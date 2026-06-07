@@ -33,19 +33,19 @@ async def cmd_start(message: Message):
         user = await db.create_user(user_id, username, first_name, referrer_id)
         
         welcome_text = (
-            f"👋 <b>Assalomu alaykum, <tg-emoji emoji-id='5312345830382910731'>{first_name}</tg-emoji> — Admin!</b>\n\n"
-            f"<tg-emoji emoji-id='5258204546391351475'>💰</tg-emoji> <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"<tg-emoji emoji-id='5879905000972358125'>👥</tg-emoji> <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"<tg-emoji emoji-id='5224496844188458905'>⚡</tg-emoji> <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f"👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n"
+            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
+            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
+            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
         )
     else:
         await db.update_user_activity(user_id)
         
         welcome_text = (
-            f"👋 <b>Assalomu alaykum, <tg-emoji emoji-id='5312345830382910731'>{first_name}</tg-emoji> — Admin!</b>\n\n"
-            f"<tg-emoji emoji-id='5258204546391351475'>💰</tg-emoji> <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"<tg-emoji emoji-id='5879905000972358125'>👥</tg-emoji> <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"<tg-emoji emoji-id='5224496844188458905'>⚡</tg-emoji> <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f"👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n"
+            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
+            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
+            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
         )
     
     await message.answer(
@@ -63,10 +63,10 @@ async def back_to_main(message: Message):
     
     if user:
         text = (
-            f"👋 <b>Assalomu alaykum, <tg-emoji emoji-id='5312345830382910731'>{message.from_user.first_name}</tg-emoji> — Admin!</b>\n\n"
-            f"<tg-emoji emoji-id='5258204546391351475'>💰</tg-emoji> <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"<tg-emoji emoji-id='5879905000972358125'>👥</tg-emoji> <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"<tg-emoji emoji-id='5224496844188458905'>⚡</tg-emoji> <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f"👋 <b>Assalomu alaykum, {message.from_user.first_name} — Admin!</b>\n\n"
+            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
+            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
+            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
         )
     else:
         text = "🏠 Bosh menyu:"
