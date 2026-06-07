@@ -17,11 +17,11 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="⭐ Stars olish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/stars.html")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/stars.html")
         ),
         InlineKeyboardButton(
             text="💎 Premium olish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/premium.html")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/premium.html")
         )
     )
     
@@ -29,11 +29,11 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📱 Nomer olish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/phone.html")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/phone.html")
         ),
         InlineKeyboardButton(
             text="🎁 Gift olish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/gift.html")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/gift.html")
         )
     )
     
@@ -53,7 +53,7 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
         ),
         InlineKeyboardButton(
             text="✨ Hisobni to'ldirish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/topup.html")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/topup.html")
         )
     )
     
@@ -146,7 +146,7 @@ def get_webapp_keyboard() -> ReplyKeyboardMarkup:
     builder.row(
         KeyboardButton(
             text="🛒 Magazin ochish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp")
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/index.html")
         )
     )
     builder.row(

@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, MessageEntity
 from aiogram.filters import CommandStart, Command
 from aiogram.types import CallbackQuery
 from aiogram.utils.formatting import Text, Bold, as_list, as_marked_section
@@ -9,6 +9,16 @@ from database import db
 from datetime import datetime
 
 router = Router()
+
+# Premium emoji IDs
+EMOJI_WAVE = "5312345830382910731"  # 👋
+EMOJI_MONEY = "5258204546391351475"  # 💰
+EMOJI_PEOPLE = "5879905000972358125"  # 👥
+EMOJI_LIGHTNING = "5224496844188458905"  # ⚡️
+EMOJI_STAR = "5807791714093502248"  # ⭐️
+EMOJI_GIFT = "5348068314629315530"  # 🎁
+EMOJI_CHECKMARK = "5774022692642492953"  # ✅
+EMOJI_CROSS = "5774077015388852135"  # ❌
 
 
 @router.message(CommandStart())
@@ -33,25 +43,37 @@ async def cmd_start(message: Message):
         user = await db.create_user(user_id, username, first_name, referrer_id)
         
         welcome_text = (
-            f"👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n"
-            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f'👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n'
+            f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
+            f'👥 <b>Referallar:</b> {user["referrals"]} ta\n\n'
+            f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
         )
+        entities = [
+            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+        ]
     else:
         await db.update_user_activity(user_id)
         
         welcome_text = (
-            f"👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n"
-            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f'👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n'
+            f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
+            f'👥 <b>Referallar:</b> {user["referrals"]} ta\n\n'
+            f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
         )
+        entities = [
+            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+        ]
     
     await message.answer(
         welcome_text,
         reply_markup=keyboards.get_webapp_main_keyboard(),
-        parse_mode="HTML"
+        entities=entities
     )
 
 
@@ -68,13 +90,20 @@ async def back_to_main(message: Message):
             f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
             f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
         )
+        entities = [
+            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+        ]
     else:
         text = "🏠 Bosh menyu:"
+        entities = []
     
     await message.answer(
         text,
         reply_markup=keyboards.get_webapp_main_keyboard(),
-        parse_mode="HTML"
+        entities=entities
     )
 
 
@@ -169,10 +198,14 @@ async def callback_stars_menu(callback: CallbackQuery):
         "📦 <b>Mavjud paketlar:</b>"
     )
     
+    entities = [
+        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_STAR),
+    ]
+    
     await callback.message.answer(
         text,
         reply_markup=keyboards.get_stars_keyboard(),
-        parse_mode="HTML"
+        entities=entities
     )
 
 
@@ -226,7 +259,14 @@ async def callback_gift_menu(callback: CallbackQuery):
         "Stars va boshqa sovg'alarni yuborishingiz mumkin bo'ladi."
     )
     
-    await callback.message.answer(text, parse_mode="HTML")
+    entities = [
+        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_GIFT),
+    ]
+    
+    await callback.message.answer(
+        text,
+        entities=entities
+    )
 
 
 @router.callback_query(F.data == "topup_menu")
@@ -238,7 +278,11 @@ async def callback_topup_menu(callback: CallbackQuery):
     user = await db.get_user(user_id)
     
     if not user:
-        await callback.message.answer("❌ Foydalanuvchi topilmadi!")
+        text = "❌ Foydalanuvchi topilmadi!"
+        entities = [
+            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_CROSS),
+        ]
+        await callback.message.answer(text, entities=entities)
         return
     
     text = (
@@ -248,7 +292,11 @@ async def callback_topup_menu(callback: CallbackQuery):
         f"Hozircha admin bilan bog'laning: @StarPayUz_Admin"
     )
     
-    await callback.message.answer(text, parse_mode="HTML")
+    entities = [
+        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_MONEY),
+    ]
+    
+    await callback.message.answer(text, entities=entities)
 
 
 @router.callback_query(F.data == "support")
