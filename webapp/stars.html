@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stars olish - StarPayUz</title>
+    <title>Elder Stars</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -13,116 +13,108 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: #1C1C1E;
             color: #ffffff;
             padding: 0;
-            padding-bottom: 20px;
-            overflow-x: hidden;
+            padding-bottom: 90px;
         }
 
-        .header {
-            background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
-            padding: 16px 20px;
-            border-radius: 0 0 24px 24px;
-            margin-bottom: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .header p {
-            font-size: 14px;
-            color: #888888;
-        }
-
-        .balance-container {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 0 16px 20px 16px;
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .balance-container::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .balance-header {
+        .top-bar {
+            background: #2C2C2E;
+            padding: 12px 20px;
+            border-radius: 0 0 20px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
+            margin-bottom: 16px;
         }
 
-        .balance-title {
+        .top-bar-left {
+            color: #3A9DFF;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .top-bar-title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .top-bar-title h1 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .top-bar-title p {
+            font-size: 13px;
+            color: #8E8E93;
+        }
+
+        .top-bar-right {
+            font-size: 20px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #3A9DFF 0%, #1E7FE8 100%);
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin: 0 16px 16px 16px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(58, 157, 255, 0.3);
+        }
+
+        .balance-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .balance-icon {
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 22px;
         }
 
-        .balance-amount {
-            font-size: 28px;
-            font-weight: 800;
+        .balance-info h3 {
+            font-size: 17px;
+            font-weight: 600;
             color: #ffffff;
-            position: relative;
-            z-index: 1;
-            margin-bottom: 12px;
+            margin-bottom: 2px;
         }
 
-        .topup-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .balance-info p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .balance-right {
+            width: 36px;
+            height: 36px;
             background: rgba(255, 255, 255, 0.95);
-            color: #1e40af;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3A9DFF;
+            font-size: 24px;
+            font-weight: 400;
             cursor: pointer;
-            position: relative;
-            z-index: 1;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .tabs {
             display: flex;
-            background: #1a1a1a;
-            border-radius: 16px;
+            background: #2C2C2E;
+            border-radius: 14px;
             padding: 4px;
             margin: 0 16px 20px 16px;
             gap: 4px;
@@ -131,21 +123,20 @@
         .tab {
             flex: 1;
             padding: 10px;
-            border-radius: 12px;
+            border-radius: 10px;
             text-align: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
-            color: #666666;
+            color: #8E8E93;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             border: none;
             background: transparent;
         }
 
         .tab.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: #3A9DFF;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
         .content {
@@ -153,19 +144,26 @@
         }
 
         .section-title {
-            font-size: 16px;
-            color: #888888;
-            margin-bottom: 12px;
+            font-size: 17px;
+            color: #ffffff;
+            margin-bottom: 16px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .input-container {
-            background: #1a1a1a;
-            border: 2px solid #2a2a2a;
-            border-radius: 16px;
+        .label {
+            font-size: 15px;
+            color: #8E8E93;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .input-group {
+            background: #2C2C2E;
+            border: 1.5px solid #3A3A3C;
+            border-radius: 14px;
             padding: 4px;
             margin-bottom: 20px;
             display: flex;
@@ -175,130 +173,106 @@
 
         .input-icon {
             padding-left: 12px;
-            font-size: 18px;
+            font-size: 20px;
         }
 
-        .username-input {
+        .input {
             flex: 1;
             background: transparent;
             border: none;
-            padding: 14px 8px;
+            padding: 12px 8px;
             color: #ffffff;
             font-size: 16px;
             outline: none;
         }
 
-        .username-input::placeholder {
-            color: #555555;
+        .input::placeholder {
+            color: #636366;
         }
 
-        .verify-button {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        .input-button {
+            background: #3A9DFF;
             color: #ffffff;
             border: none;
-            border-radius: 12px;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-weight: 700;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        .amount-label {
-            font-size: 14px;
-            color: #888888;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .packages-container {
-            background: #1a1a1a;
-            border: 2px solid #2a2a2a;
-            border-radius: 20px;
+        .amount-box {
+            background: #2C2C2E;
+            border: 1.5px solid #3A3A3C;
+            border-radius: 16px;
             padding: 16px;
-            margin-bottom: 20px;
-        }
-
-        .packages-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
             margin-bottom: 16px;
         }
 
-        .package-pill {
-            background: #2a2a2a;
-            border: 2px solid #3a3a3a;
-            border-radius: 12px;
-            padding: 10px 4px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .package-pill.selected {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-color: #3b82f6;
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-        }
-
-        .package-pill .amount {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .selected-package {
+        .amount-display {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #0a0a0a;
-            border-radius: 14px;
-            padding: 14px;
-            border: 2px solid #3a3a3a;
+            margin-bottom: 16px;
         }
 
-        .selected-package-left {
+        .amount-display-left {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .selected-package-icon {
+        .amount-display-icon {
             font-size: 24px;
         }
 
-        .selected-package-text {
-            font-size: 14px;
-            color: #888888;
+        .amount-display-text {
+            font-size: 15px;
+            color: #8E8E93;
         }
 
-        .selected-package-amount {
+        .amount-display-value {
             font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
+            font-weight: 600;
+            color: #3A9DFF;
         }
 
-        .selected-package-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: #3b82f6;
+        .buttons-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .amount-button {
+            background: #3A3A3C;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 8px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .amount-button.selected {
+            background: #3A9DFF;
+            box-shadow: 0 4px 12px rgba(58, 157, 255, 0.4);
         }
 
         .buy-button {
             width: 100%;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: #3A9DFF;
             color: #ffffff;
             border: none;
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 16px;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 17px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
-            transition: all 0.3s;
-            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(58, 157, 255, 0.4);
+            transition: all 0.2s;
         }
 
         .buy-button:active {
@@ -310,159 +284,132 @@
             cursor: not-allowed;
         }
 
-        .leaderboard {
-            margin-top: 10px;
-        }
-
-        .leader-item {
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2C2C2E;
+            border-top: 0.5px solid #3A3A3C;
+            padding: 8px 16px 20px 16px;
             display: flex;
+            justify-content: space-around;
             align-items: center;
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 10px;
-            border: 2px solid #2a2a2a;
         }
 
-        .leader-rank {
-            font-size: 18px;
-            font-weight: 800;
-            color: #3b82f6;
-            margin-right: 14px;
-            min-width: 32px;
-        }
-
-        .leader-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        .nav-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin-right: 12px;
+            gap: 4px;
+            cursor: pointer;
+            padding: 4px 12px;
         }
 
-        .leader-info {
-            flex: 1;
+        .nav-item.active .nav-icon {
+            color: #3A9DFF;
         }
 
-        .leader-name {
-            font-size: 15px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 2px;
+        .nav-item.active .nav-label {
+            color: #3A9DFF;
         }
 
-        .leader-username {
-            font-size: 13px;
-            color: #666666;
+        .nav-icon {
+            font-size: 24px;
+            color: #8E8E93;
         }
 
-        .leader-stats {
-            text-align: right;
-        }
-
-        .leader-stars {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fbbf24;
-            margin-bottom: 2px;
-        }
-
-        .leader-amount {
-            font-size: 12px;
-            color: #666666;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666666;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
+        .nav-label {
+            font-size: 11px;
+            color: #8E8E93;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>STARPAY STARS</h1>
-        <p>mini ilova</p>
+    <div class="top-bar">
+        <div class="top-bar-left">Yopish</div>
+        <div class="top-bar-title">
+            <h1>ELDER STARS</h1>
+            <p>mini ilova</p>
+        </div>
+        <div class="top-bar-right">⋯</div>
     </div>
 
-    <div class="balance-container">
-        <div class="balance-header">
-            <div class="balance-title">
-                <div class="balance-icon">💎</div>
-                <span>Balansim</span>
+    <div class="balance-card">
+        <div class="balance-left">
+            <div class="balance-icon">💎</div>
+            <div class="balance-info">
+                <h3>Elder Stars</h3>
+                <p id="balance">0 so'm</p>
             </div>
         </div>
-        <div class="balance-amount" id="balance">0 so'm</div>
-        <button class="topup-button" onclick="openTopup()">
-            + To'ldirish
-        </button>
+        <div class="balance-right" onclick="openTopup()">+</div>
     </div>
 
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('buy')">Stars olish</button>
-        <button class="tab" onclick="switchTab('leaders')">Top Liderlar</button>
+        <button class="tab active" onclick="switchTab('stars')">Stars olish</button>
+        <button class="tab" onclick="switchTab('premium')">Premium olish</button>
     </div>
 
     <div class="content">
-        <div id="buyTab">
+        <div id="starsTab">
             <div class="section-title">⭐ Telegram Stars sotib olish</div>
             
-            <div class="amount-label">Qabul qiluvchi</div>
-            <div class="input-container">
+            <div class="label">Qabul qiluvchi</div>
+            <div class="input-group">
                 <span class="input-icon">👤</span>
-                <input type="text" class="username-input" id="username" placeholder="Username kiriting" value="@username">
-                <button class="verify-button" onclick="verifyUsername()">O'zim uchun</button>
+                <input type="text" class="input" id="username" placeholder="Username kiriting">
+                <button class="input-button" onclick="setMyUsername()">O'zim uchun</button>
             </div>
 
-            <div class="amount-label">Stars miqdori<span style="color: #666;"> (Min: 50)</span></div>
+            <div class="label">Stars miqdori</div>
             
-            <div class="packages-container">
-                <div class="packages-grid">
-                    <div class="package-pill" onclick="selectPackage(50, 10000)">
-                        <div class="amount">50</div>
+            <div class="amount-box">
+                <div class="amount-display">
+                    <div class="amount-display-left">
+                        <span class="amount-display-icon">⭐</span>
+                        <span class="amount-display-text">Stars miqdori</span>
                     </div>
-                    <div class="package-pill" onclick="selectPackage(75, 14000)">
-                        <div class="amount">75</div>
-                    </div>
-                    <div class="package-pill" onclick="selectPackage(100, 18000)">
-                        <div class="amount">100</div>
-                    </div>
-                    <div class="package-pill" onclick="selectPackage(250, 45000)">
-                        <div class="amount">250</div>
-                    </div>
-                    <div class="package-pill" onclick="selectPackage(500, 85000)">
-                        <div class="amount">500</div>
-                    </div>
+                    <div class="amount-display-value" id="displayAmount">0 so'm</div>
                 </div>
 
-                <div class="selected-package" id="selectedPackage" style="display: none;">
-                    <div class="selected-package-left">
-                        <span class="selected-package-icon">⭐</span>
-                        <div>
-                            <div class="selected-package-text">Stars miqdori</div>
-                            <div class="selected-package-amount" id="selectedAmount">0</div>
-                        </div>
-                    </div>
-                    <div class="selected-package-price" id="selectedPrice">0 so'm</div>
+                <div class="buttons-row">
+                    <button class="amount-button" onclick="selectAmount(50, 10000)">50</button>
+                    <button class="amount-button" onclick="selectAmount(75, 14000)">75</button>
+                    <button class="amount-button" onclick="selectAmount(100, 18000)">100</button>
+                    <button class="amount-button" onclick="selectAmount(250, 45000)">250</button>
+                    <button class="amount-button" onclick="selectAmount(500, 85000)">500</button>
                 </div>
             </div>
 
-            <button class="buy-button" id="buyBtn" onclick="buyStars()" disabled>
-                Sotib olish
-            </button>
+            <button class="buy-button" id="buyBtn" onclick="buyStars()" disabled>Sotib olish</button>
         </div>
 
-        <div id="leadersTab" style="display: none;">
-            <div class="leaderboard" id="leaderboard"></div>
+        <div id="premiumTab" style="display: none;">
+            <div class="section-title">💎 Telegram Premium sotib olish</div>
+            <p style="color: #8E8E93; text-align: center; padding: 40px 20px;">
+                Premium xizmat tez orada...
+            </p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Menu</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🎁</div>
+            <div class="nav-label">Gifts</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🖼️</div>
+            <div class="nav-label">NFT</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profil</div>
         </div>
     </div>
 
@@ -470,47 +417,51 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
-        tg.setHeaderColor('#000000');
-        tg.setBackgroundColor('#000000');
+        tg.setHeaderColor('#1C1C1E');
+        tg.setBackgroundColor('#1C1C1E');
 
-        let selectedAmount = 0;
+        let selectedStars = 0;
         let selectedPrice = 0;
         let userBalance = 0;
 
-        // Get user data
         const initData = tg.initDataUnsafe;
         if (initData.user) {
-            document.getElementById('username').value = '@' + (initData.user.username || 'username');
+            document.getElementById('username').value = '@' + (initData.user.username || '');
         }
 
-        // Mock balance - в реальности получать с сервера
-        userBalance = 150000;
+        userBalance = 0;
         document.getElementById('balance').textContent = userBalance.toLocaleString('uz-UZ') + ' so\'m';
 
-        function selectPackage(amount, price) {
-            selectedAmount = amount;
+        function selectAmount(stars, price) {
+            selectedStars = stars;
             selectedPrice = price;
             
-            // Remove all selected classes
-            document.querySelectorAll('.package-pill').forEach(card => {
-                card.classList.remove('selected');
+            document.querySelectorAll('.amount-button').forEach(btn => {
+                btn.classList.remove('selected');
             });
             
-            // Add selected class to clicked card
-            event.target.closest('.package-pill').classList.add('selected');
+            event.target.classList.add('selected');
             
-            // Show selected package info
-            document.getElementById('selectedPackage').style.display = 'flex';
-            document.getElementById('selectedAmount').textContent = amount;
-            document.getElementById('selectedPrice').textContent = price.toLocaleString('uz-UZ') + ' so\'m';
-            
-            // Enable buy button
+            document.getElementById('displayAmount').textContent = price.toLocaleString('uz-UZ') + ' so\'m';
             document.getElementById('buyBtn').disabled = false;
         }
 
+        function setMyUsername() {
+            if (initData.user && initData.user.username) {
+                document.getElementById('username').value = '@' + initData.user.username;
+                tg.showPopup({
+                    title: '✅',
+                    message: 'Username o\'rnatildi',
+                    buttons: [{type: 'ok'}]
+                });
+            } else {
+                tg.showAlert('Username topilmadi');
+            }
+        }
+
         function buyStars() {
-            if (selectedAmount === 0) {
-                tg.showAlert('Iltimos, paketni tanlang!');
+            if (selectedStars === 0) {
+                tg.showAlert('Iltimos, miqdorni tanlang!');
                 return;
             }
 
@@ -521,14 +472,13 @@
             }
 
             if (userBalance < selectedPrice) {
-                tg.showAlert('Balans yetarli emas! Hisobni to\'ldiring.');
+                tg.showAlert('Balans yetarli emas!');
                 return;
             }
 
-            // Send data back to bot
             tg.sendData(JSON.stringify({
                 action: 'buy_stars',
-                amount: selectedAmount,
+                amount: selectedStars,
                 price: selectedPrice,
                 username: username
             }));
@@ -536,69 +486,23 @@
             tg.close();
         }
 
-        function verifyUsername() {
-            if (initData.user && initData.user.username) {
-                document.getElementById('username').value = '@' + initData.user.username;
-                tg.showPopup({
-                    title: 'Tasdiqlandi',
-                    message: 'Sizning username o\'rnatildi',
-                    buttons: [{type: 'ok'}]
-                });
-            }
-        }
-
         function openTopup() {
-            tg.close();
-            // Botga qaytadi va topup sahifasini ochadi
+            tg.showAlert('Hisobni to\'ldirish tez orada...');
         }
 
         function switchTab(tab) {
-            // Hide all tabs
-            document.getElementById('buyTab').style.display = 'none';
-            document.getElementById('leadersTab').style.display = 'none';
+            document.getElementById('starsTab').style.display = 'none';
+            document.getElementById('premiumTab').style.display = 'none';
 
-            // Remove active class from all tabs
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
-            // Show selected tab
-            if (tab === 'buy') {
-                document.getElementById('buyTab').style.display = 'block';
-                event.target.classList.add('active');
-            } else if (tab === 'leaders') {
-                document.getElementById('leadersTab').style.display = 'block';
-                event.target.classList.add('active');
-                loadLeaders();
+            if (tab === 'stars') {
+                document.getElementById('starsTab').style.display = 'block';
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else {
+                document.getElementById('premiumTab').style.display = 'block';
+                document.querySelectorAll('.tab')[1].classList.add('active');
             }
-        }
-
-        function loadLeaders() {
-            const leaderboard = document.getElementById('leaderboard');
-            const leaders = [
-                {rank: 1, name: 'Alibek Karimov', username: '@alibek_uz', stars: 1240, amount: 248000},
-                {rank: 2, name: 'Dilshod Tursunov', username: '@dilshod_t', stars: 895, amount: 179000},
-                {rank: 3, name: 'Zarina Ahmadova', username: '@zarina_a', stars: 650, amount: 130000},
-                {rank: 4, name: 'Bekzod Ismoilov', username: '@bekzod_i', stars: 420, amount: 84000},
-                {rank: 5, name: 'Malika Rahimova', username: '@malika_r', stars: 315, amount: 63000},
-            ];
-
-            leaderboard.innerHTML = '';
-            leaders.forEach(leader => {
-                const item = document.createElement('div');
-                item.className = 'leader-item';
-                item.innerHTML = `
-                    <div class="leader-rank">#${leader.rank}</div>
-                    <div class="leader-avatar">👤</div>
-                    <div class="leader-info">
-                        <div class="leader-name">${leader.name}</div>
-                        <div class="leader-username">${leader.username}</div>
-                    </div>
-                    <div class="leader-stats">
-                        <div class="leader-stars">⭐ ${leader.stars}</div>
-                        <div class="leader-amount">${leader.amount.toLocaleString('uz-UZ')} so'm</div>
-                    </div>
-                `;
-                leaderboard.appendChild(item);
-            });
         }
     </script>
 </body>
