@@ -10,30 +10,30 @@ import config
 
 
 def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
-    """Main inline keyboard - shown on start"""
+    """Main Web App keyboard - shown on start"""
     builder = InlineKeyboardBuilder()
     
-    # Row 1: Stars and Premium
+    # Row 1: Stars and Premium with Web App
     builder.row(
         InlineKeyboardButton(
             text="⭐ Stars olish",
-            callback_data="stars_menu"
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/stars.html")
         ),
         InlineKeyboardButton(
             text="💎 Premium olish",
-            callback_data="premium_menu"
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/premium.html")
         )
     )
     
-    # Row 2: Phone and Gift
+    # Row 2: Phone and Gift with Web App
     builder.row(
         InlineKeyboardButton(
             text="📱 Nomer olish",
-            callback_data="phone_menu"
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/phone.html")
         ),
         InlineKeyboardButton(
             text="🎁 Gift olish",
-            callback_data="gift_menu"
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/gift.html")
         )
     )
     
@@ -53,7 +53,7 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
         ),
         InlineKeyboardButton(
             text="✨ Hisobni to'ldirish",
-            callback_data="topup_menu"
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/webapp/topup.html")
         )
     )
     
