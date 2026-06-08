@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,12 +8,288 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+    }
+
+    body {
+        background: #030712;
+        color: #fff;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 35px;
+    }
+
+    .header-left__image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .balance-badge {
+        color: #fff;
+        font-weight: 600;
+        border: 2px solid #3B82F6;
+        background: #031632;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: .3s;
+    }
+
+    .add-button {
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 50%;
+        background: #3B82F6;
+        color: #fff;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: .3s;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .3);
+    }
+
+    .tabs {
+        display: flex;
+        padding: 5px;
+        background: #111827;
+        border-radius: 999px;
+        gap: 5px;
+        margin-bottom: 25px;
+    }
+
+    .tab {
+        flex: 1;
+        border: none;
+        background: transparent;
+        color: #9CA3AF;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .tab.active {
+        background: #3B82F6;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .4), 0 4px 12px rgba(59, 130, 246, .25);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .page-title h2 {
+        color: #3B82F6;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .section-label {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .inside-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+    }
+
+    .input {
+        width: 100%;
+        height: 56px;
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 18px;
+        padding-left: 50px;
+        padding-right: 15px;
+        color: #fff;
+        font-size: 16px;
+        outline: none;
+        transition: .3s;
+    }
+
+    .input::placeholder {
+        color: #9CA3AF;
+    }
+
+    .premium-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .premium-card {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 24px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .premium-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0 25px rgba(59, 130, 246, .4);
+    }
+
+    .premium-card.selected {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        box-shadow: 0 0 30px rgba(59, 130, 246, .5);
+    }
+
+    .premium-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+
+    .premium-duration {
+        font-size: 20px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+
+    .premium-price {
+        font-size: 16px;
+        font-weight: 600;
+        color: #9CA3AF;
+    }
+
+    .premium-card.selected .premium-price {
+        color: #fff;
+    }
+
+    .btn-primary {
+        width: 100%;
+        height: 58px;
+        margin-top: 25px;
+        border: none;
+        border-radius: 18px;
+        background: #3B82F6;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .3s;
+        box-shadow: 0 0 25px rgba(59, 130, 246, .3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 35px rgba(59, 130, 246, .45);
+    }
+
+    .btn-primary:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, .05);
+        border-radius: 28px;
+        padding: 15px 10px;
+        display: flex;
+        justify-content: space-around;
+        backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        font-size: 24px;
+    }
+
+    .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .features-list {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        color: #fff;
+        font-size: 15px;
+    }
+
+    .feature-icon {
+        font-size: 20px;
+    }
+</style>
+
 <body>
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <div class="logo-circle">⭐</div>
-            <div class="logo-text">StarPayUz</div>
+            <a href="/">
+                <img src="./images/logo.png" alt="" class="header-left__image">
+            </a>
         </div>
         <div class="header-right">
             <div class="balance-badge" id="balance">0 so'm</div>
@@ -31,55 +308,68 @@
     <!-- Content -->
     <div class="content">
         <div class="page-title">
-            <span>💎</span>
-            <span>Telegram Premium sotib olish</span>
+            <span style="font-size: 28px;">💎</span>
+            <h2>Telegram Premium sotib olish</h2>
         </div>
 
-        <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; line-height: 1.6;">
-            Premium obuna bilan qo'shimcha imkoniyatlarga ega bo'ling:
-            <br><br>
-            ✨ Tezroq yuklab olish<br>
-            📁 4 GB gacha fayllar<br>
-            🎨 Eksklyuziv stikerlar<br>
-            👤 Premium emoji va badge<br>
-            💬 Kengaytirilgan chat
-        </p>
+        <!-- Features List -->
+        <div class="features-list">
+            <div class="feature-item">
+                <span class="feature-icon">✨</span>
+                <span>Tezroq yuklab olish</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📁</span>
+                <span>4 GB gacha fayllar</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🎨</span>
+                <span>Eksklyuziv stikerlar</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">👤</span>
+                <span>Premium emoji va badge</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💬</span>
+                <span>Kengaytirilgan chat</span>
+            </div>
+        </div>
 
         <!-- Username Input -->
-        <div class="section-label">Qabul qiluvchi</div>
-        <div class="input-group">
-            <span class="input-icon">👤</span>
-            <input type="text" class="input" id="username" placeholder="Username kiriting">
-            <button class="input-button" onclick="setMyUsername()">O'zim uchun</button>
+        <h3 class="section-label">Qabul qiluvchi</h3>
+        <div class="input-wrapper">
+            <img src="./images/user.webp" class="inside-icon">
+            <input type="text" id="username" placeholder="Username kiriting" class="input">
         </div>
 
-        <!-- Premium Packages -->
-        <div class="section-label">Davomiylik</div>
-        <div class="gift-cards-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
-            <div class="gift-card" onclick="selectPremium(1, 25000)" style="padding: 24px 16px;">
-                <div class="gift-card-emoji">💎</div>
-                <div class="gift-card-name">1 oy</div>
-                <div class="gift-card-price">25 000 so'm</div>
+        <!-- Premium Cards -->
+        <h3 class="section-label">Davomiylik</h3>
+        <div class="premium-cards">
+            <div class="premium-card" onclick="selectPremium(1, 25000, this)">
+                <div class="premium-icon">💎</div>
+                <div class="premium-duration">1 oy</div>
+                <div class="premium-price">25 000 so'm</div>
             </div>
-
-            <div class="gift-card" onclick="selectPremium(3, 65000)" style="padding: 24px 16px;">
-                <div class="gift-card-emoji">💎</div>
-                <div class="gift-card-name">3 oy</div>
-                <div class="gift-card-price">65 000 so'm</div>
+            <div class="premium-card" onclick="selectPremium(3, 65000, this)">
+                <div class="premium-icon">💎</div>
+                <div class="premium-duration">3 oy</div>
+                <div class="premium-price">65 000 so'm</div>
             </div>
-
-            <div class="gift-card" onclick="selectPremium(6, 120000)" style="padding: 24px 16px;">
-                <div class="gift-card-emoji">💎</div>
-                <div class="gift-card-name">6 oy</div>
-                <div class="gift-card-price">120 000 so'm</div>
+            <div class="premium-card" onclick="selectPremium(6, 120000, this)">
+                <div class="premium-icon">💎</div>
+                <div class="premium-duration">6 oy</div>
+                <div class="premium-price">120 000 so'm</div>
             </div>
-
-            <div class="gift-card" onclick="selectPremium(12, 220000)" style="padding: 24px 16px;">
-                <div class="gift-card-emoji">💎</div>
-                <div class="gift-card-name">12 oy</div>
-                <div class="gift-card-price">220 000 so'm</div>
+            <div class="premium-card" onclick="selectPremium(12, 220000, this)">
+                <div class="premium-icon">💎</div>
+                <div class="premium-duration">12 oy</div>
+                <div class="premium-price">220 000 so'm</div>
             </div>
         </div>
+
+        <!-- Buy Button -->
+        <button class="btn-primary" id="buyBtn" onclick="buyPremium()" disabled>Sotib olish</button>
     </div>
 
     <!-- Bottom Navigation -->
@@ -104,45 +394,49 @@
 
     <script src="js/common.js"></script>
     <script>
-        function setMyUsername() {
-            const initData = tg.initDataUnsafe;
-            if (initData.user && initData.user.username) {
-                document.getElementById('username').value = '@' + initData.user.username;
-                tg.showPopup({
-                    title: '✅ Tasdiqlandi',
-                    message: 'Sizning username o\'rnatildi',
-                    buttons: [{type: 'ok'}]
-                });
-            } else {
-                tg.showAlert('Username topilmadi');
-            }
+        let selectedMonths = 0;
+        let selectedPrice = 0;
+
+        function selectPremium(months, price, element) {
+            selectedMonths = months;
+            selectedPrice = price;
+
+            document.querySelectorAll('.premium-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            element.classList.add('selected');
+            document.getElementById('buyBtn').disabled = false;
         }
 
-        function selectPremium(months, price) {
-            const username = document.getElementById('username').value;
-            if (!username || username === '@') {
-                tg.showAlert('Iltimos, avval username kiriting!');
+        function buyPremium() {
+            if (selectedMonths === 0) {
+                tg.showAlert('Iltimos, davomiylikni tanlang!');
                 return;
             }
 
-            tg.showConfirm(
-                `${months} oylik Premium obunasini ${price.toLocaleString('uz-UZ')} so'mga sotib olasizmi?`,
-                (confirmed) => {
-                    if (confirmed) {
-                        tg.sendData(JSON.stringify({
-                            action: 'buy_premium',
-                            duration: months,
-                            price: price,
-                            username: username
-                        }));
-                        tg.close();
-                    }
-                }
-            );
+            const username = document.getElementById('username').value;
+            if (!username || username === '@') {
+                tg.showAlert('Iltimos, username kiriting!');
+                return;
+            }
+
+            tg.sendData(JSON.stringify({
+                action: 'buy_premium',
+                duration: selectedMonths,
+                price: selectedPrice,
+                username: username
+            }));
+
+            tg.close();
         }
 
         function openStars() {
             window.location.href = 'stars.html';
+        }
+
+        function openTopup() {
+            window.location.href = 'topup.html';
         }
 
         function openGifts() {
@@ -156,10 +450,7 @@
         function openProfile() {
             window.location.href = 'index.html';
         }
-
-        function openTopup() {
-            window.location.href = 'topup.html';
-        }
     </script>
 </body>
+
 </html>

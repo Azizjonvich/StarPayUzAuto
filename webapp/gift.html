@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,12 +8,177 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+    }
+
+    body {
+        background: #030712;
+        color: #fff;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 35px;
+    }
+
+    .header-left__image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .balance-badge {
+        color: #fff;
+        font-weight: 600;
+        border: 2px solid #3B82F6;
+        background: #031632;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: .3s;
+    }
+
+    .add-button {
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 50%;
+        background: #3B82F6;
+        color: #fff;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: .3s;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .3);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .page-title h2 {
+        color: #3B82F6;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .page-subtitle {
+        color: #9CA3AF;
+        font-size: 15px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .gift-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .gift-card {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 20px 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .gift-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0 25px rgba(59, 130, 246, .4);
+    }
+
+    .gift-card:active {
+        transform: scale(0.97);
+    }
+
+    .gift-emoji {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+
+    .gift-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 6px;
+    }
+
+    .gift-price {
+        font-size: 14px;
+        font-weight: 600;
+        color: #3B82F6;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, .05);
+        border-radius: 28px;
+        padding: 15px 10px;
+        display: flex;
+        justify-content: space-around;
+        backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        font-size: 24px;
+    }
+
+    .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+</style>
+
 <body>
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <div class="logo-circle">⭐</div>
-            <div class="logo-text">StarPayUz</div>
+            <a href="/">
+                <img src="./images/logo.png" alt="" class="header-left__image">
+            </a>
         </div>
         <div class="header-right">
             <div class="balance-badge" id="balance">0 so'm</div>
@@ -21,52 +187,68 @@
     </div>
 
     <!-- Content -->
-    <div class="content" style="margin-top: 24px;">
+    <div class="content">
         <div class="page-title">
-            <span>🎁</span>
-            <span>Gift olish</span>
+            <span style="font-size: 28px;">🎁</span>
+            <h2>Gift olish</h2>
         </div>
 
-        <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; text-align: center;">
-            O'zingizga yoki do'stingizga gift yuboring
-        </p>
+        <p class="page-subtitle">O'zingizga yoki do'stingizga gift yuboring</p>
 
-        <!-- Gift Cards Grid -->
-        <div class="gift-cards-grid">
+        <!-- Gift Grid -->
+        <div class="gift-grid">
             <div class="gift-card" onclick="selectGift('TeddyBear', 3000)">
-                <div class="gift-card-emoji">🧸</div>
-                <div class="gift-card-name">TeddyBear</div>
-                <div class="gift-card-price">3 000 so'm</div>
+                <div class="gift-emoji">🧸</div>
+                <div class="gift-name">TeddyBear</div>
+                <div class="gift-price">3 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="selectGift('HeartGift', 3000)">
-                <div class="gift-card-emoji">💝</div>
-                <div class="gift-card-name">HeartGift</div>
-                <div class="gift-card-price">3 000 so'm</div>
+                <div class="gift-emoji">💝</div>
+                <div class="gift-name">HeartGift</div>
+                <div class="gift-price">3 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="selectGift('GiftBox', 5000)">
-                <div class="gift-card-emoji">🎁</div>
-                <div class="gift-card-name">GiftBox</div>
-                <div class="gift-card-price">5 000 so'm</div>
+                <div class="gift-emoji">🎁</div>
+                <div class="gift-name">GiftBox</div>
+                <div class="gift-price">5 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="selectGift('Rose', 5000)">
-                <div class="gift-card-emoji">🌹</div>
-                <div class="gift-card-name">Rose</div>
-                <div class="gift-card-price">5 000 so'm</div>
+                <div class="gift-emoji">🌹</div>
+                <div class="gift-name">Rose</div>
+                <div class="gift-price">5 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="selectGift('Cake', 10000)">
-                <div class="gift-card-emoji">🎂</div>
-                <div class="gift-card-name">Cake</div>
-                <div class="gift-card-price">10 000 so'm</div>
+                <div class="gift-emoji">🎂</div>
+                <div class="gift-name">Cake</div>
+                <div class="gift-price">10 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="selectGift('Bouquet', 10000)">
-                <div class="gift-card-emoji">💐</div>
-                <div class="gift-card-name">Bouquet</div>
-                <div class="gift-card-price">10 000 so'm</div>
+                <div class="gift-emoji">💐</div>
+                <div class="gift-name">Bouquet</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+
+            <div class="gift-card" onclick="selectGift('Diamond', 15000)">
+                <div class="gift-emoji">💎</div>
+                <div class="gift-name">Diamond</div>
+                <div class="gift-price">15 000 so'm</div>
+            </div>
+
+            <div class="gift-card" onclick="selectGift('Trophy', 15000)">
+                <div class="gift-emoji">🏆</div>
+                <div class="gift-name">Trophy</div>
+                <div class="gift-price">15 000 so'm</div>
+            </div>
+
+            <div class="gift-card" onclick="selectGift('Crown', 20000)">
+                <div class="gift-emoji">👑</div>
+                <div class="gift-name">Crown</div>
+                <div class="gift-price">20 000 so'm</div>
             </div>
         </div>
     </div>
@@ -113,6 +295,10 @@
             window.location.href = 'stars.html';
         }
 
+        function openTopup() {
+            window.location.href = 'topup.html';
+        }
+
         function openReyting() {
             window.location.href = 'index.html';
         }
@@ -120,10 +306,7 @@
         function openProfile() {
             window.location.href = 'index.html';
         }
-
-        function openTopup() {
-            window.location.href = 'topup.html';
-        }
     </script>
 </body>
+
 </html>

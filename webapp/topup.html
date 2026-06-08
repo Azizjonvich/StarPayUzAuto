@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,12 +8,218 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+    }
+
+    body {
+        background: #030712;
+        color: #fff;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 35px;
+    }
+
+    .header-left__image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .balance-badge {
+        color: #fff;
+        font-weight: 600;
+        border: 2px solid #3B82F6;
+        background: #031632;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: .3s;
+    }
+
+    .add-button {
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 50%;
+        background: #3B82F6;
+        color: #fff;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: .3s;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .3);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .page-title h2 {
+        color: #3B82F6;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .info-card {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 32px 24px;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .info-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+
+    .info-text {
+        color: #9CA3AF;
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+
+    .section-label {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 16px;
+    }
+
+    .menu-section {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 8px;
+        margin-bottom: 16px;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        cursor: pointer;
+        border-radius: 16px;
+        transition: .3s;
+        opacity: 0.5;
+    }
+
+    .menu-item-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .menu-icon {
+        font-size: 22px;
+    }
+
+    .menu-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .badge {
+        background: #1E293B;
+        color: #9CA3AF;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        width: 100%;
+        height: 58px;
+        border: none;
+        border-radius: 18px;
+        background: #3B82F6;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .3s;
+        box-shadow: 0 0 25px rgba(59, 130, 246, .3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 35px rgba(59, 130, 246, .45);
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, .05);
+        border-radius: 28px;
+        padding: 15px 10px;
+        display: flex;
+        justify-content: space-around;
+        backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        font-size: 24px;
+    }
+
+    .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+</style>
+
 <body>
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <div class="logo-circle">⭐</div>
-            <div class="logo-text">StarPayUz</div>
+            <a href="/">
+                <img src="./images/logo.png" alt="" class="header-left__image">
+            </a>
         </div>
         <div class="header-right">
             <div class="balance-badge" id="balance">0 so'm</div>
@@ -21,17 +228,16 @@
     </div>
 
     <!-- Content -->
-    <div class="content" style="margin-top: 24px;">
+    <div class="content">
         <div class="page-title">
-            <span>💰</span>
-            <span>Hisobni to'ldirish</span>
+            <span style="font-size: 28px;">💰</span>
+            <h2>Hisobni to'ldirish</h2>
         </div>
 
-        <div class="referral-card" style="text-align: center; padding: 40px 20px;">
-            <div style="font-size: 64px; margin-bottom: 16px;">💳</div>
-            <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; line-height: 1.6;">
-                Hisobni to'ldirish funksiyasi tez orada qo'shiladi.
-                <br><br>
+        <div class="info-card">
+            <div class="info-icon">💳</div>
+            <p class="info-text">
+                Hisobni to'ldirish funksiyasi tez orada qo'shiladi.<br><br>
                 Hozircha admin bilan bog'laning:
             </p>
             <button class="btn-primary" onclick="contactAdmin()">
@@ -39,29 +245,29 @@
             </button>
         </div>
 
-        <!-- Payment Methods (Coming Soon) -->
-        <div class="section-label" style="margin-top: 32px;">To'lov usullari</div>
-        <div class="profile-section">
-            <div class="profile-item" style="opacity: 0.5;">
-                <div class="profile-item-left">
-                    <span class="profile-item-icon">💳</span>
-                    <span class="profile-item-text">Bank kartasi</span>
+        <!-- Payment Methods -->
+        <h3 class="section-label">To'lov usullari</h3>
+        <div class="menu-section">
+            <div class="menu-item">
+                <div class="menu-item-left">
+                    <span class="menu-icon">💳</span>
+                    <span class="menu-text">Bank kartasi</span>
                 </div>
-                <span style="background: var(--bg-secondary); color: var(--text-secondary); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">Tez orada</span>
+                <span class="badge">Tez orada</span>
             </div>
-            <div class="profile-item" style="opacity: 0.5;">
-                <div class="profile-item-left">
-                    <span class="profile-item-icon">📱</span>
-                    <span class="profile-item-text">Click / Payme</span>
+            <div class="menu-item">
+                <div class="menu-item-left">
+                    <span class="menu-icon">📱</span>
+                    <span class="menu-text">Click / Payme</span>
                 </div>
-                <span style="background: var(--bg-secondary); color: var(--text-secondary); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">Tez orada</span>
+                <span class="badge">Tez orada</span>
             </div>
-            <div class="profile-item" style="opacity: 0.5;">
-                <div class="profile-item-left">
-                    <span class="profile-item-icon">⭐</span>
-                    <span class="profile-item-text">Telegram Stars</span>
+            <div class="menu-item">
+                <div class="menu-item-left">
+                    <span class="menu-icon">⭐</span>
+                    <span class="menu-text">Telegram Stars</span>
                 </div>
-                <span style="background: var(--bg-secondary); color: var(--text-secondary); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">Tez orada</span>
+                <span class="badge">Tez orada</span>
             </div>
         </div>
     </div>
@@ -109,4 +315,5 @@
         }
     </script>
 </body>
+
 </html>
