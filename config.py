@@ -18,7 +18,7 @@ SHOP_KEY = os.getenv("SHOP_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
 
 # Web App
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://kamron5505.github.io/StarPayUzWebApp")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://starpayuz-webapp.vercel.app")
 
 # Admin IDs
 ADMINS = [8784918764]
