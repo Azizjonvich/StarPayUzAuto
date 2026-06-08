@@ -9,9 +9,18 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+    }
+
     body {
-        margin: auto;
-        text-align: center;
+        background: #030712;
+        color: #fff;
     }
 
     .header {
@@ -26,128 +35,296 @@
         height: 60px;
     }
 
-    .add-button {
-        width: 30px;
-        height: 30px;
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
 
+    .balance-badge {
+        color: #fff;
+        font-weight: 600;
+        border: 2px solid #3B82F6;
+        background: #031632;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: .3s;
+    }
+
+    .balance-badge:hover {
+        background: #3B82F6;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .35);
+    }
+
+    .add-button {
+        width: 42px;
+        height: 42px;
         border: none;
         border-radius: 50%;
-
         background: #3B82F6;
         color: #fff;
-
-        font-size: 23px;
-        font-weight: 300;
-
+        font-size: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-
         cursor: pointer;
-
-        box-shadow:
-            0 0 15px rgba(59, 130, 246, .4),
-            0 8px 20px rgba(59, 130, 246, .25);
-
-        transition: all .3s ease;
+        transition: .3s;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .3);
     }
 
     .add-button:hover {
         transform: translateY(-2px) scale(1.05);
-
-        box-shadow:
-            0 0 25px rgba(59, 130, 246, .6),
-            0 10px 25px rgba(59, 130, 246, .35);
-    }
-
-    .add-button:active {
-        transform: scale(.95);
-    }
-
-    .header-right {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-    }
-
-    .balance-badge {
-        color: white;
-        font-weight: 600;
-        border: 2px solid #3B82F6;
-        padding: 5px 8px;
-        border-radius: 30px;
-        font-size: 14px;
-        background-color: #031632;
-
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .balance-badge:hover {
-        background-color: #3B82F6;
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 0 15px rgba(59, 130, 246, .4),
-            0 4px 12px rgba(59, 130, 246, .3);
-    }
-
-    .balance-badge:active {
-        transform: scale(0.96);
+        box-shadow: 0 0 30px rgba(59, 130, 246, .5);
     }
 
     .tabs {
-        background-color: rgb(58, 58, 65);
-        padding: 7px 0;
-        border-radius: 50px;
         display: flex;
-        justify-content: space-around;
+        padding: 5px;
+        background: #111827;
+        border-radius: 999px;
+        gap: 5px;
+        margin-bottom: 25px;
     }
 
     .tab {
-        color: #9CA3AF;
-        background: transparent;
+        flex: 1;
         border: none;
-
-        font-weight: 700;
+        background: transparent;
+        color: #9CA3AF;
         font-size: 15px;
-
-        padding: 10px 10px;
-        border-radius: 50px;
-
+        font-weight: 700;
+        padding: 14px;
+        border-radius: 999px;
         cursor: pointer;
-        transition: all .3s ease;
+        transition: .3s;
     }
 
-    /* Наведение */
     .tab:hover {
         color: #fff;
-      background: #3B82F6;
+        background: rgba(59, 130, 246, .15);
     }
 
     .tab.active {
-        color: #fff;
-
         background: #3B82F6;
-
+        color: #fff;
         box-shadow:
-            0 0 15px rgba(59, 130, 246, .35),
+            0 0 20px rgba(59, 130, 246, .4),
             0 4px 12px rgba(59, 130, 246, .25);
     }
 
-    /* Нажатие */
-    .tab:active {
-        transform: scale(.97);
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
     }
-    .page-title{
-        margin-top: 30px;
+
+    .page-title h2 {
+        color: #3B82F6;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .section-label {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .inside-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+    }
+
+    .input {
+        width: 100%;
+        height: 56px;
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 18px;
+        padding-left: 50px;
+        padding-right: 15px;
+        color: #fff;
+        font-size: 16px;
+        outline: none;
+        transition: .3s;
+    }
+
+    .input::placeholder {
+        color: #9CA3AF;
+    }
+
+    .input:focus {
+        box-shadow: 0 0 20px rgba(59, 130, 246, .35);
+    }
+
+    .content {
+        margin-top: 20px;
+    }
+
+    .amount-box {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 18px;
+        margin-top: 10px;
+    }
+
+    .amount-display {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .amount-display-left {
         display: flex;
         align-items: center;
         gap: 10px;
-        justify-content: center;
     }
-    .page-title h2{
-        color: #0d5ece;
+
+    .amount-icon {
+        font-size: 22px;
+    }
+
+    .amount-label {
+        color: #9CA3AF;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .amount-value {
+        color: #3B82F6;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .buttons-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+
+    .amount-btn {
+        background: #1E293B;
+        border: none;
+        border-radius: 16px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 14px 0;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .amount-btn:hover {
+        transform: translateY(-2px);
+        background: #2b3a52;
+    }
+
+    .amount-btn.selected {
+        background: #3B82F6;
+        box-shadow:
+            0 0 20px rgba(59, 130, 246, .45),
+            0 4px 15px rgba(59, 130, 246, .25);
+    }
+
+    .btn-primary {
+        width: 100%;
+        height: 58px;
+        margin-top: 25px;
+
+        border: none;
+        border-radius: 18px;
+
+        background: #3B82F6;
+        color: #fff;
+
+        font-size: 18px;
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition: .3s;
+
+        box-shadow:
+            0 0 25px rgba(59, 130, 246, .3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 0 35px rgba(59, 130, 246, .45);
+    }
+
+    .btn-primary:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+
+        background: #111827;
+
+        border: 1px solid rgba(255, 255, 255, .05);
+
+        border-radius: 28px;
+
+        padding: 15px 10px;
+
+        display: flex;
+        justify-content: space-around;
+
+        backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+
+        color: #9CA3AF;
+
+        cursor: pointer;
+
+        transition: .3s;
+    }
+
+    .nav-item:hover {
+        color: #fff;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        font-size: 24px;
+    }
+
+    .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .custom-stars {
+        margin-bottom: 15px;
     }
 </style>
 
@@ -177,40 +354,36 @@
     <!-- Content -->
     <div class="content">
         <div class="page-title">
-                <img src="./images/star.webp" alt="" style="width: 7%; height: 7%;">
+            <img src="./images/star.webp" alt="" style="width: 7%; height: 7%;">
             <h2>Telegram Stars sotib olish</h2>
         </div>
 
         <!-- Username Input -->
-        <div class="section-label">Qabul qiluvchi</div>
-        <div class="input-group">
-            <span class="input-icon">👤</span>
-            <input type="text" class="input" id="username" placeholder="Username kiriting">
-            <button class="input-button" onclick="setMyUsername()">O'zim uchun</button>
+        <h3 class="section-label">Qabul qiluvchi</h3>
+        <div class="input-wrapper">
+            <img src="./images/user.webp" class="inside-icon">
+
+            <input type="text" placeholder="Username kiriting" class="input">
         </div>
 
         <!-- Amount Selection -->
-        <div class="section-label">Stars miqdori</div>
-        <div class="amount-box">
-            <div class="amount-display">
-                <div class="amount-display-left">
-                    <span class="amount-icon">📝</span>
-                    <span class="amount-label">Stars miqdori</span>
-                </div>
-                <div class="amount-value" id="displayAmount">0 so'm</div>
-            </div>
+        <div class="input-wrapper custom-stars">
+            <img src="./images/star-input.webp" class="inside-icon" alt="star">
 
-            <div class="buttons-row">
-                <button class="amount-btn" onclick="selectAmount(50, 10000)">50</button>
-                <button class="amount-btn" onclick="selectAmount(75, 14000)">75</button>
-                <button class="amount-btn" onclick="selectAmount(100, 18000)">100</button>
-                <button class="amount-btn" onclick="selectAmount(250, 45000)">250</button>
-                <button class="amount-btn" onclick="selectAmount(500, 85000)">500</button>
-            </div>
+            <input type="number" id="customStars" class="input" placeholder="Stars miqdorini kiriting">
         </div>
+    
+    </div>
 
-        <!-- Buy Button -->
-        <button class="btn-primary" id="buyBtn" onclick="buyStars()" disabled>Sotib olish</button>
+    <div class="buttons-row">
+        <button class="amount-btn" onclick="selectAmount(50, 10000)">50</button>
+        <button class="amount-btn" onclick="selectAmount(75, 14000)">75</button>
+        <button class="amount-btn" onclick="selectAmount(100, 18000)">100</button>
+        <button class="amount-btn" onclick="selectAmount(250, 45000)">250</button>
+        <button class="amount-btn" onclick="selectAmount(500, 85000)">500</button>
+    </div>
+    <!-- Buy Button -->
+    <button class="btn-primary" id="buyBtn" onclick="buyStars()" disabled>Sotib olish</button>
     </div>
 
     <!-- Bottom Navigation -->
