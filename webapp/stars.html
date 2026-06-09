@@ -326,6 +326,12 @@
     .custom-stars {
         margin-bottom: 15px;
     }
+
+    .amount-hint {
+        color: #9CA3AF;
+        font-size: 13px;
+        margin: -15px 0 20px 4px;
+    }
 </style>
 
 <body>
@@ -366,10 +372,12 @@
         </div>
 
         <!-- Amount Selection -->
+        <h3 class="section-label">Stars miqdori</h3>
         <div class="input-wrapper custom-stars">
             <img src="./images/star-input.webp" class="inside-icon" alt="star">
-            <input type="number" id="customStars" class="input" placeholder="Stars miqdorini kiriting">
+            <input type="number" id="customStars" class="input" placeholder="50 — 1 000 000" min="50" max="1000000" step="1">
         </div>
+        <p class="amount-hint">Minimal: 50 · Maksimal: 1 000 000 stars</p>
     
     </div>
 
@@ -409,17 +417,33 @@
         let selectedStars = 0;
         let selectedPrice = 0;
 
+        document.getElementById('customStars').addEventListener('input', function () {
+            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
+            const check = validateStarsAmount(this.value);
+            if (check.ok) {
+                selectedStars = check.value;
+                selectedPrice = 0;
+                document.getElementById('buyBtn').disabled = false;
+            } else {
+                selectedStars = 0;
+                document.getElementById('buyBtn').disabled = true;
+            }
+        });
+
         function selectAmount(stars, price) {
-            selectedStars = stars;
+            const check = validateStarsAmount(stars);
+            if (!check.ok) {
+                tg.showAlert(check.message);
+                return;
+            }
+            selectedStars = check.value;
             selectedPrice = price;
 
+            document.getElementById('customStars').value = stars;
             document.querySelectorAll('.amount-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
-
             event.target.classList.add('selected');
-
-            document.getElementById('displayAmount').textContent = price.toLocaleString('uz-UZ') + ' so\'m';
             document.getElementById('buyBtn').disabled = false;
         }
 
@@ -438,10 +462,13 @@
         }
 
         function buyStars() {
-            if (selectedStars === 0) {
-                tg.showAlert('Iltimos, miqdorni tanlang!');
+            const customVal = document.getElementById('customStars').value;
+            const check = validateStarsAmount(customVal || selectedStars);
+            if (!check.ok) {
+                tg.showAlert(check.message);
                 return;
             }
+            selectedStars = check.value;
 
             const username = document.getElementById('username').value;
             if (!username || username === '@') {

@@ -23,12 +23,18 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://starpayuz-webapp.vercel.app")
 # Admin IDs
 ADMINS = [8784918764]
 
+# Stars limits (Fragment API minimum is 50)
+STARS_MIN_AMOUNT = 50
+STARS_MAX_AMOUNT = 1_000_000
+
 # Products configuration
 PRODUCTS = {
     "stars": {
         "name": "⭐ Stars olish",
         "emoji": "⭐",
         "color": "#FFD700",
+        "min_amount": STARS_MIN_AMOUNT,
+        "max_amount": STARS_MAX_AMOUNT,
         "packages": [
             {"amount": 50, "price": 10000},
             {"amount": 75, "price": 15000},

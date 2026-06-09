@@ -52,4 +52,7 @@ class Settings:
         )
 
 
+STARS_MIN_AMOUNT = 50
+STARS_MAX_AMOUNT = 1_000_000
+
 settings = Settings.from_env()

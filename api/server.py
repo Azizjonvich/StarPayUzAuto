@@ -4,7 +4,7 @@ from pathlib import Path
 
 from aiohttp import web
 
-from bot.config import settings
+from bot.config import STARS_MAX_AMOUNT, STARS_MIN_AMOUNT, settings
 from services.database import (
   add_balance,
   create_order,
@@ -50,9 +50,32 @@ async def health(_: web.Request) -> web.Response:
   return web.json_response({"ok": True, "service": "StarPayUz"})
 
 
+def _parse_stars_quantity(body: dict) -> int | None:
+  raw = body.get("quantity") or body.get("amount")
+  if raw is None:
+    return None
+  try:
+    return int(raw)
+  except (TypeError, ValueError):
+    return None
+
+
+def _validate_stars_quantity(quantity: int | None) -> str | None:
+  if quantity is None:
+    return "Stars miqdori ko'rsatilmagan"
+  if quantity < STARS_MIN_AMOUNT:
+    return f"Minimal miqdor: {STARS_MIN_AMOUNT} stars"
+  if quantity > STARS_MAX_AMOUNT:
+    return f"Maksimal miqdor: {STARS_MAX_AMOUNT:,} stars"
+  return None
+
+
 async def api_stars_price(request: web.Request) -> web.Response:
   body = await _json_body(request)
-  quantity = int(body.get("quantity", 50))
+  quantity = _parse_stars_quantity(body) or STARS_MIN_AMOUNT
+  err = _validate_stars_quantity(quantity)
+  if err:
+    return web.json_response({"ok": False, "error": err}, status=400)
   try:
     data = await fragment.get_stars_price(quantity)
     return web.json_response({"ok": True, "data": data})
@@ -70,9 +93,12 @@ async def api_order_stars(request: web.Request) -> web.Response:
     return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
 
   username = (body.get("username") or "").strip().lstrip("@")
-  quantity = int(body.get("quantity", 0))
-  if not username or quantity < 1:
-    return web.json_response({"ok": False, "error": "Invalid input"}, status=400)
+  quantity = _parse_stars_quantity(body)
+  if not username:
+    return web.json_response({"ok": False, "error": "Username ko'rsatilmagan"}, status=400)
+  err = _validate_stars_quantity(quantity)
+  if err:
+    return web.json_response({"ok": False, "error": err}, status=400)
 
   try:
     result = await fragment.buy_stars(username, quantity)

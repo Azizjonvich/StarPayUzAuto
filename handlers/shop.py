@@ -55,6 +55,12 @@ async def process_buy_stars(callback: CallbackQuery):
     
     amount = int(callback.data.split("_")[2])
     user_id = callback.from_user.id
+
+    if amount < config.STARS_MIN_AMOUNT or amount > config.STARS_MAX_AMOUNT:
+        await callback.message.answer(
+            f"❌ Stars miqdori {config.STARS_MIN_AMOUNT:,} dan {config.STARS_MAX_AMOUNT:,} gacha bo'lishi kerak."
+        )
+        return
     
     # Find price for this amount
     price = None
