@@ -43,39 +43,20 @@ async def cmd_start(message: Message):
     
     if not user:
         user = await db.create_user(user_id, username, first_name, referrer_id)
-        
-        welcome_text = (
-            f'👋 <b>Assalomu alaykum, {first_name}!</b>\n\n'
-            f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
-            f'� <b>Referallar:</b> {user["referrals"]} ta\n\n'
-            f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
-        )
-        entities = [
-            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
-        ]
     else:
         await db.update_user_activity(user_id)
-        
-        welcome_text = (
-            f'👋 <b>Assalomu alaykum, {first_name}!</b>\n\n'
-            f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
-            f'👥 <b>Referallar:</b> {user["referrals"]} ta\n\n'
-            f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
-        )
-        entities = [
-            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
-        ]
+    
+    welcome_text = (
+        f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> <b>Assalomu alaykum, {first_name}!</b>\n\n'
+        f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
+        f'<tg-emoji emoji-id="{EMOJI_PEOPLE}">�</tg-emoji> <b>Referallar:</b> {user["referrals"]} ta\n\n'
+        f'<tg-emoji emoji-id="{EMOJI_LIGHTNING}">⚡️</tg-emoji> <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
+    )
     
     await message.answer(
         welcome_text,
         reply_markup=keyboards.get_webapp_main_keyboard(),
-        entities=entities
+        parse_mode="HTML"
     )
 
 
@@ -87,25 +68,18 @@ async def back_to_main(message: Message):
     
     if user:
         text = (
-            f"👋 <b>Assalomu alaykum, {message.from_user.first_name}!</b>\n\n"
-            f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
-            f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
-            f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
+            f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> <b>Assalomu alaykum, {message.from_user.first_name}!</b>\n\n'
+            f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
+            f'<tg-emoji emoji-id="{EMOJI_PEOPLE}">👥</tg-emoji> <b>Referallar:</b> {user["referrals"]} ta\n\n'
+            f'<tg-emoji emoji-id="{EMOJI_LIGHTNING}">⚡️</tg-emoji> <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
         )
-        entities = [
-            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
-        ]
     else:
         text = "🏠 Bosh menyu:"
-        entities = []
     
     await message.answer(
         text,
         reply_markup=keyboards.get_webapp_main_keyboard(),
-        entities=entities
+        parse_mode="HTML"
     )
 
 
@@ -194,20 +168,16 @@ async def callback_stars_menu(callback: CallbackQuery):
     await callback.answer()
     
     text = (
-        "⭐ <b>Telegram Stars sotib olish</b>\n\n"
+        f'<tg-emoji emoji-id="{EMOJI_STAR}">⭐</tg-emoji> <b>Telegram Stars sotib olish</b>\n\n'
         "Stars — Telegram ichida maxsus kontent va xizmatlarni "
         "sotib olish uchun ishlatiladi.\n\n"
         "📦 <b>Mavjud paketlar:</b>"
     )
     
-    entities = [
-        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_STAR),
-    ]
-    
     await callback.message.answer(
         text,
         reply_markup=keyboards.get_stars_keyboard(),
-        entities=entities
+        parse_mode="HTML"
     )
 
 
@@ -255,19 +225,15 @@ async def callback_gift_menu(callback: CallbackQuery):
     await callback.answer()
     
     text = (
-        "🎁 <b>Gift sovg'alar</b>\n\n"
+        f'<tg-emoji emoji-id="{EMOJI_GIFT}">🎁</tg-emoji> <b>Gift sovg\'alar</b>\n\n'
         "Tez orada mavjud bo'ladi...\n\n"
         "Bu bo'limda siz do'stlaringizga Premium, "
         "Stars va boshqa sovg'alarni yuborishingiz mumkin bo'ladi."
     )
     
-    entities = [
-        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_GIFT),
-    ]
-    
     await callback.message.answer(
         text,
-        entities=entities
+        parse_mode="HTML"
     )
 
 
@@ -280,25 +246,18 @@ async def callback_topup_menu(callback: CallbackQuery):
     user = await db.get_user(user_id)
     
     if not user:
-        text = "❌ Foydalanuvchi topilmadi!"
-        entities = [
-            MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_CROSS),
-        ]
-        await callback.message.answer(text, entities=entities)
+        text = f'<tg-emoji emoji-id="{EMOJI_CROSS}">❌</tg-emoji> Foydalanuvchi topilmadi!'
+        await callback.message.answer(text, parse_mode="HTML")
         return
     
     text = (
-        f"💰 <b>Hisobni to'ldirish</b>\n\n"
+        f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> <b>Hisobni to\'ldirish</b>\n\n'
         f"Joriy balans: {user['balance']:,.0f} so'm\n\n"
         f"To'ldirish funksiyasi tez orada qo'shiladi.\n"
         f"Hozircha admin bilan bog'laning: @StarPayUz_Admin"
     )
     
-    entities = [
-        MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_MONEY),
-    ]
-    
-    await callback.message.answer(text, entities=entities)
+    await callback.message.answer(text, parse_mode="HTML")
 
 
 @router.callback_query(F.data == "support")
