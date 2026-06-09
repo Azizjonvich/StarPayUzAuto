@@ -12,7 +12,7 @@ router = Router()
 
 # Premium emoji IDs
 EMOJI_WAVE = "5312345830382910731"  # 👋
-EMOJI_MONEY = "5258204546391351475"  # 💰
+EMOJI_MONEY = "5407091881219736716"  # 💰
 EMOJI_PEOPLE = "5879905000972358125"  # 👥
 EMOJI_LIGHTNING = "5224496844188458905"  # ⚡️
 EMOJI_STAR = "5807791714093502248"  # ⭐️
@@ -43,31 +43,31 @@ async def cmd_start(message: Message):
         user = await db.create_user(user_id, username, first_name, referrer_id)
         
         welcome_text = (
-            f'👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n'
+            f'👋 <b>Assalomu alaykum, {first_name}!</b>\n\n'
             f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
             f'👥 <b>Referallar:</b> {user["referrals"]} ta\n\n'
             f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
         )
         entities = [
             MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
         ]
     else:
         await db.update_user_activity(user_id)
         
         welcome_text = (
-            f'👋 <b>Assalomu alaykum, {first_name} — Admin!</b>\n\n'
+            f'👋 <b>Assalomu alaykum, {first_name}!</b>\n\n'
             f'💰 <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
             f'👥 <b>Referallar:</b> {user["referrals"]} ta\n\n'
             f'⚡️ <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
         )
         entities = [
             MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
         ]
     
     await message.answer(
@@ -85,16 +85,16 @@ async def back_to_main(message: Message):
     
     if user:
         text = (
-            f"👋 <b>Assalomu alaykum, {message.from_user.first_name} — Admin!</b>\n\n"
+            f"👋 <b>Assalomu alaykum, {message.from_user.first_name}!</b>\n\n"
             f"💰 <b>Balans:</b> {user['balance']:,.0f} so'm\n"
             f"👥 <b>Referallar:</b> {user['referrals']} ta\n\n"
             f"⚡️ <i>Quyidagilardan kerakli bo'limni tanlang:</i>"
         )
         entities = [
             MessageEntity(type="custom_emoji", offset=0, length=1, custom_emoji_id=EMOJI_WAVE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
-            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name} — Admin!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n'), length=1, custom_emoji_id=EMOJI_MONEY),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n'), length=1, custom_emoji_id=EMOJI_PEOPLE),
+            MessageEntity(type="custom_emoji", offset=len(f'👋 Assalomu alaykum, {message.from_user.first_name}!\n\n💰 Balans: {user["balance"]:,.0f} so\'m\n👥 Referallar: {user["referrals"]} ta\n\n'), length=1, custom_emoji_id=EMOJI_LIGHTNING),
         ]
     else:
         text = "🏠 Bosh menyu:"
