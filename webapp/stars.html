@@ -29,7 +29,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 35px;
+        margin-bottom: 28px;
     }
 
     .header-left__image {
@@ -85,8 +85,8 @@
         padding: 5px;
         background: #111827;
         border-radius: 999px;
-        gap: 5px;
-        margin-bottom: 25px;
+        gap: 6px;
+        margin-bottom: 20px;
     }
 
     .tab {
@@ -119,7 +119,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
     .page-title h2 {
@@ -132,12 +132,12 @@
         display: block;
         color: #fff;
         font-weight: 600;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .input-wrapper {
         position: relative;
-        margin-bottom: 25px;
+        margin-bottom: 18px;
     }
 
     .inside-icon {
@@ -215,7 +215,8 @@
     .buttons-row {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
+        gap: 8px;
+        margin-top: 6px;
     }
 
     .amount-btn {
@@ -296,18 +297,13 @@
         right: 15px;
         bottom: 15px;
         z-index: 50;
-
         background: #111827;
-
         border: 1px solid rgba(255, 255, 255, .05);
-
         border-radius: 28px;
-
-        padding: 15px 10px;
-
+        padding: 12px 10px;
         display: flex;
         justify-content: space-around;
-
+        align-items: center;
         backdrop-filter: blur(20px);
         pointer-events: auto;
     }
@@ -316,12 +312,11 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 5px;
-
+        justify-content: center;
+        gap: 4px;
+        width: 70px;
         color: #9CA3AF;
-
         cursor: pointer;
-
         transition: .3s;
     }
 
@@ -334,22 +329,32 @@
     }
 
     .nav-icon {
-        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+    }
+
+    .nav-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
     }
 
     .nav-label {
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 600;
+        color: inherit;
     }
 
     .custom-stars {
-        margin-bottom: 15px;
+        margin-bottom: 0;
     }
 
     .amount-hint {
         color: #9CA3AF;
         font-size: 13px;
-        margin: -15px 0 20px 4px;
+        margin: 8px 0 14px 4px;
     }
 </style>
 
@@ -394,7 +399,8 @@
         <h3 class="section-label">Stars miqdori</h3>
         <div class="input-wrapper custom-stars">
             <img src="./images/star-input.webp" class="inside-icon" alt="star">
-            <input type="number" id="customStars" class="input" placeholder="50 — 1 000 000" min="50" max="1000000" step="1">
+            <input type="number" id="customStars" class="input" placeholder="50 — 1 000 000" min="50" max="1000000"
+                step="1">
         </div>
         <p class="amount-hint">Minimal: 50 · Maksimal: 1 000 000 stars</p>
 
@@ -412,23 +418,37 @@
     </div>
 
     <!-- Bottom Navigation -->
+
     <div class="bottom-nav">
+
         <div class="nav-item active" onclick="openStars()">
-            <div class="nav-icon">🏠</div>
+            <div class="nav-icon">
+                <img src="./images/home.webp" alt="home">
+            </div>
             <div class="nav-label">Menu</div>
         </div>
+
         <div class="nav-item" onclick="openGifts()">
-            <div class="nav-icon">🎁</div>
+            <div class="nav-icon">
+                <img src="./images/gift.webp" alt="Gifts">
+            </div>
             <div class="nav-label">Gifts</div>
         </div>
+
         <div class="nav-item" onclick="openReyting()">
-            <div class="nav-icon">🏆</div>
-            <div class="nav-label">Reyting</div>
+            <div class="nav-icon">
+                <img src="./images/rating.webp" alt="Rating">
+            </div>
+            <div class="nav-label">Rating</div>
         </div>
+
         <div class="nav-item" onclick="openProfile()">
-            <div class="nav-icon">👤</div>
+            <div class="nav-icon">
+                <img src="./images/profile.webp" alt="profile">
+            </div>
             <div class="nav-label">Profil</div>
         </div>
+
     </div>
 
     <script src="js/common.js"></script>

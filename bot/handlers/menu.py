@@ -62,7 +62,6 @@ async def reply_language(message: Message) -> None:
     await message.answer(
       menu_text(
         user,
-        message.from_user.id,
         message.from_user.username,
         message.from_user.first_name,
       ),

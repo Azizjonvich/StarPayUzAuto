@@ -11,6 +11,7 @@ async def init_db() -> None:
             """
             CREATE TABLE IF NOT EXISTS users (
                 telegram_id INTEGER PRIMARY KEY,
+                sp_id INTEGER UNIQUE,
                 username TEXT,
                 full_name TEXT,
                 balance INTEGER NOT NULL DEFAULT 0,
@@ -44,7 +45,17 @@ async def init_db() -> None:
             );
             """
         )
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN sp_id INTEGER UNIQUE")
+        except aiosqlite.OperationalError:
+            pass
         await db.commit()
+
+
+async def _next_sp_id(db: aiosqlite.Connection) -> int:
+    cur = await db.execute("SELECT COALESCE(MAX(sp_id), 0) + 1 FROM users")
+    row = await cur.fetchone()
+    return row[0] if row else 1
 
 
 async def ensure_user(
@@ -60,13 +71,23 @@ async def ensure_user(
         )
         row = await cur.fetchone()
         if row:
-            return dict(row)
+            user = dict(row)
+            if user.get("sp_id") is None:
+                sp_id = await _next_sp_id(db)
+                await db.execute(
+                    "UPDATE users SET sp_id = ? WHERE telegram_id = ?",
+                    (sp_id, telegram_id),
+                )
+                await db.commit()
+                user["sp_id"] = sp_id
+            return user
+        sp_id = await _next_sp_id(db)
         await db.execute(
             """
-            INSERT INTO users (telegram_id, username, full_name, referred_by)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO users (telegram_id, sp_id, username, full_name, referred_by)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (telegram_id, username, full_name, referred_by),
+            (telegram_id, sp_id, username, full_name, referred_by),
         )
         if referred_by:
             await db.execute(
@@ -89,6 +110,31 @@ async def get_user(telegram_id: int) -> dict | None:
         )
         row = await cur.fetchone()
         return dict(row) if row else None
+
+
+async def get_user_by_sp_id(sp_id: int) -> dict | None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM users WHERE sp_id = ?", (sp_id,)
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+
+async def update_balance_by_sp_id(
+    sp_id: int, amount: int, operation: str = "add"
+) -> dict | None:
+    user = await get_user_by_sp_id(sp_id)
+    if not user:
+        return None
+    if operation == "add":
+        await add_balance(user["telegram_id"], amount)
+    else:
+        ok = await deduct_balance(user["telegram_id"], amount)
+        if not ok:
+            return None
+    return await get_user_by_sp_id(sp_id)
 
 
 async def add_balance(telegram_id: int, amount: int) -> int:

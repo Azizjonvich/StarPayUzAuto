@@ -34,14 +34,19 @@ def _btn(
 
 def main_inline_keyboard() -> InlineKeyboardMarkup:
     base = settings.webapp_base_url
+    admin_url = "https://t.me/StarPayUzAdmin"
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 _btn(
-                    "🚀 StarPayUz ochish",
-                    web_app_url=f"{base}/app/index.html",
-                    style="success",
+                    "Webapp",
+                    web_app_url=f"{base}/stars.html",
+                    style="primary",
                 ),
+            ],
+            [
+                _btn("@StarPayUzAdmin", url=admin_url, style="danger"),
+                _btn("@StarPayUzAdmin", url=admin_url, style="success"),
             ],
         ]
     )

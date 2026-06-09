@@ -79,7 +79,6 @@ async def cb_refresh(query: CallbackQuery) -> None:
   await query.message.edit_text(
     menu_text(
       user,
-      query.from_user.id,
       query.from_user.username,
       query.from_user.first_name,
     ),

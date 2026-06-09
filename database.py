@@ -55,11 +55,21 @@ class Database:
             await db.commit()
     
     async def get_user(self, user_id: int) -> Optional[dict]:
-        """Get user by ID"""
+        """Get user by Telegram ID"""
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute(
                 "SELECT * FROM users WHERE user_id = ?", (user_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                return dict(row) if row else None
+
+    async def get_user_by_sp_id(self, sp_id: int) -> Optional[dict]:
+        """Get user by internal StarPayUz ID"""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT * FROM users WHERE id = ?", (sp_id,)
             ) as cursor:
                 row = await cursor.fetchone()
                 return dict(row) if row else None
@@ -96,7 +106,7 @@ class Database:
             await db.commit()
     
     async def update_balance(self, user_id: int, amount: float, operation: str = 'add'):
-        """Update user balance"""
+        """Update user balance by Telegram ID"""
         async with aiosqlite.connect(self.db_path) as db:
             if operation == 'add':
                 await db.execute(
@@ -109,6 +119,16 @@ class Database:
                     (amount, user_id)
                 )
             await db.commit()
+
+    async def update_balance_by_sp_id(
+        self, sp_id: int, amount: float, operation: str = "add"
+    ) -> Optional[dict]:
+        """Update user balance by internal StarPayUz ID"""
+        user = await self.get_user_by_sp_id(sp_id)
+        if not user:
+            return None
+        await self.update_balance(user["user_id"], amount, operation)
+        return await self.get_user_by_sp_id(sp_id)
     
     async def create_order(self, order_id: str, user_id: int, product_type: str,
                           amount: int, price: float) -> dict:

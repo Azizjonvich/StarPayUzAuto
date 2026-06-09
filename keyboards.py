@@ -10,15 +10,28 @@ import config
 
 
 def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
-    """Main Web App keyboard — single green Web App button"""
+    """Main inline menu: Webapp + admin contact buttons"""
     builder = InlineKeyboardBuilder()
+    admin_url = "https://t.me/StarPayUzAdmin"
 
     builder.row(
         InlineKeyboardButton(
-            text="🚀 StarPayUz ochish",
-            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/index.html"),
-            style="success",
+            text="Webapp",
+            web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/stars.html"),
+            style="primary",
         )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="@StarPayUzAdmin",
+            url=admin_url,
+            style="danger",
+        ),
+        InlineKeyboardButton(
+            text="@StarPayUzAdmin",
+            url=admin_url,
+            style="success",
+        ),
     )
 
     return builder.as_markup()

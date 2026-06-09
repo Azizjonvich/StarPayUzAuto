@@ -16,18 +16,18 @@ EMOJI_LIGHTNING = "5224496844188458905"  # ⚡️
 
 def menu_text(
   user: dict,
-  user_id: int,
   username: str | None,
   first_name: str | None,
 ) -> str:
   balance = user.get("balance", 0)
   refs = user.get("referrals", 0)
+  sp_id = user.get("sp_id") or user.get("id") or user.get("telegram_id", "—")
   display = f"@{username}" if username else (first_name or "Foydalanuvchi")
   return (
     f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> '
     f"<b>Assalomu alaykum, {display}</b>\n\n"
     f'<tg-emoji emoji-id="{EMOJI_ORANGE}">🟠</tg-emoji> '
-    f"<b>User ID:</b> {user_id}\n"
+    f"<b>StarPayUz ID:</b> <code>{sp_id}</code>\n"
     f"┗ <tg-emoji emoji-id=\"{EMOJI_WALLET}\">👛</tg-emoji> "
     f"<b>Balans:</b> {balance:,} so'm\n"
     f"┗ <tg-emoji emoji-id=\"{EMOJI_PEOPLE}\">👥</tg-emoji> "
@@ -54,7 +54,7 @@ async def cmd_start(message: Message) -> None:
   user = await ensure_user(tg.id, tg.username, tg.full_name, referred_by=ref_id)
 
   await message.answer(
-    menu_text(user, tg.id, tg.username, tg.first_name),
+    menu_text(user, tg.username, tg.first_name),
     reply_markup=main_inline_keyboard(),
   )
   await message.answer(
@@ -72,6 +72,6 @@ async def cmd_menu(message: Message) -> None:
     tg.id, tg.username, tg.full_name
   )
   await message.answer(
-    menu_text(user, tg.id, tg.username, tg.first_name),
+    menu_text(user, tg.username, tg.first_name),
     reply_markup=main_inline_keyboard(),
   )

@@ -25,11 +25,12 @@ EMOJI_CHECKMARK = "5774022692642492953"  # ✅
 EMOJI_CROSS = "5774077015388852135"  # ❌
 
 
-def get_welcome_text(user: dict, user_id: int, username: str | None, first_name: str | None) -> str:
+def get_welcome_text(user: dict, username: str | None, first_name: str | None) -> str:
     display = f"@{username}" if username else (first_name or "Foydalanuvchi")
+    sp_id = user.get("id", "—")
     return (
         f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> <b>Assalomu alaykum, {display}</b>\n\n'
-        f'<tg-emoji emoji-id="{EMOJI_ORANGE}">🟠</tg-emoji> <b>User ID:</b> {user_id}\n'
+        f'<tg-emoji emoji-id="{EMOJI_ORANGE}">🟠</tg-emoji> <b>StarPayUz ID:</b> <code>{sp_id}</code>\n'
         f'┗ <tg-emoji emoji-id="{EMOJI_WALLET}">👛</tg-emoji> <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
         f'┗ <tg-emoji emoji-id="{EMOJI_PEOPLE}">👥</tg-emoji> <b>Referallar:</b> {user["referrals"]} ta\n\n'
         f'<blockquote><tg-emoji emoji-id="{EMOJI_LIGHTNING}">⚡️</tg-emoji> <b>Kerakli bo\'limni tanlang:</b></blockquote>'
@@ -59,7 +60,7 @@ async def cmd_start(message: Message):
     else:
         await db.update_user_activity(user_id)
     
-    welcome_text = get_welcome_text(user, user_id, username, first_name)
+    welcome_text = get_welcome_text(user, username, first_name)
 
     await message.answer(
         welcome_text,
@@ -77,7 +78,6 @@ async def back_to_main(message: Message):
     if user:
         text = get_welcome_text(
             user,
-            user_id,
             message.from_user.username,
             message.from_user.first_name,
         )
