@@ -22,7 +22,7 @@
         background: #030712;
         color: #fff;
         padding: 20px;
-        padding-bottom: 110px;
+        padding-bottom: 180px;
     }
 
     .header {
@@ -242,6 +242,14 @@
             0 4px 15px rgba(59, 130, 246, .25);
     }
 
+    .purchase-bar {
+        position: fixed;
+        left: 20px;
+        right: 20px;
+        bottom: 100px;
+        z-index: 200;
+    }
+
     .btn-primary {
         width: 100%;
         height: 58px;
@@ -250,18 +258,25 @@
         border: none;
         border-radius: 18px;
 
-        background: #3B82F6;
-        color: #fff;
+        background: #3B82F6 !important;
+        color: #fff !important;
 
         font-size: 18px;
         font-weight: 700;
 
         cursor: pointer;
+        pointer-events: auto;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
 
         transition: .3s;
 
         box-shadow:
             0 0 25px rgba(59, 130, 246, .3);
+    }
+
+    .purchase-bar .btn-primary {
+        margin-top: 0;
     }
 
     .btn-primary:hover {
@@ -280,6 +295,7 @@
         left: 15px;
         right: 15px;
         bottom: 15px;
+        z-index: 50;
 
         background: #111827;
 
@@ -293,6 +309,7 @@
         justify-content: space-around;
 
         backdrop-filter: blur(20px);
+        pointer-events: auto;
     }
 
     .nav-item {
@@ -388,7 +405,10 @@
             <button type="button" class="amount-btn" onclick="selectAmount(250, 50000, this)">250</button>
             <button type="button" class="amount-btn" onclick="selectAmount(500, 100000, this)">500</button>
         </div>
-        <button type="button" class="btn-primary" id="buyBtn" onclick="buyStars()">Sotib olish</button>
+    </div>
+
+    <div class="purchase-bar">
+        <button type="button" class="btn-primary" id="buyBtn">Sotib olish</button>
     </div>
 
     <!-- Bottom Navigation -->
@@ -447,6 +467,7 @@
             if (defaultBtn) {
                 selectAmount(50, 10000, defaultBtn);
             }
+            setupPurchaseButton(buyStars, 'Sotib olish');
         });
 
         function setMyUsername() {

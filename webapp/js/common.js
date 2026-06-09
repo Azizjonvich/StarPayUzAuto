@@ -57,13 +57,44 @@ function setBuyButtonLoading(btnId, loading) {
 
 function submitOrder(payload, btnId) {
     setBuyButtonLoading(btnId, true);
+    if (tg.MainButton) {
+        tg.MainButton.showProgress();
+        tg.MainButton.disable();
+    }
     try {
         tg.sendData(JSON.stringify(payload));
         setTimeout(() => tg.close(), 300);
     } catch (e) {
         setBuyButtonLoading(btnId, false);
+        if (tg.MainButton) {
+            tg.MainButton.hideProgress();
+            tg.MainButton.enable();
+        }
         tg.showAlert('Xatolik: ' + (e.message || 'qayta urinib ko\'ring'));
     }
+}
+
+let mainButtonHandler = null;
+
+function setupPurchaseButton(onClick, text) {
+    const label = text || 'Sotib olish';
+    const btn = document.getElementById('buyBtn');
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = label;
+        btn.onclick = onClick;
+    }
+    if (!tg.MainButton) return;
+    tg.MainButton.setText(label);
+    tg.MainButton.color = '#3B82F6';
+    tg.MainButton.textColor = '#ffffff';
+    if (mainButtonHandler) {
+        tg.MainButton.offClick(mainButtonHandler);
+    }
+    mainButtonHandler = onClick;
+    tg.MainButton.onClick(mainButtonHandler);
+    tg.MainButton.enable();
+    tg.MainButton.show();
 }
 
 function validateStarsAmount(amount) {
