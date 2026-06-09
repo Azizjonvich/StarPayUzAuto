@@ -44,7 +44,7 @@ class Settings:
             support_url=os.getenv("SUPPORT_URL", "https://t.me/"),
             admin_ids=_list_ints(os.getenv("ADMIN_IDS", "")),
             api_host=os.getenv("API_HOST", "0.0.0.0"),
-            api_port=int(os.getenv("API_PORT", "8080")),
+            api_port=int(os.getenv("PORT") or os.getenv("API_PORT", "8080")),
             custom_emoji_star=os.getenv("CUSTOM_EMOJI_STAR") or None,
             custom_emoji_premium=os.getenv("CUSTOM_EMOJI_PREMIUM") or None,
             custom_emoji_gift=os.getenv("CUSTOM_EMOJI_GIFT") or None,
