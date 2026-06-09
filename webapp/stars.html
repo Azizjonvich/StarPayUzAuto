@@ -21,6 +21,8 @@
     body {
         background: #030712;
         color: #fff;
+        padding: 20px;
+        padding-bottom: 110px;
     }
 
     .header {
@@ -380,13 +382,13 @@
         <p class="amount-hint">Minimal: 50 · Maksimal: 1 000 000 stars</p>
 
         <div class="buttons-row">
-            <button class="amount-btn" onclick="selectAmount(50, 10000)">50</button>
-            <button class="amount-btn" onclick="selectAmount(75, 15000)">75</button>
-            <button class="amount-btn" onclick="selectAmount(100, 20000)">100</button>
-            <button class="amount-btn" onclick="selectAmount(250, 50000)">250</button>
-            <button class="amount-btn" onclick="selectAmount(500, 100000)">500</button>
+            <button type="button" class="amount-btn" onclick="selectAmount(50, 10000, this)">50</button>
+            <button type="button" class="amount-btn" onclick="selectAmount(75, 15000, this)">75</button>
+            <button type="button" class="amount-btn" onclick="selectAmount(100, 20000, this)">100</button>
+            <button type="button" class="amount-btn" onclick="selectAmount(250, 50000, this)">250</button>
+            <button type="button" class="amount-btn" onclick="selectAmount(500, 100000, this)">500</button>
         </div>
-        <button class="btn-primary" id="buyBtn" onclick="buyStars()" disabled>Sotib olish</button>
+        <button type="button" class="btn-primary" id="buyBtn" onclick="buyStars()">Sotib olish</button>
     </div>
 
     <!-- Bottom Navigation -->
@@ -420,14 +422,13 @@
             if (check.ok) {
                 selectedStars = check.value;
                 selectedPrice = 0;
-                document.getElementById('buyBtn').disabled = false;
             } else {
                 selectedStars = 0;
-                document.getElementById('buyBtn').disabled = true;
+                selectedPrice = 0;
             }
         });
 
-        function selectAmount(stars, price) {
+        function selectAmount(stars, price, btn) {
             const check = validateStarsAmount(stars);
             if (!check.ok) {
                 tg.showAlert(check.message);
@@ -437,12 +438,16 @@
             selectedPrice = price;
 
             document.getElementById('customStars').value = stars;
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            event.target.classList.add('selected');
-            document.getElementById('buyBtn').disabled = false;
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+            if (btn) btn.classList.add('selected');
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const defaultBtn = document.querySelector('.amount-btn');
+            if (defaultBtn) {
+                selectAmount(50, 10000, defaultBtn);
+            }
+        });
 
         function setMyUsername() {
             const initData = tg.initDataUnsafe;
