@@ -34,10 +34,9 @@ class Settings:
         base = os.getenv("WEBAPP_BASE_URL", "http://localhost:8080").rstrip("/")
         return cls(
             bot_token=os.getenv("BOT_TOKEN", ""),
-            fragment_api_key=os.getenv("FRAGMENT_API_KEY", ""),
-            fragment_api_base=os.getenv(
-                "FRAGMENT_API_BASE", "https://fragment-api.uz/api/v1"
-            ).rstrip("/"),
+            fragment_api_key=os.getenv("FRAGMENT_API_KEY") or os.getenv("FRAGMENT_API_KEY", ""),
+            fragment_api_base=os.getenv("FRAGMENT_API_BASE")
+                or os.getenv("FRAGMENT_API_URL", "https://fragment-api.uz/api/v1").rstrip("/"),
             shop_id=os.getenv("SHOP_ID", ""),
             shop_key=os.getenv("SHOP_KEY", ""),
             webapp_base_url=base,
