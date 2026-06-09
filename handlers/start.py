@@ -49,7 +49,7 @@ async def cmd_start(message: Message):
     welcome_text = (
         f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> <b>Assalomu alaykum, {first_name}!</b>\n\n'
         f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> <b>Balans:</b> {user["balance"]:,.0f} so\'m\n'
-        f'<tg-emoji emoji-id="{EMOJI_PEOPLE}">�</tg-emoji> <b>Referallar:</b> {user["referrals"]} ta\n\n'
+        f'<tg-emoji emoji-id="{EMOJI_PEOPLE}">👥</tg-emoji> <b>Referallar:</b> {user["referrals"]} ta\n\n'
         f'<tg-emoji emoji-id="{EMOJI_LIGHTNING}">⚡️</tg-emoji> <i>Quyidagilardan kerakli bo\'limni tanlang:</i>'
     )
     

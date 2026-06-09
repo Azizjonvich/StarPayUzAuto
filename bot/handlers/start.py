@@ -7,15 +7,24 @@ from services.database import ensure_user, get_user
 
 router = Router()
 
+EMOJI_WAVE = "5312345830382910731"  # 👋
+EMOJI_MONEY = "5407091881219736716"  # 💰
+EMOJI_PEOPLE = "5879905000972358125"  # 👥
+EMOJI_LIGHTNING = "5224496844188458905"  # ⚡️
+
 
 def menu_text(user: dict, display_name: str) -> str:
   balance = user.get("balance", 0)
   refs = user.get("referrals", 0)
   return (
-    f"👋 Assalomu alaykum, StarPayUz — {display_name}!\n"
-    f"💰 Balans: {balance:,} so'm\n"
-    f"👥 Referallar: {refs} ta\n\n"
-    f"👇 Quyidagilardan kerakli bo'limni tanlang:"
+    f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> '
+    f"Assalomu alaykum, StarPayUz — {display_name}!\n"
+    f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> '
+    f"Balans: {balance:,} so'm\n"
+    f'<tg-emoji emoji-id="{EMOJI_PEOPLE}">👥</tg-emoji> '
+    f"Referallar: {refs} ta\n\n"
+    f'<tg-emoji emoji-id="{EMOJI_LIGHTNING}">⚡️</tg-emoji> '
+    f"Quyidagilardan kerakli bo'limni tanlang:"
   )
 
 
