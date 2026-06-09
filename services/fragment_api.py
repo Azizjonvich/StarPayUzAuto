@@ -87,36 +87,18 @@ class FragmentAPI:
 
     async def buy_stars(self, username: str, quantity: int) -> dict[str, Any]:
         username = username.lstrip("@")
-        for path in ("stars/buy", "orders/stars", "stars/order"):
-            try:
-                return await self._request(
-                    "POST",
-                    path,
-                    json={"username": username, "quantity": quantity},
-                )
-            except FragmentAPIError as e:
-                if e.status == 404:
-                    continue
-                raise
-        raise FragmentAPIError(
-            "Stars endpoint not found — check FRAGMENT_API_BASE in .env"
+        return await self._request(
+            "POST",
+            "stars/buy",
+            json={"username": username, "amount": quantity},
         )
 
     async def buy_premium(self, username: str, months: int) -> dict[str, Any]:
         username = username.lstrip("@")
-        for path in ("premium/buy", "orders/premium", "premium/order"):
-            try:
-                return await self._request(
-                    "POST",
-                    path,
-                    json={"username": username, "months": months},
-                )
-            except FragmentAPIError as e:
-                if e.status == 404:
-                    continue
-                raise
-        raise FragmentAPIError(
-            "Premium endpoint not found — check FRAGMENT_API_BASE in .env"
+        return await self._request(
+            "POST",
+            "premium/buy",
+            json={"username": username, "duration": months},
         )
 
     async def buy_gift(self, username: str, gift_id: str) -> dict[str, Any]:
