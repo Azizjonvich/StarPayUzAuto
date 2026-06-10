@@ -216,16 +216,19 @@ async def _buy_gift(message: Message, data: dict):
         )
         return
 
-    # Маппинг подарков на их ID (нужно будет заполнить реальными ID)
+    # Маппинг подарков на их ID из Telegram
     gift_mapping = {
-        "bear": "premium_gift_bear",
-        "rose": "premium_gift_rose",
-        "cake": "premium_gift_cake",
-        "diamond": "premium_gift_diamond",
-        "heart": "premium_gift_heart",
-        "ring": "premium_gift_ring",
-        "rocket": "premium_gift_rocket",
-        "trophy": "premium_gift_trophy",
+        "bear": "5170233102089322756",      # 🧸 15 💜
+        "heart": "5170145012310081615",     # 💝 15 💜
+        "box": "5170250947678437525",       # 🎁 25 💜
+        "rose": "5168103777563050263",      # 🌹 25 💜
+        "cake": "5170144170496491616",      # 🎂 50 💜
+        "bouquet": "5170314324215857265",   # 💐 50 💜
+        "rocket": "5170564780938756245",    # 🚀 50 💜
+        "trophy": "5168043875654172773",    # 🏆 100 💜
+        "ring": "5170690322832818290",      # 💍 100 💜
+        "diamond": "5170521118301225164",   # 💎 100 💜
+        "champagne": "6028601630662853006", # 🍾 50 💜
     }
 
     gift_id = gift_mapping.get(gift.lower())

@@ -70,6 +70,19 @@ PRODUCTS = {
         "name": "🎁 Gift olish",
         "emoji": "🎁",
         "color": "#FF69B4",
-        "info": "Premium sovg'alar"
+        "info": "Premium sovg'alar",
+        "packages": [
+            {"id": "bear", "name": "🧸 Ayiq", "price": 15000, "emoji": "🧸"},
+            {"id": "heart", "name": "💝 Yurak", "price": 15000, "emoji": "💝"},
+            {"id": "box", "name": "🎁 Quti", "price": 25000, "emoji": "🎁"},
+            {"id": "rose", "name": "🌹 Atirgul", "price": 25000, "emoji": "🌹"},
+            {"id": "cake", "name": "🎂 Tort", "price": 50000, "emoji": "🎂"},
+            {"id": "bouquet", "name": "💐 Guldasta", "price": 50000, "emoji": "💐"},
+            {"id": "rocket", "name": "🚀 Raketa", "price": 50000, "emoji": "🚀"},
+            {"id": "champagne", "name": "🍾 Shampan", "price": 50000, "emoji": "🍾"},
+            {"id": "trophy", "name": "🏆 Kubok", "price": 100000, "emoji": "🏆"},
+            {"id": "ring", "name": "💍 Uzuk", "price": 100000, "emoji": "💍"},
+            {"id": "diamond", "name": "💎 Olmos", "price": 100000, "emoji": "💎"},
+        ]
     }
 }
