@@ -12,9 +12,31 @@ def _is_admin(user_id: int) -> bool:
     return user_id in config.ADMINS
 
 
+@router.message(Command("admin_check"))
+async def cmd_admin_check(message: Message) -> None:
+    """Debug command to check if user is admin"""
+    if not message.from_user:
+        return
+    
+    user_id = message.from_user.id
+    is_admin = _is_admin(user_id)
+    
+    await message.answer(
+        f"🔍 <b>Admin Check</b>\n\n"
+        f"Your Telegram ID: <code>{user_id}</code>\n"
+        f"Admin list: <code>{config.ADMINS}</code>\n"
+        f"Is admin: {'✅ YES' if is_admin else '❌ NO'}",
+        parse_mode="HTML",
+    )
+
+
 @router.message(Command("user"))
 async def cmd_user_info(message: Message) -> None:
-    if not message.from_user or not _is_admin(message.from_user.id):
+    if not message.from_user:
+        return
+    
+    if not _is_admin(message.from_user.id):
+        await message.answer("❌ Bu buyruq faqat adminlar uchun.")
         return
 
     parts = (message.text or "").split()
@@ -33,11 +55,11 @@ async def cmd_user_info(message: Message) -> None:
 
     username = f"@{user['username']}" if user.get("username") else "—"
     await message.answer(
-        f"👤 <b>Foydalanuvchi #{user['id']}</b>\n\n"
-        f"StarPayUz ID: <code>{user['id']}</code>\n"
-        f"Telegram ID: <code>{user['user_id']}</code>\n"
+        f"👤 <b>Foydalanuvchi #{user['sp_id']}</b>\n\n"
+        f"StarPayUz ID: <code>{user['sp_id']}</code>\n"
+        f"Telegram ID: <code>{user['telegram_id']}</code>\n"
         f"Username: {username}\n"
-        f"Ism: {user.get('first_name') or '—'}\n"
+        f"Ism: {user.get('full_name') or '—'}\n"
         f"Balans: <b>{user['balance']:,.0f}</b> so'm\n"
         f"Referallar: {user.get('referrals', 0)} ta",
         parse_mode="HTML",
@@ -46,7 +68,11 @@ async def cmd_user_info(message: Message) -> None:
 
 @router.message(Command("bal"))
 async def cmd_balance(message: Message) -> None:
-    if not message.from_user or not _is_admin(message.from_user.id):
+    if not message.from_user:
+        return
+        
+    if not _is_admin(message.from_user.id):
+        await message.answer("❌ Bu buyruq faqat adminlar uchun.")
         return
 
     parts = (message.text or "").split()
@@ -87,7 +113,7 @@ async def cmd_balance(message: Message) -> None:
         await message.answer("❌ Summa 0 dan katta bo'lishi kerak.")
         return
 
-    user = await db.update_balance_by_sp_id(sp_id, amount, operation)
+    user = await db.update_balance_by_sp_id(sp_id, int(amount), operation)
     if not user:
         await message.answer("❌ Foydalanuvchi topilmadi.")
         return
@@ -95,7 +121,7 @@ async def cmd_balance(message: Message) -> None:
     action = "qo'shildi" if operation == "add" else "ayirildi"
     await message.answer(
         f"✅ <b>{amount:,.0f}</b> so'm {action}\n\n"
-        f"Foydalanuvchi: <code>#{user['id']}</code>\n"
+        f"Foydalanuvchi: <code>#{user['sp_id']}</code>\n"
         f"Yangi balans: <b>{user['balance']:,.0f}</b> so'm",
         parse_mode="HTML",
     )
