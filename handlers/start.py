@@ -27,7 +27,7 @@ EMOJI_CROSS = "5774077015388852135"  # ❌
 
 def get_welcome_text(user: dict, username: str | None, first_name: str | None) -> str:
     display = f"@{username}" if username else (first_name or "Foydalanuvchi")
-    sp_id = user.get("id", "—")
+    sp_id = user.get("sp_id") or user.get("id", "—")
     return (
         f'<tg-emoji emoji-id="{EMOJI_WAVE}">👋</tg-emoji> <b>Assalomu alaykum, {display}</b>\n\n'
         f'<tg-emoji emoji-id="{EMOJI_ORANGE}">🟠</tg-emoji> <b>StarPayUz ID:</b> <code>{sp_id}</code>\n'

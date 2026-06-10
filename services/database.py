@@ -83,6 +83,7 @@ async def ensure_user(
         if row:
             return dict(row)
         
+        # Insert with sp_id generated automatically by SERIAL
         await conn.execute(
             """
             INSERT INTO users (telegram_id, username, full_name, referred_by)
