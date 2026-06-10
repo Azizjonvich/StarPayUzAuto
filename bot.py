@@ -48,9 +48,11 @@ async def main():
     if config.API_ID and config.API_HASH:
         try:
             from services.telethon_client import init_gift_sender
+            session = config.TELETHON_SESSION_STRING or config.SESSION_NAME
             await init_gift_sender(
                 config.API_ID,
                 config.API_HASH,
+                session,
                 config.PHONE_NUMBER if config.PHONE_NUMBER else None
             )
             logger.info("Telethon gift sender initialized")

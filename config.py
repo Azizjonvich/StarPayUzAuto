@@ -11,6 +11,7 @@ API_ID = int(os.getenv("API_ID", "0"))
 API_HASH = os.getenv("API_HASH", "")
 PHONE_NUMBER = os.getenv("PHONE_NUMBER", "")  # Your phone number for user account
 SESSION_NAME = os.getenv("SESSION_NAME", "starpay_session")
+TELETHON_SESSION_STRING = os.getenv("TELETHON_SESSION_STRING", "")  # String session for Railway
 
 # Fragment API settings
 FRAGMENT_API_KEY = os.getenv("FRAGMENT_API_KEY")

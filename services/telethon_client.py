@@ -10,6 +10,7 @@ from telethon.errors import (
     UsernameInvalidError,
     UsernameNotOccupiedError,
 )
+from telethon.sessions import StringSession
 from telethon.tl.types import InputStickerSetShortName
 
 logger = logging.getLogger(__name__)
@@ -18,10 +19,10 @@ logger = logging.getLogger(__name__)
 class TelethonGiftSender:
     """Отправка подарков через Telegram User Client"""
 
-    def __init__(self, api_id: int, api_hash: str, session_name: str = "session"):
+    def __init__(self, api_id: int, api_hash: str, session: str | StringSession = "session"):
         self.api_id = api_id
         self.api_hash = api_hash
-        self.session_name = session_name
+        self.session = session
         self.client: TelegramClient | None = None
 
     async def start(self, phone: str | None = None):
@@ -29,7 +30,13 @@ class TelethonGiftSender:
         if not self.api_id or not self.api_hash:
             raise ValueError("API_ID and API_HASH are required")
 
-        self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
+        # Если передана строка сессии, используем StringSession
+        if isinstance(self.session, str) and len(self.session) > 50:
+            session = StringSession(self.session)
+        else:
+            session = self.session
+
+        self.client = TelegramClient(session, self.api_id, self.api_hash)
         await self.client.start(phone=phone)
         logger.info("Telethon client started successfully")
 
@@ -145,10 +152,10 @@ class TelethonGiftSender:
 gift_sender: TelethonGiftSender | None = None
 
 
-async def init_gift_sender(api_id: int, api_hash: str, phone: str | None = None):
+async def init_gift_sender(api_id: int, api_hash: str, session: str = "", phone: str | None = None):
     """Инициализация отправителя подарков"""
     global gift_sender
-    gift_sender = TelethonGiftSender(api_id, api_hash)
+    gift_sender = TelethonGiftSender(api_id, api_hash, session or "starpayuz_session")
     await gift_sender.start(phone)
     return gift_sender
 

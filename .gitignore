@@ -27,6 +27,10 @@ wheels/
 .env
 .env.local
 
+# Telethon sessions (DO NOT COMMIT!)
+*.session
+*.session-journal
+
 # Database
 *.db
 *.sqlite
