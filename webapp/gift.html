@@ -100,6 +100,26 @@
         margin-bottom: 25px;
     }
 
+    .gift-emoji {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .gift-emoji img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .gift-card:hover .gift-emoji img {
+        transform: scale(1.1);
+    }
+
     .gift-card {
         background: #111827;
         border: 2px solid #3B82F6;
@@ -158,7 +178,9 @@
         outline: none;
     }
 
-    .input::placeholder { color: #9CA3AF; }
+    .input::placeholder {
+        color: #9CA3AF;
+    }
 
     .selected-gift-info {
         background: #111827;
@@ -250,6 +272,12 @@
         font-size: 13px;
         font-weight: 600;
     }
+
+    .gift-emoji img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+    }
 </style>
 
 <body>
@@ -286,9 +314,10 @@
 
         <!-- Gift Grid -->
         <div class="gift-grid">
+
             <div class="gift-card" onclick="pickGift(this, 'TeddyBear', 3000)">
                 <div class="gift-emoji">
-                    <img src="./images/bear.webp" alt="" width="70px" height="70px">
+                    <img src="./images/bear.webp" alt="TeddyBear" width="70" height="70">
                 </div>
                 <div class="gift-name">TeddyBear</div>
                 <div class="gift-price">3 000 so'm</div>
@@ -296,55 +325,76 @@
 
             <div class="gift-card" onclick="pickGift(this, 'HeartGift', 3000)">
                 <div class="gift-emoji">
-                    <img src="./images/heart.webp" alt="">
+                    <img src="./images/heart.webp" alt="HeartGift" width="70" height="70">
                 </div>
                 <div class="gift-name">HeartGift</div>
                 <div class="gift-price">3 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'GiftBox', 5000)">
-                <div class="gift-emoji"></div>
+                <div class="gift-emoji">
+                    <img src="./images/box.webp" alt="GiftBox" width="70" height="70">
+                </div>
                 <div class="gift-name">GiftBox</div>
                 <div class="gift-price">5 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Rose', 5000)">
-                <div class="gift-emoji">🌹</div>
+                <div class="gift-emoji">
+                    <img src="./images/rose.webp" alt="Rose" width="70" height="70">
+                </div>
                 <div class="gift-name">Rose</div>
                 <div class="gift-price">5 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Cake', 10000)">
-                <div class="gift-emoji">🎂</div>
+                <div class="gift-emoji">
+                    <img src="./images/cake.webp" alt="Cake" width="70" height="70">
+                </div>
                 <div class="gift-name">Cake</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Cake', 10000)">
+                <div class="gift-emoji">
+                    <img src="./images/shampen.webp" alt="Cake" width="70" height="70">
+                </div>
+                <div class="gift-name">champagne</div>
                 <div class="gift-price">10 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Bouquet', 10000)">
-                <div class="gift-emoji">💐</div>
+                <div class="gift-emoji">
+                    <img src="./images/bouquet.webp" alt="Bouquet" width="70" height="70">
+                </div>
                 <div class="gift-name">Bouquet</div>
                 <div class="gift-price">10 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Diamond', 15000)">
-                <div class="gift-emoji">💎</div>
+                <div class="gift-emoji">
+                    <img src="./images/diamond.webp" alt="Diamond" width="70" height="70">
+                </div>
                 <div class="gift-name">Diamond</div>
                 <div class="gift-price">15 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Trophy', 15000)">
-                <div class="gift-emoji">🏆</div>
+                <div class="gift-emoji">
+                    <img src="./images/trophy.webp" alt="Trophy" width="70" height="70">
+                </div>
                 <div class="gift-name">Trophy</div>
                 <div class="gift-price">15 000 so'm</div>
             </div>
 
             <div class="gift-card" onclick="pickGift(this, 'Crown', 20000)">
-                <div class="gift-emoji">👑</div>
+                <div class="gift-emoji">
+                    <img src="./images/crown.webp" alt="Crown" width="70" height="70">
+                </div>
                 <div class="gift-name">Crown</div>
                 <div class="gift-price">20 000 so'm</div>
             </div>
-        </div>
 
+        </div>
         <button class="btn-primary" id="buyBtn" onclick="buyGift()" disabled>Sotib olish</button>
     </div>
 
