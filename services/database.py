@@ -1,62 +1,72 @@
-import aiosqlite
-from pathlib import Path
+"""Database layer with PostgreSQL support via asyncpg"""
+import asyncio
+import os
+from typing import Any
 
-# Single DB path used by the whole project
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "starpay.db"
+import asyncpg
+
+# Read DATABASE_URL from env
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+# Connection pool (created on init_db)
+_pool: asyncpg.Pool | None = None
+
+
+async def get_pool() -> asyncpg.Pool:
+    global _pool
+    if _pool is None:
+        if not DATABASE_URL or not DATABASE_URL.startswith("postgres"):
+            raise RuntimeError("DATABASE_URL not set or invalid")
+        _pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
+    return _pool
 
 
 async def init_db() -> None:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.executescript(
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
-                telegram_id INTEGER PRIMARY KEY,
-                sp_id INTEGER UNIQUE,
+                telegram_id BIGINT PRIMARY KEY,
+                sp_id SERIAL UNIQUE,
                 username TEXT,
                 full_name TEXT,
                 balance INTEGER NOT NULL DEFAULT 0,
                 referrals INTEGER NOT NULL DEFAULT 0,
-                referred_by INTEGER,
+                referred_by BIGINT,
                 language TEXT NOT NULL DEFAULT 'uz',
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER NOT NULL,
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT NOT NULL,
                 product_type TEXT NOT NULL,
                 target_username TEXT,
                 quantity INTEGER,
                 amount INTEGER,
                 status TEXT NOT NULL DEFAULT 'pending',
                 external_id TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (telegram_id) REFERENCES users(telegram_id)
-            );
-
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS payments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER,
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT,
                 shop_order_id TEXT UNIQUE,
                 amount INTEGER NOT NULL,
                 status TEXT NOT NULL DEFAULT 'pending',
                 raw_payload TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
             """
         )
-        try:
-            await db.execute("ALTER TABLE users ADD COLUMN sp_id INTEGER UNIQUE")
-        except aiosqlite.OperationalError:
-            pass
-        await db.commit()
-
-
-async def _next_sp_id(db: aiosqlite.Connection) -> int:
-    cur = await db.execute("SELECT COALESCE(MAX(sp_id), 0) + 1 FROM users")
-    row = await cur.fetchone()
-    return row[0] if row else 1
 
 
 async def ensure_user(
@@ -64,68 +74,52 @@ async def ensure_user(
     username: str | None,
     full_name: str | None,
     referred_by: int | None = None,
-) -> dict:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute(
-            "SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)
+) -> dict[str, Any]:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM users WHERE telegram_id = $1", telegram_id
         )
-        row = await cur.fetchone()
         if row:
-            user = dict(row)
-            if user.get("sp_id") is None:
-                sp_id = await _next_sp_id(db)
-                await db.execute(
-                    "UPDATE users SET sp_id = ? WHERE telegram_id = ?",
-                    (sp_id, telegram_id),
-                )
-                await db.commit()
-                user["sp_id"] = sp_id
-            return user
-        sp_id = await _next_sp_id(db)
-        await db.execute(
+            return dict(row)
+        
+        await conn.execute(
             """
-            INSERT INTO users (telegram_id, sp_id, username, full_name, referred_by)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO users (telegram_id, username, full_name, referred_by)
+            VALUES ($1, $2, $3, $4)
             """,
-            (telegram_id, sp_id, username, full_name, referred_by),
+            telegram_id, username, full_name, referred_by,
         )
         if referred_by:
-            await db.execute(
-                "UPDATE users SET referrals = referrals + 1 WHERE telegram_id = ?",
-                (referred_by,),
+            await conn.execute(
+                "UPDATE users SET referrals = referrals + 1 WHERE telegram_id = $1",
+                referred_by,
             )
-        await db.commit()
-        cur = await db.execute(
-            "SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)
+        row = await conn.fetchrow(
+            "SELECT * FROM users WHERE telegram_id = $1", telegram_id
         )
-        row = await cur.fetchone()
-        return dict(row)
+        return dict(row) if row else {}
 
 
-async def get_user(telegram_id: int) -> dict | None:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute(
-            "SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)
+async def get_user(telegram_id: int) -> dict[str, Any] | None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM users WHERE telegram_id = $1", telegram_id
         )
-        row = await cur.fetchone()
         return dict(row) if row else None
 
 
-async def get_user_by_sp_id(sp_id: int) -> dict | None:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute(
-            "SELECT * FROM users WHERE sp_id = ?", (sp_id,)
-        )
-        row = await cur.fetchone()
+async def get_user_by_sp_id(sp_id: int) -> dict[str, Any] | None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM users WHERE sp_id = $1", sp_id)
         return dict(row) if row else None
 
 
 async def update_balance_by_sp_id(
     sp_id: int, amount: int, operation: str = "add"
-) -> dict | None:
+) -> dict[str, Any] | None:
     user = await get_user_by_sp_id(sp_id)
     if not user:
         return None
@@ -139,39 +133,34 @@ async def update_balance_by_sp_id(
 
 
 async def add_balance(telegram_id: int, amount: int) -> int:
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute(
-            "UPDATE users SET balance = balance + ? WHERE telegram_id = ?",
-            (amount, telegram_id),
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "UPDATE users SET balance = balance + $1 WHERE telegram_id = $2 RETURNING balance",
+            amount, telegram_id,
         )
-        await db.commit()
-        cur = await db.execute(
-            "SELECT balance FROM users WHERE telegram_id = ?", (telegram_id,)
-        )
-        row = await cur.fetchone()
-        return row[0] if row else 0
+        return row["balance"] if row else 0
 
 
 async def deduct_balance(telegram_id: int, amount: int) -> bool:
     user = await get_user(telegram_id)
     if not user or user["balance"] < amount:
         return False
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute(
-            "UPDATE users SET balance = balance - ? WHERE telegram_id = ? AND balance >= ?",
-            (amount, telegram_id, amount),
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "UPDATE users SET balance = balance - $1 WHERE telegram_id = $2 AND balance >= $1",
+            amount, telegram_id,
         )
-        await db.commit()
-        return db.total_changes > 0
+        return result != "UPDATE 0"
 
 
 async def set_language(telegram_id: int, lang: str) -> None:
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute(
-            "UPDATE users SET language = ? WHERE telegram_id = ?",
-            (lang, telegram_id),
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE users SET language = $1 WHERE telegram_id = $2", lang, telegram_id
         )
-        await db.commit()
 
 
 async def create_order(
@@ -183,37 +172,29 @@ async def create_order(
     external_id: str | None = None,
     status: str = "pending",
 ) -> int:
-    async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute(
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
             """
             INSERT INTO orders (telegram_id, product_type, target_username, quantity, amount, status, external_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
             """,
-            (
-                telegram_id,
-                product_type,
-                target_username,
-                quantity,
-                amount,
-                status,
-                external_id,
-            ),
+            telegram_id, product_type, target_username, quantity, amount, status, external_id,
         )
-        await db.commit()
-        return cur.lastrowid or 0
+        return row["id"] if row else 0
 
 
-async def get_user_orders(telegram_id: int, limit: int = 10) -> list[dict]:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute(
+async def get_user_orders(telegram_id: int, limit: int = 10) -> list[dict[str, Any]]:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
             """
-            SELECT * FROM orders WHERE telegram_id = ?
-            ORDER BY id DESC LIMIT ?
+            SELECT * FROM orders WHERE telegram_id = $1
+            ORDER BY id DESC LIMIT $2
             """,
-            (telegram_id, limit),
+            telegram_id, limit,
         )
-        rows = await cur.fetchall()
         return [dict(r) for r in rows]
 
 
@@ -224,22 +205,22 @@ async def record_payment(
     status: str,
     raw_payload: str,
 ) -> bool:
-    async with aiosqlite.connect(DB_PATH) as db:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
         try:
-            await db.execute(
+            await conn.execute(
                 """
                 INSERT INTO payments (shop_order_id, telegram_id, amount, status, raw_payload)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES ($1, $2, $3, $4, $5)
                 """,
-                (shop_order_id, telegram_id, amount, status, raw_payload),
+                shop_order_id, telegram_id, amount, status, raw_payload,
             )
-            await db.commit()
             return True
-        except aiosqlite.IntegrityError:
+        except asyncpg.UniqueViolationError:
             return False
 
 
-# Legacy API compatibility layer for handlers that use "from database import db"
+# Legacy API compatibility layer for handlers that use "from services.database import db"
 class _LegacyDB:
     """Compatibility wrapper to match old database.py API"""
     
