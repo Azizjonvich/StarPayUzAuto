@@ -362,6 +362,73 @@ async def payment_webhook(request: web.Request) -> web.Response:
   return web.json_response({"ok": True})
 
 
+async def api_order_topup(request: web.Request) -> web.Response:
+  """Create topup order with 5 minute expiration"""
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  order_id = body.get("order_id")
+  amount = body.get("amount")
+  
+  if not order_id or not amount:
+    return web.json_response({"ok": False, "error": "order_id va amount kerak"}, status=400)
+  
+  try:
+    amount_int = int(amount)
+    if amount_int < 10000 or amount_int > 10000000:
+      return web.json_response({"ok": False, "error": "Summa noto'g'ri"}, status=400)
+  except (TypeError, ValueError):
+    return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
+
+  # Create order in database
+  await create_order(int(user_id), "topup", "", None, amount_int, order_id, "pending")
+  
+  return web.json_response({"ok": True, "order_id": order_id})
+
+
+async def api_payment_check(request: web.Request) -> web.Response:
+  """Check if payment was received"""
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  order_id = body.get("order_id")
+  if not order_id:
+    return web.json_response({"ok": False, "error": "order_id kerak"}, status=400)
+  
+  # Check if payment exists in payments table
+  from services.database import get_pool
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    payment = await conn.fetchrow(
+      "SELECT * FROM payments WHERE shop_order_id = $1 AND status = 'paid'",
+      order_id
+    )
+    
+    if payment:
+      return web.json_response({
+        "ok": True,
+        "paid": True,
+        "amount": payment["amount"]
+      })
+    else:
+      return web.json_response({
+        "ok": True,
+        "paid": False
+      })
+
+
 async def on_startup(app: web.Application) -> None:
   from services.database import init_db
 
@@ -378,7 +445,9 @@ def create_app() -> web.Application:
   app.router.add_post("/api/order/premium", api_order_premium)
   app.router.add_post("/api/order/gift", api_order_gift)
   app.router.add_post("/api/order/phone", api_order_phone)
+  app.router.add_post("/api/order/topup", api_order_topup)
   app.router.add_post("/api/payment/create", api_payment_create)
+  app.router.add_post("/api/payment/check", api_payment_check)
   app.router.add_post("/webhook/payment", payment_webhook)
   app.router.add_post("/api/webhook/payment", payment_webhook)
 

@@ -359,6 +359,238 @@
         font-size: 13px;
         margin: 8px 0 14px 4px;
     }
+
+    /* Topup Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: #111827;
+        border: 2px solid #3B82F6;
+        border-radius: 22px;
+        padding: 24px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+        background: #1E293B;
+        border: none;
+        border-radius: 50%;
+        color: #9CA3AF;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .3s;
+    }
+
+    .modal-close:hover {
+        background: #3B82F6;
+        color: #fff;
+    }
+
+    .modal-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 20px;
+        padding-right: 40px;
+    }
+
+    .topup-input-wrapper {
+        margin-bottom: 20px;
+    }
+
+    .topup-input {
+        width: 100%;
+        height: 60px;
+        background: #1E293B;
+        border: 2px solid #3B82F6;
+        border-radius: 16px;
+        padding: 0 16px;
+        color: #fff;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        outline: none;
+    }
+
+    .topup-input::placeholder {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+
+    .topup-hint {
+        color: #9CA3AF;
+        font-size: 13px;
+        margin-top: 8px;
+        text-align: center;
+    }
+
+    .quick-amounts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+    .quick-amount {
+        padding: 16px 8px;
+        background: #1E293B;
+        border: 2px solid transparent;
+        border-radius: 14px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: .3s;
+        text-align: center;
+    }
+
+    .quick-amount:hover {
+        background: #2b3a52;
+    }
+
+    .quick-amount.selected {
+        background: #3B82F6;
+        border-color: #3B82F6;
+        box-shadow: 0 0 20px rgba(59, 130, 246, .4);
+    }
+
+    .payment-info {
+        display: none;
+        background: #1E293B;
+        border: 2px solid #3B82F6;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .payment-info.active {
+        display: block;
+    }
+
+    .payment-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #374151;
+    }
+
+    .payment-row:last-child {
+        border-bottom: none;
+    }
+
+    .payment-label {
+        color: #9CA3AF;
+        font-size: 14px;
+    }
+
+    .payment-value {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .copy-btn {
+        background: #3B82F6;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .copy-btn:hover {
+        background: #2563EB;
+    }
+
+    .timer-block {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        border-radius: 14px;
+        padding: 16px;
+        margin: 16px 0;
+        text-align: center;
+    }
+
+    .timer-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .timer-value {
+        color: #fff;
+        font-size: 32px;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+    }
+
+    .warning-box {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #EF4444;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .warning-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .warning-text {
+        color: #FCA5A5;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .success-note {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid #22C55E;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        color: #86EFAC;
+        font-size: 13px;
+        line-height: 1.5;
+    }
 </style>
 
 <body>
@@ -452,6 +684,96 @@
             <div class="nav-label">Profil</div>
         </div>
 
+    </div>
+
+    <!-- Topup Modal -->
+    <div class="modal-overlay" id="topupModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTopupModal()">×</button>
+            <h2 class="modal-title">💰 Balansni to'ldirish</h2>
+
+            <div class="topup-input-wrapper">
+                <input 
+                    type="number" 
+                    class="topup-input" 
+                    id="topupAmount" 
+                    placeholder="Summa kiriting"
+                    min="10000"
+                    max="10000000"
+                >
+                <div class="topup-hint">Minimal: 10,000 so'm | Maksimal: 10,000,000 so'm</div>
+            </div>
+
+            <div class="quick-amounts-grid">
+                <button class="quick-amount" onclick="selectTopupAmount(10000, this)">10,000</button>
+                <button class="quick-amount" onclick="selectTopupAmount(25000, this)">25,000</button>
+                <button class="quick-amount" onclick="selectTopupAmount(50000, this)">50,000</button>
+                <button class="quick-amount" onclick="selectTopupAmount(100000, this)">100,000</button>
+                <button class="quick-amount" onclick="selectTopupAmount(250000, this)">250,000</button>
+                <button class="quick-amount" onclick="selectTopupAmount(500000, this)">500,000</button>
+            </div>
+
+            <div class="payment-info" id="paymentInfo">
+                <div class="success-note">
+                    ✅ To'lov so'rovi yaratildi! Quyidagi karta raqamiga pul o'tkazing.
+                </div>
+
+                <div class="payment-row">
+                    <div class="payment-label">🆔 Buyurtma ID:</div>
+                    <div class="payment-value">
+                        <span id="orderId">-</span>
+                        <button class="copy-btn" onclick="copyText('orderId')">Nusxalash</button>
+                    </div>
+                </div>
+
+                <div class="payment-row">
+                    <div class="payment-label">💰 Miqdor:</div>
+                    <div class="payment-value" id="paymentAmount">0 so'm</div>
+                </div>
+
+                <div class="payment-row">
+                    <div class="payment-label">💳 Karta raqami:</div>
+                    <div class="payment-value">
+                        <span id="cardNumber">8600 **** **** 3444</span>
+                        <button class="copy-btn" onclick="copyCardNumber()">Nusxalash</button>
+                    </div>
+                </div>
+
+                <div class="payment-row">
+                    <div class="payment-label">👤 Karta egasi:</div>
+                    <div class="payment-value">A/A</div>
+                </div>
+
+                <div class="timer-block">
+                    <div class="timer-label">⏰ Qolgan vaqt</div>
+                    <div class="timer-value" id="timerDisplay">05:00</div>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-text">
+                        <strong>MUHIM!</strong> Quyida ko'rsatilgan summani <strong>AYNAN</strong> to'lashingiz shart! 
+                        Hatto <strong>1 so'm</strong> kam yoki ko'p bo'lsa ham to'lov <strong>avtomatik qabul qilinmaydi</strong>.
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-icon">⏱️</div>
+                    <div class="warning-text">
+                        Muddat: <span id="startTime">--:--</span> — <span id="endTime">--:--</span> (Toshkent). 
+                        Aniq 5 daqiqa. Undan keyin avtomatik bekor qilinadi!
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="checkPaymentStatus()">
+                    ✅ To'lovni tekshirish
+                </button>
+            </div>
+
+            <button class="btn-primary" id="createPaymentBtn" onclick="createPayment()">
+                To'ldirish
+            </button>
+        </div>
     </div>
 
     <script src="js/common.js"></script>
@@ -552,6 +874,204 @@
 
         function openProfile() {
             window.location.href = 'index.html';
+        }
+
+        // Topup Modal Functions
+        let topupTimer = null;
+        let topupEndTime = null;
+        let selectedTopupAmount = 0;
+        let currentOrderId = '';
+        const CARD_NUMBER = '8600123456783444'; // Замените на реальный номер карты
+
+        function openTopup() {
+            document.getElementById('topupModal').classList.add('active');
+        }
+
+        function closeTopupModal() {
+            document.getElementById('topupModal').classList.remove('active');
+            document.getElementById('paymentInfo').classList.remove('active');
+            document.getElementById('createPaymentBtn').style.display = 'block';
+            selectedTopupAmount = 0;
+            document.getElementById('topupAmount').value = '';
+            document.querySelectorAll('.quick-amount').forEach(btn => btn.classList.remove('selected'));
+            
+            if (topupTimer) {
+                clearInterval(topupTimer);
+                topupTimer = null;
+            }
+        }
+
+        function selectTopupAmount(amount, btn) {
+            selectedTopupAmount = amount;
+            document.getElementById('topupAmount').value = amount;
+            document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
+            if (btn) btn.classList.add('selected');
+        }
+
+        document.getElementById('topupAmount').addEventListener('input', function() {
+            selectedTopupAmount = parseInt(this.value) || 0;
+            document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
+        });
+
+        async function createPayment() {
+            const amount = selectedTopupAmount || parseInt(document.getElementById('topupAmount').value);
+            
+            if (!amount || amount < 10000) {
+                tg.showAlert('Minimal summa: 10,000 so\'m');
+                return;
+            }
+            
+            if (amount > 10000000) {
+                tg.showAlert('Maksimal summa: 10,000,000 so\'m');
+                return;
+            }
+
+            // Generate unique order ID
+            currentOrderId = 'topup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            
+            // Show payment info
+            document.getElementById('createPaymentBtn').style.display = 'none';
+            document.getElementById('paymentInfo').classList.add('active');
+            
+            // Set values
+            document.getElementById('orderId').textContent = currentOrderId;
+            document.getElementById('paymentAmount').textContent = amount.toLocaleString('uz-UZ') + ' so\'m';
+            document.getElementById('cardNumber').textContent = formatCardNumber(CARD_NUMBER);
+            
+            // Set times
+            const now = new Date();
+            topupEndTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+            
+            document.getElementById('startTime').textContent = formatTime(now);
+            document.getElementById('endTime').textContent = formatTime(topupEndTime);
+            
+            // Start timer
+            startTimer();
+            
+            // Save to database (optional)
+            try {
+                await fetch(`${window.API_BASE}/api/order/topup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-Init-Data': tg.initData
+                    },
+                    body: JSON.stringify({
+                        order_id: currentOrderId,
+                        amount: amount,
+                        card_number: CARD_NUMBER,
+                        telegram_id: tg.initDataUnsafe?.user?.id
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to save order:', error);
+            }
+        }
+
+        function startTimer() {
+            if (topupTimer) clearInterval(topupTimer);
+            
+            updateTimerDisplay();
+            topupTimer = setInterval(() => {
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            if (!topupEndTime) return;
+            
+            const now = new Date();
+            const diff = topupEndTime - now;
+            
+            if (diff <= 0) {
+                clearInterval(topupTimer);
+                document.getElementById('timerDisplay').textContent = '00:00';
+                tg.showAlert('Muddat tugadi! Iltimos, qaytadan to\'ldirish yarating.');
+                closeTopupModal();
+                return;
+            }
+            
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function formatTime(date) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatCardNumber(card) {
+            return card.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        function copyCardNumber() {
+            copyToClipboard(CARD_NUMBER);
+            tg.showPopup({
+                title: '✅ Nusxalandi',
+                message: 'Karta raqami nusxalandi',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            copyToClipboard(text);
+            tg.showPopup({
+                title: '✅ Nusxalandi',
+                message: 'Matn nusxalandi',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const temp = document.createElement('textarea');
+                temp.value = text;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+            }
+        }
+
+        async function checkPaymentStatus() {
+            if (!currentOrderId) return;
+            
+            try {
+                const response = await fetch(`${window.API_BASE}/api/payment/check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-Init-Data': tg.initData
+                    },
+                    body: JSON.stringify({
+                        order_id: currentOrderId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok && result.paid) {
+                    tg.showPopup({
+                        title: '✅ To\'lov tasdiqlandi!',
+                        message: `Balans ${result.amount} so'm ga to'ldirildi!`,
+                        buttons: [{type: 'ok'}]
+                    });
+                    closeTopupModal();
+                    await loadUserBalance();
+                } else {
+                    tg.showAlert('To\'lov hali kelmadi. Iltimos, kutib turing yoki qayta tekshiring.');
+                }
+            } catch (error) {
+                console.error('Check payment error:', error);
+                tg.showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+            }
         }
     </script>
 </body>
