@@ -453,35 +453,7 @@
         text-align: center;
     }
 
-    .quick-amounts-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        margin-bottom: 16px;
-    }
 
-    .quick-amount {
-        padding: 12px 6px;
-        background: #1E293B;
-        border: 2px solid transparent;
-        border-radius: 12px;
-        color: #fff;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: .3s;
-        text-align: center;
-    }
-
-    .quick-amount:active {
-        transform: scale(0.95);
-    }
-
-    .quick-amount.selected {
-        background: #3B82F6;
-        border-color: #3B82F6;
-        box-shadow: 0 0 15px rgba(59, 130, 246, .4);
-    }
 
     .payment-info {
         display: none;
@@ -697,11 +669,11 @@
                     type="number" 
                     class="topup-input" 
                     id="topupAmount" 
-                    placeholder="Summa"
+                    placeholder="1000"
                     min="1000"
                     max="10000000"
                 >
-                <div class="topup-hint">Min: 1,000 | Max: 10,000,000</div>
+                <div class="topup-hint">Min: 1,000 so'm | Max: 10,000,000 so'm</div>
             </div>
 
             <div class="payment-info" id="paymentInfo">
@@ -870,7 +842,6 @@
             document.getElementById('createPaymentBtn').style.display = 'block';
             selectedTopupAmount = 0;
             document.getElementById('topupAmount').value = '';
-            document.querySelectorAll('.quick-amount').forEach(btn => btn.classList.remove('selected'));
             
             if (topupTimer) {
                 clearInterval(topupTimer);
