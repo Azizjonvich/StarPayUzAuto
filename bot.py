@@ -17,6 +17,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Log startup env vars (no secrets)
+logger.info("=== STARTUP ===")
+logger.info("PORT=%s", os.environ.get("PORT", "NOT SET"))
+logger.info("BOT_TOKEN set: %s", bool(os.environ.get("BOT_TOKEN")))
+logger.info("FRAGMENT_API_KEY set: %s", bool(os.environ.get("FRAGMENT_API_KEY")))
+logger.info("FRAGMENT_API_BASE=%s", os.environ.get("FRAGMENT_API_BASE", "NOT SET"))
+logger.info("===============")
+
 
 async def start_api_server():
     """Start aiohttp API server"""
