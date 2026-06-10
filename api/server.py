@@ -87,9 +87,17 @@ async def api_user_balance(request: web.Request) -> web.Response:
     user_id = body.get("telegram_id")
   if not user_id:
     return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
-  user = await get_user(int(user_id))
-  if not user:
-    return web.json_response({"ok": True, "balance": 0})
+  
+  # Ensure user exists (create if not)
+  from services.database import ensure_user
+  username = None
+  full_name = None
+  if auth and auth.get("user"):
+    u = auth["user"]
+    username = u.get("username")
+    full_name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()
+  
+  user = await ensure_user(int(user_id), username, full_name or "User")
   return web.json_response({"ok": True, "balance": user.get("balance", 0)})
 
 
