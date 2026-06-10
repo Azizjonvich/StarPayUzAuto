@@ -145,17 +145,39 @@ async def api_order_stars(request: web.Request) -> web.Response:
 
   username = (body.get("username") or "").strip().lstrip("@")
   quantity = _parse_stars_quantity(body)
+  
+  logger.info("api_order_stars: user_id=%s, username=%s, quantity=%s", user_id, username, quantity)
+  
   if not username:
     return web.json_response({"ok": False, "error": "Username ko'rsatilmagan"}, status=400)
   err = _validate_stars_quantity(quantity)
   if err:
     return web.json_response({"ok": False, "error": err}, status=400)
 
+  user = await get_user(int(user_id))
+  if not user:
+    logger.warning("User %s not found in DB", user_id)
+    return web.json_response({"ok": False, "error": "Foydalanuvchi topilmadi. /start bosing."}, status=400)
+  
+  balance = user.get("balance", 0)
+  logger.info("User %s balance: %s", user_id, balance)
+  
+  # Calculate price (simple: 200 sum per star)
+  price = quantity * 200
+  
+  if balance < price:
+    logger.warning("Insufficient balance: have %s, need %s", balance, price)
+    return web.json_response(
+      {"ok": False, "error": f"Balans yetarli emas. Kerak: {price:,} so'm, Balans: {balance:,} so'm"},
+      status=400
+    )
+
   try:
     result = await fragment.buy_stars(username, quantity)
     order_id = await create_order(
       int(user_id), "stars", username, quantity, None, str(result.get("id", "")), "completed"
     )
+    await deduct_balance(int(user_id), price)
     return web.json_response({"ok": True, "order_id": order_id, "result": result})
   except FragmentAPIError as e:
     await create_order(int(user_id), "stars", username, quantity, None, status="failed")
