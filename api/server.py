@@ -219,17 +219,84 @@ async def api_order_gift(request: web.Request) -> web.Response:
     return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
 
   username = (body.get("username") or "").strip().lstrip("@")
-  gift_id = (body.get("gift_id") or "default").strip()
-
-  try:
-    result = await fragment.buy_gift(username, gift_id)
+  gift = (body.get("gift") or "").strip().lower()
+  price = int(body.get("price", 0))
+  
+  if not username:
+    return web.json_response({"ok": False, "error": "Username ko'rsatilmagan"}, status=400)
+  
+  if not gift or price <= 0:
+    return web.json_response({"ok": False, "error": "Gift tanlanmagan"}, status=400)
+  
+  # Check balance
+  user = await get_user(int(user_id))
+  if not user:
+    return web.json_response({"ok": False, "error": "Foydalanuvchi topilmadi"}, status=400)
+  
+  balance = user.get("balance", 0)
+  if balance < price:
+    return web.json_response({
+      "ok": False,
+      "error": f"Balans yetarli emas. Kerak: {price:,} so'm, Balans: {balance:,} so'm"
+    }, status=400)
+  
+  # Gift ID mapping
+  gift_mapping = {
+    "heart": "5170145012310081615",
+    "bear": "5170233102089322756",
+    "box": "5170250947678437525",
+    "rose": "5168103777563050263",
+    "cake": "5170144170496491616",
+    "rocket": "5170564780938756245",
+    "champagne": "6028601630662853006",
+    "bouquet": "5170314324215857265",
+    "diamond": "5170521118301225164",
+    "trophy": "5168043875654172773",
+    "ring": "5170690322832818290",
+  }
+  
+  gift_id = gift_mapping.get(gift.lower())
+  if not gift_id:
+    return web.json_response({"ok": False, "error": f"Noma'lum gift: {gift}"}, status=400)
+  
+  # Send gift via Telethon
+  from services.telethon_client import gift_sender
+  
+  if not gift_sender:
+    return web.json_response({
+      "ok": False,
+      "error": "Gift sервис временно недоступен. Telethon не настроен."
+    }, status=503)
+  
+  logger.info(f"Sending gift {gift} (ID: {gift_id}) to @{username}")
+  result = await gift_sender.send_gift(username, gift_id, message="🎁 Gift from StarPayUz")
+  logger.info(f"Gift send result: {result}")
+  
+  if result and result.get("ok"):
+    # Deduct balance
+    await deduct_balance(int(user_id), price)
+    
+    # Create order
     order_id = await create_order(
-      int(user_id), "gift", username, None, None, str(result.get("id", "")), "completed"
+      int(user_id), "gift", username, None, price, gift_id, "completed"
     )
-    return web.json_response({"ok": True, "order_id": order_id, "result": result})
-  except FragmentAPIError as e:
-    await create_order(int(user_id), "gift", username, None, None, status="failed")
-    return web.json_response({"ok": False, "error": str(e)}, status=400)
+    
+    return web.json_response({
+      "ok": True,
+      "order_id": order_id,
+      "message": f"Gift yuborildi: {gift.capitalize()} → @{username}"
+    })
+  else:
+    # Create failed order
+    order_id = await create_order(
+      int(user_id), "gift", username, None, price, gift_id, "failed"
+    )
+    
+    error_msg = result.get("error", "Noma'lum xatolik") if result else "Xatolik"
+    return web.json_response({
+      "ok": False,
+      "error": error_msg
+    }, status=400)
 
 
 async def api_order_phone(request: web.Request) -> web.Response:
