@@ -10,6 +10,7 @@ from aiohttp import web
 import config
 from services import database
 from handlers import start, shop, balance, profile, webapp, admin
+from middlewares import AccessControlMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,6 +73,10 @@ async def main():
     )
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
+
+    # Add access control middleware
+    dp.update.middleware(AccessControlMiddleware())
+    logger.info("Access control middleware enabled - only @StarPayUzAdmin can use the bot")
 
     dp.include_router(start.router)
     dp.include_router(webapp.router)

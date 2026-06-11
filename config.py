@@ -35,6 +35,10 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://starpayuz-webapp.vercel.app")
 # Admin IDs
 ADMINS = [8784918764]
 
+# Allowed usernames (for access control) - comma separated
+ALLOWED_USERNAMES = os.getenv("ALLOWED_USERNAMES", "StarPayUzAdmin").split(",")
+# Пример: ALLOWED_USERNAMES=StarPayUzAdmin,user2,user3
+
 # Stars limits (Fragment API minimum is 50)
 STARS_MIN_AMOUNT = 50
 STARS_MAX_AMOUNT = 1_000_000
