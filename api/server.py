@@ -259,20 +259,34 @@ async def api_order_gift(request: web.Request) -> web.Response:
   if not gift_id:
     return web.json_response({"ok": False, "error": f"Noma'lum gift: {gift}"}, status=400)
   
-  # Send gift via Telethon
-  from services.telethon_client import gift_sender
+  # Send gift via Bot API (not Telethon!)
+  from aiogram import Bot
+  from aiogram.client.default import DefaultBotProperties
+  from aiogram.enums import ParseMode
   
-  if not gift_sender:
+  if not settings.bot_token:
     return web.json_response({
       "ok": False,
-      "error": "Gift sервис временно недоступен. Telethon не настроен."
+      "error": "Bot token не настроен"
     }, status=503)
   
-  logger.info(f"Sending gift {gift} (ID: {gift_id}) to @{username}")
-  result = await gift_sender.send_gift(username, gift_id, message="🎁 Gift from StarPayUz")
-  logger.info(f"Gift send result: {result}")
+  bot = Bot(
+    token=settings.bot_token,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+  )
   
-  if result and result.get("ok"):
+  try:
+    logger.info(f"Sending gift {gift} (ID: {gift_id}) to @{username} via Bot API")
+    
+    # Отправляем подарок через Bot API
+    result = await bot.send_gift(
+      user_id=int(user_id),  # От кого (наш пользователь)
+      gift_id=gift_id,
+      text=f"🎁 Gift from @{username}!",
+    )
+    
+    logger.info(f"Gift sent successfully: {result}")
+    
     # Deduct balance
     await deduct_balance(int(user_id), price)
     
@@ -286,17 +300,22 @@ async def api_order_gift(request: web.Request) -> web.Response:
       "order_id": order_id,
       "message": f"Gift yuborildi: {gift.capitalize()} → @{username}"
     })
-  else:
+    
+  except Exception as e:
+    logger.error(f"Failed to send gift: {e}")
+    
     # Create failed order
     order_id = await create_order(
       int(user_id), "gift", username, None, price, gift_id, "failed"
     )
     
-    error_msg = result.get("error", "Noma'lum xatolik") if result else "Xatolik"
     return web.json_response({
       "ok": False,
-      "error": error_msg
+      "error": f"Xatolik: {str(e)}"
     }, status=400)
+  
+  finally:
+    await bot.session.close()
 
 
 async def api_order_phone(request: web.Request) -> web.Response:
