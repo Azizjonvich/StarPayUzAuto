@@ -205,14 +205,18 @@ async def _buy_gift(message: Message, data: dict):
 
     # Отправка подарка через Telethon
     from services.telethon_client import gift_sender
+    
+    logger.info(f"Gift sender status: {gift_sender}")
 
     if not gift_sender:
+        logger.error("Gift sender not initialized - Telethon not configured")
         await db.update_order(order_id, status="failed")
         await db.update_balance(user_id, price, "add")
         await message.answer(
-            "❌ <b>Gift сервис временно недоступен</b>\n\n"
-            "Пожалуйста, попробуйте позже или выберите другой продукт.\n\n"
-            "Пул qaytarildi.",
+            f"❌ <b>Gift сервис временно недоступен</b>\n\n"
+            f"⚠️ Telethon не настроен на сервере.\n"
+            f"💰 Pul qaytarildi: <b>{price:,}</b> so'm\n\n"
+            f"Iltimos, попробуйте позже или выберите другой продукт.",
             parse_mode="HTML",
             reply_markup=keyboards.get_webapp_main_keyboard(),
         )
@@ -235,15 +239,20 @@ async def _buy_gift(message: Message, data: dict):
 
     gift_id = gift_mapping.get(gift.lower())
     if not gift_id:
+        logger.error(f"Unknown gift type: {gift}")
         await db.update_order(order_id, status="failed")
         await db.update_balance(user_id, price, "add")
         await message.answer(
-            "❌ <b>Noma'lum gift turi</b>\n\nPul qaytarildi.",
+            f"❌ <b>Noma'lum gift turi</b>\n\n"
+            f"Gift: {gift}\n"
+            f"💰 Pul qaytarildi: <b>{price:,}</b> so'm",
             parse_mode="HTML",
         )
         return
 
+    logger.info(f"Sending gift {gift} (ID: {gift_id}) to @{username}")
     result = await gift_sender.send_gift(username, gift_id, message="🎁 Gift from StarPayUz")
+    logger.info(f"Gift send result: {result}")
 
     if result and result.get("ok"):
         await db.update_order(
@@ -251,9 +260,11 @@ async def _buy_gift(message: Message, data: dict):
         )
         user = await db.get_user(user_id)
         await message.answer(
-            f"✅ <b>Muvaffaqiyatli!</b>\n\n"
-            f"🎁 <b>{gift.capitalize()}</b> → @{username}\n"
-            f"💰 Yangi balans: {user['balance']:,.0f} so'm",
+            f"🎉 <b>Muvaffaqiyatli!</b>\n\n"
+            f"🎁 Gift yuborildi: <b>{gift.capitalize()}</b>\n"
+            f"👤 Qabul qiluvchi: @{username}\n"
+            f"💰 Yangi balans: <b>{user['balance']:,.0f}</b> so'm\n\n"
+            f"✅ Gift darhol yetkazildi!",
             parse_mode="HTML",
             reply_markup=keyboards.get_webapp_main_keyboard(),
         )
@@ -262,7 +273,10 @@ async def _buy_gift(message: Message, data: dict):
         await db.update_balance(user_id, price, "add")
         err = result.get("error", "Noma'lum xatolik")
         await message.answer(
-            f"❌ <b>Xatolik:</b> {err}\n\nPul qaytarildi.",
+            f"❌ <b>Xatolik yuz berdi</b>\n\n"
+            f"📝 Sabab: {err}\n"
+            f"💰 Pul qaytarildi: <b>{price:,}</b> so'm\n\n"
+            f"Iltimos, qayta urinib ko'ring yoki admin bilan bog'laning.",
             parse_mode="HTML",
             reply_markup=keyboards.get_webapp_main_keyboard(),
         )
