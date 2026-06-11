@@ -6,9 +6,7 @@ from typing import Any
 from telethon import TelegramClient, functions
 from telethon.errors import (
     FloodWaitError,
-    UserNotFoundError,
-    UsernameInvalidError,
-    UsernameNotOccupiedError,
+    UserIdInvalidError,
 )
 from telethon.sessions import StringSession
 from telethon.tl.types import InputStickerSetShortName
@@ -72,14 +70,11 @@ class TelethonGiftSender:
             # Получаем пользователя
             try:
                 user = await self.client.get_entity(username)
-            except (
-                UserNotFoundError,
-                UsernameInvalidError,
-                UsernameNotOccupiedError,
-            ):
+            except (UserIdInvalidError, ValueError, TypeError) as e:
+                logger.error(f"User not found: @{username}, error: {e}")
                 return {
                     "ok": False,
-                    "error": f"Username @{username} not found",
+                    "error": f"Username @{username} topilmadi",
                 }
 
             # Отправляем подарок через SendGift API
@@ -104,7 +99,7 @@ class TelethonGiftSender:
             logger.error(f"FloodWait: need to wait {e.seconds}s")
             return {
                 "ok": False,
-                "error": f"Too many requests. Wait {e.seconds} seconds",
+                "error": f"Juda ko'p so'rovlar. {e.seconds} soniya kuting",
                 "retry_after": e.seconds,
             }
 
@@ -112,7 +107,7 @@ class TelethonGiftSender:
             logger.exception(f"Failed to send gift: {e}")
             return {
                 "ok": False,
-                "error": str(e),
+                "error": f"Xatolik: {str(e)}",
             }
 
     async def get_available_gifts(self) -> dict[str, Any]:
