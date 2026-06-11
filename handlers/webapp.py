@@ -210,7 +210,9 @@ async def _buy_gift(message: Message, data: dict):
         await db.update_order(order_id, status="failed")
         await db.update_balance(user_id, price, "add")
         await message.answer(
-            "❌ <b>Gift сервис недоступен</b>\n\nПул qaytarildi.",
+            "❌ <b>Gift сервис временно недоступен</b>\n\n"
+            "Пожалуйста, попробуйте позже или выберите другой продукт.\n\n"
+            "Пул qaytarildi.",
             parse_mode="HTML",
             reply_markup=keyboards.get_webapp_main_keyboard(),
         )

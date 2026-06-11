@@ -104,19 +104,14 @@ class FragmentAPI:
         )
 
     async def buy_gift(self, username: str, gift_id: str) -> dict[str, Any]:
-        username = username.lstrip("@")
-        for path in ("gift/buy", "orders/gift", "gifts/order"):
-            try:
-                return await self._request(
-                    "POST",
-                    path,
-                    json={"username": username, "gift_id": gift_id},
-                )
-            except FragmentAPIError as e:
-                if e.status == 404:
-                    continue
-                raise
-        raise FragmentAPIError("Gift endpoint not found — check API docs")
+        """
+        DEPRECATED: Fragment API не поддерживает отправку подарков.
+        Используйте services.telethon_client.gift_sender вместо этого.
+        """
+        return {
+            "ok": False,
+            "error": "Gift sending not supported by Fragment API. Use Telethon instead."
+        }
 
     async def buy_phone(self, username: str, country: str) -> dict[str, Any]:
         username = username.lstrip("@")

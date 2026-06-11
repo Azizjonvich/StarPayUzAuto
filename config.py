@@ -7,7 +7,12 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Telethon (User Client for sending gifts)
-API_ID = int(os.getenv("API_ID", "0"))
+# Optional - if not set, gift sending will be disabled
+try:
+    API_ID = int(os.getenv("API_ID", "0") or "0")
+except (ValueError, TypeError):
+    API_ID = 0
+
 API_HASH = os.getenv("API_HASH", "")
 PHONE_NUMBER = os.getenv("PHONE_NUMBER", "")  # Your phone number for user account
 SESSION_NAME = os.getenv("SESSION_NAME", "starpay_session")
