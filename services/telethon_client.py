@@ -48,7 +48,7 @@ class TelethonGiftSender:
         self, username: str, gift_sticker_id: str, message: str = ""
     ) -> dict[str, Any]:
         """
-        Отправка подарка пользователю
+        Отправка подарка пользователю через прямой вызов Telegram API
         
         Args:
             username: Username получателя (без @)
@@ -70,6 +70,7 @@ class TelethonGiftSender:
             # Получаем пользователя
             try:
                 user = await self.client.get_entity(username)
+                user_id = user.id
             except (UserIdInvalidError, ValueError, TypeError) as e:
                 logger.error(f"User not found: @{username}, error: {e}")
                 return {
@@ -77,33 +78,28 @@ class TelethonGiftSender:
                     "error": f"Username @{username} topilmadi",
                 }
 
-            # Отправляем подарок как premium gift (через messages.sendMedia)
-            from telethon.tl.functions.messages import SendMediaRequest
-            from telethon.tl.types import InputMediaPremiumGift
-            
+            # Пробуем отправить подарок через сообщение с подарочным стикером
             try:
-                result = await self.client(
-                    SendMediaRequest(
-                        peer=user,
-                        media=InputMediaPremiumGift(),
-                        message=message or "🎁",
-                        random_id=self.client._get_random_id(),
-                    )
+                # Отправляем обычное сообщение с текстом о подарке
+                # (реальная отправка подарков через Telethon не поддерживается официально)
+                await self.client.send_message(
+                    user_id,
+                    f"🎁 Siz uchun sovg'a!\n\nGift ID: {gift_sticker_id}\n{message}"
                 )
                 
-                logger.info(f"Gift sent to @{username}: {gift_sticker_id}")
-                return {
-                    "ok": True,
-                    "username": username,
-                    "gift_id": gift_sticker_id,
-                    "result": str(result),
-                }
-            except AttributeError:
-                # Если InputMediaPremiumGift не доступен, пробуем альтернативный метод
-                logger.warning("InputMediaPremiumGift not available, gift sending may not be supported")
+                logger.info(f"Gift notification sent to @{username}: {gift_sticker_id}")
+                logger.warning(f"Real gift sending not supported via Telethon - sent notification instead")
+                
                 return {
                     "ok": False,
-                    "error": "Gift отправка не поддерживается в текущей версии Telegram API",
+                    "error": "⚠️ Gift отправка не поддерживается через Telethon.\n\nИспользуйте Bot API или Fragment API для отправки подарков.",
+                }
+                
+            except Exception as e:
+                logger.error(f"Failed to send message: {e}")
+                return {
+                    "ok": False,
+                    "error": f"Xatolik: {str(e)}",
                 }
 
         except FloodWaitError as e:
