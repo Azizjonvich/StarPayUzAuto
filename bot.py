@@ -45,10 +45,13 @@ async def main():
     runner = await start_api_server()
 
     # Initialize Telethon gift sender (if credentials provided)
+    logger.info(f"API_ID check: {config.API_ID}, API_HASH check: {bool(config.API_HASH)}")
+    
     if config.API_ID and config.API_HASH:
         try:
             from services.telethon_client import init_gift_sender
             session = config.TELETHON_SESSION_STRING or config.SESSION_NAME
+            logger.info(f"Initializing Telethon with session type: {'string' if config.TELETHON_SESSION_STRING else 'file'}")
             await init_gift_sender(
                 config.API_ID,
                 config.API_HASH,
@@ -59,6 +62,8 @@ async def main():
         except Exception as e:
             logger.error(f"Failed to initialize Telethon: {e}")
             logger.warning("Gift sending will not be available")
+    else:
+        logger.warning(f"Telethon not configured: API_ID={config.API_ID}, API_HASH={'set' if config.API_HASH else 'not set'}")
 
     # Initialize bot
     bot = Bot(
