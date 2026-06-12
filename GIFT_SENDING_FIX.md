@@ -6,43 +6,44 @@ Gift sending was not working because the implementation was trying to use:
 2. Simple text messages - not actual Telegram gifts
 
 ## Solution
-Implemented proper Telegram MTProto gift sending using Telethon:
+Implemented proper Telegram MTProto gift sending using Telethon with the correct 3-step process:
 
-### Method 1: `payments.sendStarGift` (Primary)
+### Correct Method: `InputInvoiceStarGift` + `GetPaymentFormRequest` + `SendStarsFormRequest`
 ```python
-from telethon.tl.functions.payments import SendStarGiftRequest
-from telethon.tl.types import InputUser
+from telethon.tl.types import InputInvoiceStarGift
+from telethon.tl.functions.payments import GetPaymentFormRequest, SendStarsFormRequest
 
-result = await client(
-    SendStarGiftRequest(
-        user_id=InputUser(user_id=user_id, access_hash=access_hash),
-        gift_id=int(gift_sticker_id),
-        hide_name=False,
-        message=message,
-    )
+# Step 1: Get receiver as InputPeer
+receiver_peer = await client.get_input_entity(username)
+
+# Step 2: Create invoice for gift
+invoice = InputInvoiceStarGift(
+    peer=receiver_peer,
+    gift_id=int(gift_sticker_id)
 )
-```
 
-### Method 2: `payments.sendStarsForm` (Fallback)
-If `SendStarGiftRequest` is not available, fallback to:
-```python
-from telethon.tl.functions.payments import SendStarsFormRequest
+# Step 3: Get payment form
+payment_form = await client(GetPaymentFormRequest(invoice=invoice))
 
+# Step 4: Send gift through form
 result = await client(
     SendStarsFormRequest(
-        form_id=int(gift_sticker_id),
-        invoice=None,
+        form_id=payment_form.form_id,
+        invoice=invoice
     )
 )
 ```
+
+This is the **WORKING METHOD** based on real implementation from StackOverflow.
 
 ## Changes Made
 
 ### 1. `services/telethon_client.py`
-- ✅ Replaced `SendMessageRequest` with `SendStarGiftRequest`
-- ✅ Added fallback to `SendStarsFormRequest` if primary method fails
-- ✅ Proper error handling with Uzbek messages
-- ✅ Improved logging
+- ✅ Использует правильный метод: `InputInvoiceStarGift` + `GetPaymentFormRequest` + `SendStarsFormRequest`
+- ✅ 3-шаговый процесс отправки подарка
+- ✅ Улучшенная обработка ошибок (STARGIFT_USAGE_LIMITED, PEER_ID_INVALID, BALANCE_TOO_LOW)
+- ✅ Правильная работа с `InputPeer` вместо `InputUser`
+- ✅ Подробное логирование каждого шага
 
 ### 2. `api/server.py`
 - ✅ Switched from Bot API to Telethon gift sender
