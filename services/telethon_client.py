@@ -153,35 +153,40 @@ class TelethonGiftSender:
             }
 
     async def get_available_gifts(self) -> dict[str, Any]:
-        """Получить список доступных подарков"""
+        """Получить список доступных Star Gifts из Telegram"""
         if not self.client or not self.client.is_connected():
             return {"ok": False, "error": "Client not connected"}
 
         try:
-            # Получаем набор стикеров с подарками
-            result = await self.client(
-                functions.messages.GetStickerSetRequest(
-                    stickerset=InputStickerSetShortName(short_name="PremiumGifts"),
-                    hash=0,
-                )
-            )
-
+            # Получаем список доступных Star Gifts
+            from telethon.tl.functions.payments import GetStarGiftsRequest
+            
+            result = await self.client(GetStarGiftsRequest(hash=0))
+            
             gifts = []
-            for doc in result.documents:
-                gifts.append(
-                    {
-                        "id": doc.id,
-                        "access_hash": doc.access_hash,
-                        "emoji": getattr(doc.attributes[0], "alt", "🎁")
-                        if doc.attributes
-                        else "🎁",
+            if hasattr(result, 'gifts'):
+                for gift in result.gifts:
+                    gift_info = {
+                        "id": str(gift.id),
+                        "stars": getattr(gift, 'stars', 0),
+                        "availability_remains": getattr(gift, 'availability_remains', None),
+                        "availability_total": getattr(gift, 'availability_total', None),
+                        "limited": getattr(gift, 'limited', False),
                     }
-                )
-
-            return {"ok": True, "gifts": gifts}
+                    
+                    # Получаем sticker info если есть
+                    if hasattr(gift, 'sticker'):
+                        sticker = gift.sticker
+                        if hasattr(sticker, 'id'):
+                            gift_info['sticker_id'] = str(sticker.id)
+                    
+                    gifts.append(gift_info)
+            
+            logger.info(f"Got {len(gifts)} available Star Gifts from Telegram")
+            return {"ok": True, "gifts": gifts, "count": len(gifts)}
 
         except Exception as e:
-            logger.exception(f"Failed to get gifts: {e}")
+            logger.exception(f"Failed to get Star Gifts: {e}")
             return {"ok": False, "error": str(e)}
 
 

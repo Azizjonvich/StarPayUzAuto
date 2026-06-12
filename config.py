@@ -82,17 +82,28 @@ PRODUCTS = {
         "color": "#FF69B4",
         "info": "Premium sovg'alar",
         "packages": [
-            {"id": "heart", "name": "💝 Yurak", "price": 3000, "emoji": "💝"},
-            {"id": "bear", "name": "🧸 Ayiq", "price": 3000, "emoji": "🧸"},
-            {"id": "box", "name": "🎁 Quti", "price": 5000, "emoji": "🎁"},
-            {"id": "rose", "name": "🌹 Atirgul", "price": 5000, "emoji": "🌹"},
-            {"id": "cake", "name": "🎂 Tort", "price": 10000, "emoji": "🎂"},
-            {"id": "rocket", "name": "🚀 Raketa", "price": 10000, "emoji": "🚀"},
-            {"id": "champagne", "name": "🍾 Shampan", "price": 10000, "emoji": "🍾"},
-            {"id": "bouquet", "name": "💐 Guldasta", "price": 10000, "emoji": "💐"},
-            {"id": "diamond", "name": "💎 Olmos", "price": 20000, "emoji": "💎"},
-            {"id": "trophy", "name": "🏆 Kubok", "price": 20000, "emoji": "🏆"},
-            {"id": "ring", "name": "💍 Uzuk", "price": 20000, "emoji": "💍"},
+            # Обычные подарки (Regular Gifts)
+            {"id": "heart", "name": "Yurak", "price": 3000, "emoji": "💝", "stars": 1, "tier": "regular"},
+            {"id": "bear", "name": "Ayiq", "price": 3000, "emoji": "🧸", "stars": 1, "tier": "regular"},
+            {"id": "box", "name": "Quti", "price": 5000, "emoji": "🎁", "stars": 1, "tier": "regular"},
+            {"id": "rose", "name": "Atirgul", "price": 5000, "emoji": "🌹", "stars": 1, "tier": "regular"},
+            {"id": "cake", "name": "Tort", "price": 10000, "emoji": "🎂", "stars": 2, "tier": "regular"},
+            {"id": "rocket", "name": "Raketa", "price": 10000, "emoji": "🚀", "stars": 2, "tier": "regular"},
+            {"id": "champagne", "name": "Shampan", "price": 10000, "emoji": "🍾", "stars": 2, "tier": "regular"},
+            {"id": "bouquet", "name": "Guldasta", "price": 10000, "emoji": "💐", "stars": 2, "tier": "regular"},
+            {"id": "diamond", "name": "Olmos", "price": 20000, "emoji": "💎", "stars": 5, "tier": "regular"},
+            {"id": "trophy", "name": "Kubok", "price": 20000, "emoji": "🏆", "stars": 5, "tier": "regular"},
+            {"id": "ring", "name": "Uzuk", "price": 20000, "emoji": "💍", "stars": 5, "tier": "regular"},
+            
+            # Удалённые/Премиум подарки (Deluxe/Limited Gifts)
+            {"id": "deluxe_rose", "name": "Deluxe Atirgul", "price": 50000, "emoji": "🌹✨", "stars": 25, "tier": "deluxe", "limited": True},
+            {"id": "deluxe_heart", "name": "Deluxe Yurak", "price": 50000, "emoji": "💝✨", "stars": 25, "tier": "deluxe", "limited": True},
+            {"id": "deluxe_cake", "name": "Deluxe Tort", "price": 75000, "emoji": "🎂✨", "stars": 50, "tier": "deluxe", "limited": True},
+            {"id": "deluxe_diamond", "name": "Deluxe Olmos", "price": 100000, "emoji": "💎✨", "stars": 100, "tier": "deluxe", "limited": True},
+            {"id": "golden_trophy", "name": "Oltin Kubok", "price": 150000, "emoji": "🏆✨", "stars": 250, "tier": "premium", "limited": True},
+            {"id": "star_crown", "name": "Yulduz Toj", "price": 200000, "emoji": "👑✨", "stars": 500, "tier": "premium", "limited": True},
+            {"id": "blue_gem", "name": "Ko'k Javohir", "price": 250000, "emoji": "💠", "stars": 1000, "tier": "premium", "limited": True},
+            {"id": "fire_phoenix", "name": "Olovli Qanot", "price": 500000, "emoji": "🔥🦅", "stars": 2500, "tier": "exclusive", "limited": True},
         ]
     }
 }

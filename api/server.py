@@ -242,6 +242,7 @@ async def api_order_gift(request: web.Request) -> web.Response:
   
   # Gift ID mapping
   gift_mapping = {
+    # Regular gifts
     "heart": "5170145012310081615",
     "bear": "5170233102089322756",
     "box": "5170250947678437525",
@@ -253,6 +254,17 @@ async def api_order_gift(request: web.Request) -> web.Response:
     "diamond": "5170521118301225164",
     "trophy": "5168043875654172773",
     "ring": "5170690322832818290",
+    
+    # Deluxe/Limited gifts (IDs need to be obtained from GetStarGiftsRequest)
+    # These are placeholder IDs - update with real IDs from Telegram API
+    "deluxe_rose": "5170145012310081616",      # Deluxe Rose - 25 stars
+    "deluxe_heart": "5170145012310081617",     # Deluxe Heart - 25 stars
+    "deluxe_cake": "5170144170496491617",      # Deluxe Cake - 50 stars
+    "deluxe_diamond": "5170521118301225165",   # Deluxe Diamond - 100 stars
+    "golden_trophy": "5168043875654172774",    # Golden Trophy - 250 stars
+    "star_crown": "5170145012310081618",       # Star Crown - 500 stars
+    "blue_gem": "5170145012310081619",         # Blue Gem - 1000 stars
+    "fire_phoenix": "5170145012310081620",     # Fire Phoenix - 2500 stars
   }
   
   gift_id = gift_mapping.get(gift.lower())

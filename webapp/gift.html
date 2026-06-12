@@ -144,6 +144,65 @@
         box-shadow: 0 0 30px rgba(59, 130, 246, .5);
     }
 
+    /* Deluxe gift card animations */
+    @keyframes shimmer {
+        0% { background-position: -100% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    .gift-card[style*="border-color: #FFD700"] {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gift-card[style*="border-color: #FFD700"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 215, 0, 0.1),
+            transparent
+        );
+        animation: shimmer 3s infinite;
+    }
+
+    .gift-card[style*="border-color: #9F7AEA"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(159, 122, 234, 0.1),
+            transparent
+        );
+        animation: shimmer 3s infinite;
+    }
+
+    .gift-card[style*="border-color: #FF6B9D"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 107, 157, 0.1),
+            transparent
+        );
+        animation: shimmer 3s infinite;
+    }
+
     .section-label {
         display: block;
         color: #fff;
@@ -327,7 +386,9 @@
     <!-- Content -->
     <div class="content">
         <div class="page-title">
-            <span style="font-size: 28px;">🎁</span>
+            <span>
+                <img src="./images/giftoption.webp" alt="" style="width: 30px;">
+            </span>
             <h2>Gift olish</h2>
         </div>
 
@@ -434,6 +495,79 @@
             </div>
 
         </div>
+
+        <h3 class="section-label" style="margin-top: 30px; color: #FFD700;">⭐ Deluxe Gifts</h3>
+        <p class="page-subtitle" style="margin-bottom: 15px;">Chegaralangan miqdordagi maxsus sovg'alar</p>
+
+        <!-- Deluxe Gift Grid -->
+        <div class="gift-grid">
+
+            <div class="gift-card" style="border-color: #FFD700;" onclick="pickGift(this, 'deluxe_rose', 50000)">
+                <div class="gift-emoji">
+                    <img src="./images/rose.webp" alt="Deluxe Rose" width="70" height="70" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));">
+                </div>
+                <div class="gift-name">Deluxe Atirgul</div>
+                <div class="gift-price" style="color: #FFD700;">50 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #FFD700;" onclick="pickGift(this, 'deluxe_heart', 50000)">
+                <div class="gift-emoji">
+                    <img src="./images/heart.webp" alt="Deluxe Heart" width="70" height="70" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));">
+                </div>
+                <div class="gift-name">Deluxe Yurak</div>
+                <div class="gift-price" style="color: #FFD700;">50 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #FFD700;" onclick="pickGift(this, 'deluxe_cake', 75000)">
+                <div class="gift-emoji">
+                    <img src="./images/cake.webp" alt="Deluxe Cake" width="70" height="70" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));">
+                </div>
+                <div class="gift-name">Deluxe Tort</div>
+                <div class="gift-price" style="color: #FFD700;">75 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #FFD700;" onclick="pickGift(this, 'deluxe_diamond', 100000)">
+                <div class="gift-emoji">
+                    <img src="./images/diamond.webp" alt="Deluxe Diamond" width="70" height="70" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));">
+                </div>
+                <div class="gift-name">Deluxe Olmos</div>
+                <div class="gift-price" style="color: #FFD700;">100 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #9F7AEA;" onclick="pickGift(this, 'golden_trophy', 150000)">
+                <div class="gift-emoji">
+                    <img src="./images/trophy.webp" alt="Golden Trophy" width="70" height="70" style="filter: drop-shadow(0 0 10px rgba(159,122,234,0.6));">
+                </div>
+                <div class="gift-name">Oltin Kubok</div>
+                <div class="gift-price" style="color: #9F7AEA;">150 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #9F7AEA;" onclick="pickGift(this, 'star_crown', 200000)">
+                <div class="gift-emoji">
+                    <div style="font-size: 48px;">👑✨</div>
+                </div>
+                <div class="gift-name">Yulduz Toj</div>
+                <div class="gift-price" style="color: #9F7AEA;">200 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #FF6B9D;" onclick="pickGift(this, 'blue_gem', 250000)">
+                <div class="gift-emoji">
+                    <div style="font-size: 48px;">💠</div>
+                </div>
+                <div class="gift-name">Ko'k Javohir</div>
+                <div class="gift-price" style="color: #FF6B9D;">250 000 so'm</div>
+            </div>
+
+            <div class="gift-card" style="border-color: #FF6B9D;" onclick="pickGift(this, 'fire_phoenix', 500000)">
+                <div class="gift-emoji">
+                    <div style="font-size: 48px;">🔥🦅</div>
+                </div>
+                <div class="gift-name">Olovli Qanot</div>
+                <div class="gift-price" style="color: #FF6B9D;">500 000 so'm</div>
+            </div>
+
+        </div>
+        
         <button class="btn-primary" id="buyBtn" onclick="buyGift()" disabled>Sotib olish</button>
     </div>
 
