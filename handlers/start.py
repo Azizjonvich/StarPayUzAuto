@@ -274,8 +274,8 @@ async def callback_support(callback: CallbackQuery):
     text = (
         "🔒 <b>Qo'llab-quvvatlash</b>\n\n"
         "Savol yoki muammo bo'lsa, biz bilan bog'laning:\n\n"
-        "👤 Admin: @StarPayUz_Admin\n"
-        "📢 Kanal: @StarPayUz_Channel\n"
+        "👤 Admin: @StarPayUzAdmin\n"
+        "📢 Kanal: @StarPayUzNews\n"
         "💬 Guruh: @StarPayUz_Chat\n\n"
         "⏰ Ish vaqti: 9:00 - 22:00 (har kuni)\n\n"
         "📧 Email: support@starpayuz.com"

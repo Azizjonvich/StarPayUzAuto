@@ -450,10 +450,10 @@ async def payment_webhook(request: web.Request) -> web.Response:
       try:
         await bot.send_message(
           user_id,
-          f"🎉 <b>Tabriklaymiz!</b>\n\n"
-          f"💵 Hisobingiz to'ldirildi: <b>{amount:,}</b> so'm\n"
-          f"💰 Yangi balans: <b>{new_balance:,}</b> so'm\n\n"
-          f"✅ To'lov muvaffaqiyatli amalga oshirildi!",
+          f"🎊 <b>Tabriklaymiz!</b> 🎉\n\n"
+          f"💸 <b>+{amount:,}</b> so'm\n"
+          f"💰 Balans: <b>{new_balance:,}</b> so'm\n\n"
+          f"✅ To'lov muvaffaqiyatli qabul qilindi",
         )
       except Exception as e:
         logger.warning("Could not notify user %s: %s", user_id, e)
