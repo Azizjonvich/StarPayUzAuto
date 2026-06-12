@@ -49,6 +49,7 @@ class TelethonGiftSender:
     ) -> dict[str, Any]:
         """
         Отправка подарка пользователю через Telethon MTProto
+        Использует правильный метод: InputInvoiceStarGift + GetPaymentForm + SendStarsForm
         
         Args:
             username: Username получателя (без @)
@@ -67,10 +68,10 @@ class TelethonGiftSender:
         username = username.lstrip("@")
 
         try:
-            # Получаем пользователя
+            # Получаем пользователя (InputPeer)
             try:
-                user = await self.client.get_entity(username)
-                user_id = user.id
+                receiver_peer = await self.client.get_input_entity(username)
+                logger.info(f"Got receiver peer for @{username}: {receiver_peer}")
             except Exception as e:
                 logger.error(f"User not found: @{username}, error: {e}")
                 return {
@@ -78,22 +79,31 @@ class TelethonGiftSender:
                     "error": f"Username @{username} topilmadi",
                 }
 
-            # Используем payments.sendStarGift для отправки подарка
-            from telethon.tl.functions.payments import SendStarGiftRequest
-            from telethon.tl.types import InputUser
+            # Создаем инвойс для подарка
+            from telethon.tl.types import InputInvoiceStarGift
+            from telethon.tl.functions.payments import GetPaymentFormRequest, SendStarsFormRequest
             
             try:
-                # Отправляем подарок через payments.sendStarGift
+                # Шаг 1: Создаем invoice для подарка
+                invoice = InputInvoiceStarGift(
+                    peer=receiver_peer,
+                    gift_id=int(gift_sticker_id)
+                )
+                logger.info(f"Created invoice for gift {gift_sticker_id}")
+                
+                # Шаг 2: Получаем форму оплаты
+                payment_form = await self.client(GetPaymentFormRequest(invoice=invoice))
+                logger.info(f"Got payment form: form_id={payment_form.form_id}")
+                
+                # Шаг 3: Отправляем подарок через форму
                 result = await self.client(
-                    SendStarGiftRequest(
-                        user_id=InputUser(user_id=user_id, access_hash=user.access_hash),
-                        gift_id=int(gift_sticker_id),
-                        hide_name=False,
-                        message=message if message else None,
+                    SendStarsFormRequest(
+                        form_id=payment_form.form_id,
+                        invoice=invoice
                     )
                 )
                 
-                logger.info(f"Star gift sent to @{username}: {gift_sticker_id}")
+                logger.info(f"Star gift sent to @{username}: {gift_sticker_id}, result: {result}")
                 return {
                     "ok": True,
                     "username": username,
@@ -102,35 +112,30 @@ class TelethonGiftSender:
                 }
                 
             except Exception as e:
-                logger.error(f"Failed to send star gift: {e}")
-                # Если метод не существует, пробуем альтернативный способ
-                if "SendStarGiftRequest" in str(e) or "not found" in str(e).lower():
-                    logger.warning("SendStarGiftRequest not available, trying alternative method")
-                    # Пробуем отправить через форму покупки подарка
-                    try:
-                        from telethon.tl.functions.payments import SendStarsFormRequest
-                        
-                        result = await self.client(
-                            SendStarsFormRequest(
-                                form_id=int(gift_sticker_id),
-                                invoice=None,
-                            )
-                        )
-                        
-                        logger.info(f"Gift sent via form to @{username}: {gift_sticker_id}")
-                        return {
-                            "ok": True,
-                            "username": username,
-                            "gift_id": gift_sticker_id,
-                            "result": str(result),
-                        }
-                    except Exception as e2:
-                        logger.error(f"Alternative method also failed: {e2}")
+                error_msg = str(e)
+                logger.error(f"Failed to send star gift: {error_msg}")
                 
-                return {
-                    "ok": False,
-                    "error": f"Xatolik: {str(e)}",
-                }
+                # Проверяем специфические ошибки
+                if "STARGIFT_USAGE_LIMITED" in error_msg:
+                    return {
+                        "ok": False,
+                        "error": "Bu sovg'a tugab qolgan. Boshqa sovg'a tanlang.",
+                    }
+                elif "PEER_ID_INVALID" in error_msg:
+                    return {
+                        "ok": False,
+                        "error": f"Username @{username} noto'g'ri yoki mavjud emas",
+                    }
+                elif "BALANCE_TOO_LOW" in error_msg:
+                    return {
+                        "ok": False,
+                        "error": "Telegram Stars yetarli emas (bot hisobida)",
+                    }
+                else:
+                    return {
+                        "ok": False,
+                        "error": f"Xatolik: {error_msg}",
+                    }
 
         except FloodWaitError as e:
             logger.error(f"FloodWait: need to wait {e.seconds}s")
