@@ -8,7 +8,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>window.API_BASE = 'https://worker-production-679d.up.railway.app';</script>
 
-    <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
     <style>
@@ -162,8 +161,6 @@
         .swiper-pagination {
             display: none;
         }
-
-        /* Скрываем точки */
 
         .gift-card {
             background: #111827;
@@ -326,17 +323,8 @@
         }
 
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.1);
-            }
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
         }
 
         .nft-emoji-wrapper img,
@@ -430,7 +418,6 @@
 </head>
 
 <body>
-    <!-- Header -->
     <div class="header">
         <div class="header-left">
             <a href="/"><img src="./images/logo.png" alt="" class="header-left__image"></a>
@@ -441,7 +428,6 @@
         </div>
     </div>
 
-    <!-- Content -->
     <div class="content">
         <div class="page-title">
             <span><img src="./images/gift.webp" alt="" style="width: 30px;"></span>
@@ -458,160 +444,137 @@
         <h3 class="section-label">Gift tanlang</h3>
         <div id="selectedGiftInfo" class="selected-gift-info">Gift tanlanmagan</div>
 
-        <!-- Swiper for Regular Gifts -->
         <div class="swiper mySwiper">
             <div class="swiper-wrapper">
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'heart', 3000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Yurak', 3000)">
                         <div class="gift-emoji"><img src="./images/heart.webp" alt="Heart"></div>
                         <div class="gift-name">Yurak</div>
                         <div class="gift-price">3 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'bear', 3000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Ayiq', 3000)">
                         <div class="gift-emoji"><img src="./images/bear.webp" alt="Bear"></div>
                         <div class="gift-name">Ayiq</div>
                         <div class="gift-price">3 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'box', 5000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Quti', 5000)">
                         <div class="gift-emoji"><img src="./images/box.webp" alt="Box"></div>
                         <div class="gift-name">Quti</div>
                         <div class="gift-price">5 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'rose', 5000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Atirgul', 5000)">
                         <div class="gift-emoji"><img src="./images/rose.webp" alt="Rose"></div>
                         <div class="gift-name">Atirgul</div>
                         <div class="gift-price">5 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'cake', 10000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Tort', 10000)">
                         <div class="gift-emoji"><img src="./images/cake.webp" alt="Cake"></div>
                         <div class="gift-name">Tort</div>
                         <div class="gift-price">10 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'rocket', 10000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Raketa', 10000)">
                         <div class="gift-emoji"><img src="./images/rocket.webp" alt="Rocket"></div>
                         <div class="gift-name">Raketa</div>
                         <div class="gift-price">10 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'champagne', 10000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Shampan', 10000)">
                         <div class="gift-emoji"><img src="./images/shampen.webp" alt="Champagne"></div>
                         <div class="gift-name">Shampan</div>
                         <div class="gift-price">10 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'bouquet', 10000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Guldasta', 10000)">
                         <div class="gift-emoji"><img src="./images/bouqet.webp" alt="Bouquet"></div>
                         <div class="gift-name">Guldasta</div>
                         <div class="gift-price">10 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'diamond', 20000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Olmos', 20000)">
                         <div class="gift-emoji"><img src="./images/diamond.webp" alt="Diamond"></div>
                         <div class="gift-name">Olmos</div>
                         <div class="gift-price">20 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'trophy', 20000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Kubok', 20000)">
                         <div class="gift-emoji"><img src="./images/trophy.webp" alt="Trophy"></div>
                         <div class="gift-name">Kubok</div>
                         <div class="gift-price">20 000 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'ring', 20000)">
+                    <div class="gift-card" onclick="pickGift(this, 'Uzuk', 20000)">
                         <div class="gift-emoji"><img src="./images/ring.webp" alt="Ring"></div>
                         <div class="gift-name">Uzuk</div>
                         <div class="gift-price">20 000 so'm</div>
                     </div>
                 </div>
-
-                <!-- Limited Edition Gifts -->
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'newyear_tree', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, 'Yangi yil archasi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/newyear__tree.webp" alt="New Year Tree"></div>
                         <div class="gift-name">Yangi yil archasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'newyear_bear', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, 'Yangi yil ayiqchasi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/newyear__bear.webp" alt="New Year Bear"></div>
                         <div class="gift-name">Yangi yil ayiqchasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'valentine_heart', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, 'Sevgi yuragi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/valentine__heart.webp" alt="Valentine Heart"></div>
                         <div class="gift-name">Sevgi yuragi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'valentine_bear', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, 'Sevgi ayiqchasi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/valentine__bear.webp" alt="Valentine Bear"></div>
                         <div class="gift-name">Sevgi ayiqchasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'patrick_bear', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, 'Sent-Patrik ayiqchasi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/patrick__bear.webp" alt="St. Patrick Bear"></div>
                         <div class="gift-name">Sent-Patrik ayiqchasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'april_bear', 10500)">
+                    <div class="gift-card" onclick="pickGift(this, '1-aprel ayiqchasi', 10500)">
                         <div class="gift-emoji"><img src="./images/deletedgifts/aprel__bear.webp" alt="April Fools Bear"></div>
                         <div class="gift-name">1-aprel ayiqchasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
                 <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'easter_bear', 10500)">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/easter__bear.webp alt="Easter Bear"></div>
+                    <div class="gift-card" onclick="pickGift(this, 'Pasxa ayiqchasi', 10500)">
+                        <div class="gift-emoji"><img src="./images/deletedgifts/easter__bear.webp" alt="Easter Bear"></div>
                         <div class="gift-name">Pasxa ayiqchasi</div>
                         <div class="gift-price">10 500 so'm</div>
                     </div>
                 </div>
-
-               
             </div>
         </div>
 
-        <!-- NFT Gifts Section -->
         <div class="nft-section">
             <div class="nft-header">
                 <h2 class="nft-title">✨ NFT Gifts ✨</h2>
@@ -619,7 +582,7 @@
             </div>
 
             <div class="nft-grid">
-                <div class="nft-card" onclick="pickGift(this, 'deluxe_rose', 50000)">
+                <div class="nft-card" onclick="pickGift(this, 'Deluxe Atirgul', 50000)">
                     <span class="nft-badge">Limited</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -629,7 +592,7 @@
                     <div class="nft-price">50 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'deluxe_heart', 50000)">
+                <div class="nft-card" onclick="pickGift(this, 'Deluxe Yurak', 50000)">
                     <span class="nft-badge">Limited</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -639,7 +602,7 @@
                     <div class="nft-price">50 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'deluxe_cake', 75000)">
+                <div class="nft-card" onclick="pickGift(this, 'Deluxe Tort', 75000)">
                     <span class="nft-badge">Rare</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -649,7 +612,7 @@
                     <div class="nft-price">75 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'deluxe_diamond', 100000)">
+                <div class="nft-card" onclick="pickGift(this, 'Deluxe Olmos', 100000)">
                     <span class="nft-badge">Rare</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -659,7 +622,7 @@
                     <div class="nft-price">100 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'golden_trophy', 150000)">
+                <div class="nft-card" onclick="pickGift(this, 'Oltin Kubok', 150000)">
                     <span class="nft-badge">Epic</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -670,7 +633,7 @@
                     <div class="nft-price">150 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'star_crown', 200000)">
+                <div class="nft-card" onclick="pickGift(this, 'Yulduz Toj', 200000)">
                     <span class="nft-badge">Epic</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -680,7 +643,7 @@
                     <div class="nft-price">200 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'blue_gem', 250000)">
+                <div class="nft-card" onclick="pickGift(this, 'Ko\'k Javohir', 250000)">
                     <span class="nft-badge">Legendary</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"></div>
@@ -690,7 +653,7 @@
                     <div class="nft-price">250 000 so'm</div>
                 </div>
 
-                <div class="nft-card" onclick="pickGift(this, 'fire_phoenix', 500000)">
+                <div class="nft-card" onclick="pickGift(this, 'Olovli Qanot', 500000)">
                     <span class="nft-badge">Mythic</span>
                     <div class="nft-emoji-wrapper">
                         <div class="nft-glow"
@@ -707,7 +670,6 @@
         <button class="btn-primary" id="buyBtn" onclick="buyGift()" disabled>Sotib olish</button>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item" onclick="openStars()">
             <div class="nav-icon"><img src="./images/home.webp" alt="home"></div>
@@ -727,23 +689,22 @@
         </div>
     </div>
 
-    <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="js/common.js"></script>
     <script>
-        // Initialize Swiper
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand(); // Разворачиваем WebApp на весь экран
+        }
+
+        // Настройка Swiper (оптимальная для кликов)
         const swiper = new Swiper('.mySwiper', {
-            slidesPerView: 'auto',  // Автоматический размер
-            spaceBetween: 20,  // 20px между карточками
-            loop: true,  // Бесконечная прокрутка
-            centeredSlides: false,  // Не центрировать
-            autoplay: {
-                delay: 0,  // Без задержки
-                disableOnInteraction: false,
-            },
-            speed: 3000,  // Медленная непрерывная прокрутка
-            freeMode: true,  // Свободное движение
-            freeModeMomentum: false,  // Без инерции
+            slidesPerView: 'auto',  
+            spaceBetween: 15,  
+            freeMode: true,
+            allowTouchMove: true
         });
 
         let selectedGift = null;
@@ -752,7 +713,7 @@
         function pickGift(el, name, price) {
             selectedGift = name;
             selectedGiftPrice = price;
-            document.querySelectorAll('.gift-card, .nft-card, .limited-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.gift-card, .nft-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
             document.getElementById('selectedGiftInfo').innerHTML =
                 `Tanlandi: <strong>${name}</strong> — ${price.toLocaleString('uz-UZ')} so'm`;
@@ -760,21 +721,32 @@
         }
 
         function buyGift() {
-            const username = getUsername('username');
+            // Безопасное получение юзернейма напрямую из DOM, если функции getUsername нет
+            const usernameInput = document.getElementById('username');
+            const username = usernameInput ? usernameInput.value.trim() : '';
+
             if (!username) {
-                tg.showAlert('Iltimos, username kiriting!');
+                if (tg) tg.showAlert('Iltimos, username kiriting!');
+                else alert('Iltimos, username kiriting!');
                 return;
             }
             if (!selectedGift) {
-                tg.showAlert('Gift tanlang!');
+                if (tg) tg.showAlert('Gift tanlang!');
+                else alert('Gift tanlang!');
                 return;
             }
-            submitOrder({
-                action: 'buy_gift',
-                gift: selectedGift,
-                price: selectedGiftPrice,
-                username: username
-            });
+
+            // Отправка данных на ваш бэкенд
+            if (typeof submitOrder === 'function') {
+                submitOrder({
+                    action: 'buy_gift',
+                    gift: selectedGift,
+                    price: selectedGiftPrice,
+                    username: username
+                });
+            } else {
+                console.log('submitOrder funksiyasi topilmadi', { selectedGift, selectedGiftPrice, username });
+            }
         }
 
         function openStars() { window.location.href = 'stars.html'; }
@@ -786,3 +758,7 @@
 </body>
 
 </html>
+
+
+
+
