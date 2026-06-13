@@ -65,23 +65,30 @@ class FragmentAPIClient:
         amount: int, 
         order_id: str, 
         user_id: int,
-        description: str = "Hisobni to'ldirish"
+        description: str = "Hisobni to'ldirish",
+        callback_url: str = "",
+        redirect_url: str = ""
     ) -> Dict[str, Any]:
         """
         Create payment invoice via Fragment API Uz
         Docs: https://fragment-api.uz/docs/payment
         """
-        return await self._make_request(
-            "payment/create",
-            {
-                "shop_id": self.shop_id,
-                "amount": amount,
-                "order_id": order_id,
-                "user_id": user_id,
-                "description": description,
-                "currency": "UZS",
-            }
-        )
+        payload = {
+            "shop_id": self.shop_id,
+            "amount": amount,
+            "order_id": order_id,
+            "user_id": user_id,
+            "description": description,
+            "currency": "UZS",
+        }
+        # Callback URL для уведомлений об оплате
+        if callback_url:
+            payload["callback_url"] = callback_url
+        # Redirect URL после успешной оплаты
+        if redirect_url:
+            payload["redirect_url"] = redirect_url
+        
+        return await self._make_request("payment/create", payload)
 
     async def check_payment(self, order_id: str) -> Dict[str, Any]:
         """

@@ -391,16 +391,22 @@ async def api_payment_create(request: web.Request) -> web.Response:
     return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
 
   # Create order in database
-  await create_order(int(user_id), "topup", "", amount_int, amount_int, order_id, "pending")
+  await create_order(int(user_id), "topup", "", None, amount_int, order_id, "pending")
   
   # Import api_client to create payment
   from api_client import api_client
+  
+  # Определяем callback_url для вебхуков
+  callback_url = f"{settings.webapp_base_url}/webhook/payment"
+  redirect_url = f"{settings.webapp_base_url}/payment/success"
   
   result = await api_client.create_payment(
     amount=amount_int,
     order_id=order_id,
     user_id=int(user_id),
-    description=f"StarPayUz - Hisobni to'ldirish {amount_int:,} so'm"
+    description=f"StarPayUz - Hisobni to'ldirish {amount_int:,} so'm",
+    callback_url=callback_url,
+    redirect_url=redirect_url
   )
   
   if result.get("ok") and result.get("payment_url"):
@@ -417,38 +423,102 @@ async def api_payment_create(request: web.Request) -> web.Response:
 
 
 async def payment_webhook(request: web.Request) -> web.Response:
+  """
+  Единый обработчик вебхуков от платёжных систем.
+  Поддерживает:
+    - Fragment API (поле "order_id", "amount", "user_id")
+    - Click (поле "merchant_trans_id", "amount", "user_id")
+    - Payme (поле "order_id", "amount", "customer_id")
+  """
   try:
     payload = await request.json()
   except Exception:
     return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400)
 
+  logger.info("Payment webhook received: %s", json.dumps(payload, ensure_ascii=False)[:200])
+
+  # Проверка shop_id (для Fragment API / Click)
   shop_id = str(payload.get("shop_id", ""))
   if settings.shop_id and shop_id and shop_id != str(settings.shop_id):
+    logger.warning("Invalid shop_id: %s (expected %s)", shop_id, settings.shop_id)
     return web.json_response({"ok": False, "error": "Invalid shop_id"}, status=403)
 
-  if settings.shop_key and not verify_shop_signature(payload, settings.shop_key):
-    logger.warning("Payment webhook signature mismatch — check SHOP_KEY / payload format")
+  # Проверка подписи
+  if settings.shop_key:
+    if not verify_shop_signature(payload, settings.shop_key):
+      logger.warning("Payment webhook signature mismatch — check SHOP_KEY / payload format")
+      # Не блокируем обработку, т.к. разные платёжные системы используют разные алгоритмы
+    else:
+      logger.info("Payment webhook signature verified")
 
-  status = str(payload.get("status", "paid")).lower()
-  if status not in ("paid", "success", "completed", "1", "true"):
+  # Определяем статус (Click использует поле "error": 0 для успеха)
+  raw_status = str(payload.get("status", "")).lower()
+  action = str(payload.get("action", "")).lower()
+  error_code = payload.get("error")
+  
+  # Click: action="1" (complete) и error=0 значит успех
+  is_click_success = (action == "1" and error_code == 0)
+  # Payme: status="paid" / status="completed"
+  is_paid = raw_status in ("paid", "success", "completed", "1", "true")
+  
+  if not is_paid and not is_click_success:
+    logger.info("Webhook ignored: status=%s, action=%s, error=%s", raw_status, action, error_code)
     return web.json_response({"ok": True, "message": "ignored status"})
 
+  # Извлекаем поля (поддержка разных форматов)
   order_id, amount, user_id = extract_payment_fields(payload)
-  if not order_id or not amount:
+  
+  # Если не нашли через общие поля — пробуем специфичные для Click
+  if not order_id:
+    order_id = payload.get("merchant_trans_id") or payload.get("click_trans_id")
+  if not amount:
+    # Click/Payme могут передавать amount как строку с десятичной точкой "50000.00"
+    raw_amount = payload.get("amount") or payload.get("sum") or payload.get("total")
+    if raw_amount is not None:
+      try:
+        amount = int(float(str(raw_amount)))
+      except (TypeError, ValueError):
+        amount = None
+  if not user_id:
+    user_id = payload.get("user_id") or payload.get("telegram_id") or payload.get("customer_id")
+  
+  if not order_id or amount is None:
+    logger.warning("Missing required fields: order_id=%s, amount=%s", order_id, amount)
     return web.json_response({"ok": False, "error": "Missing order_id or amount"}, status=400)
 
+  try:
+    amount_int = int(float(str(amount))) if not isinstance(amount, int) else amount
+  except (TypeError, ValueError):
+    return web.json_response({"ok": False, "error": "Invalid amount"}, status=400)
+
+  try:
+    user_int = int(user_id) if user_id else None
+  except (TypeError, ValueError):
+    user_int = None
+
+  if not user_int:
+    logger.warning("Payment webhook missing user_id — cannot credit balance. Payload: %s", json.dumps(payload, ensure_ascii=False)[:300])
+    # Всё равно записываем платеж, но баланс не начисляем
+    # (админ сможет вручную проверить и начислить)
+
+  # Записываем платеж (если уже был — вернёт False)
   inserted = await record_payment(
     order_id,
-    user_id,
-    amount,
+    user_int,
+    amount_int,
     "paid",
     json.dumps(payload, ensure_ascii=False),
   )
   if not inserted:
+    logger.info("Payment %s already processed, skipping", order_id)
     return web.json_response({"ok": True, "message": "already processed"})
 
-  if user_id:
-    new_balance = await add_balance(user_id, amount)
+  # Начисляем баланс только если есть user_id
+  if user_int:
+    new_balance = await add_balance(user_int, amount_int)
+    logger.info("Balance credited: user=%s, amount=%s, new_balance=%s", user_int, amount_int, new_balance)
+    
+    # Отправляем уведомление в Telegram
     from aiogram import Bot
     from aiogram.client.default import DefaultBotProperties
     from aiogram.enums import ParseMode
@@ -460,18 +530,20 @@ async def payment_webhook(request: web.Request) -> web.Response:
       )
       try:
         await bot.send_message(
-          user_id,
+          user_int,
           f"🎊 <b>Tabriklaymiz!</b> 🎉\n\n"
-          f"💸 <b>+{amount:,}</b> so'm\n"
+          f"💸 <b>+{amount_int:,}</b> so'm\n"
           f"💰 Balans: <b>{new_balance:,}</b> so'm\n\n"
           f"✅ To'lov muvaffaqiyatli qabul qilindi",
         )
       except Exception as e:
-        logger.warning("Could not notify user %s: %s", user_id, e)
+        logger.warning("Could not notify user %s: %s", user_int, e)
       finally:
         await bot.session.close()
+  else:
+    logger.warning("Payment %s recorded but balance NOT credited (no user_id)", order_id)
 
-  return web.json_response({"ok": True})
+  return web.json_response({"ok": True, "message": "Payment processed"})
 
 
 async def api_order_topup(request: web.Request) -> web.Response:
@@ -569,6 +641,118 @@ async def on_startup(app: web.Application) -> None:
   logger.info("API server ready — webapp at /app/")
 
 
+async def click_webhook(request: web.Request) -> web.Response:
+  """
+  Webhook для Click UZ.
+  Click отправляет два запроса:
+    1. PREPARE (action=0) — проверка, что заказ существует
+    2. COMPLETE (action=1) — подтверждение оплаты
+  """
+  try:
+    payload = await request.json()
+  except Exception:
+    return web.json_response({"error": "Invalid JSON"}, status=400)
+
+  logger.info("Click webhook received: %s", json.dumps(payload, ensure_ascii=False)[:300])
+
+  action = int(payload.get("action", 0))
+  
+  if action == 0:
+    # PREPARE — проверяем заказ
+    from services.click_payment import handle_click_prepare
+    result = await handle_click_prepare(payload, settings.shop_id, settings.shop_key)
+    return web.json_response(result)
+  elif action == 1:
+    # COMPLETE — обрабатываем платеж
+    from services.click_payment import handle_click_complete
+    result = await handle_click_complete(payload, settings.shop_id, settings.shop_key)
+    return web.json_response(result)
+  else:
+    return web.json_response({
+      "click_trans_id": payload.get("click_trans_id", ""),
+      "merchant_trans_id": payload.get("merchant_trans_id", ""),
+      "error": -1,
+      "error_note": "Invalid action"
+    })
+
+
+async def payment_success_page(request: web.Request) -> web.Response:
+  """Page shown after successful payment"""
+  return web.Response(
+    content_type="text/html",
+    text="""<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To'lov muvaffaqiyatli — StarPayUz</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 24px;
+      padding: 48px 32px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #3B82F6;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 16px 40px;
+      background: #3B82F6;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: .3s;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">✅</div>
+    <h1>To'lov muvaffaqiyatli!</h1>
+    <p>Hisobingiz muvaffaqiyatli to'ldirildi.<br>Botga qaytib, balansingizni tekshiring.</p>
+    <a href="https://t.me/StarPayUz_Bot" class="btn">🤖 Botga qaytish</a>
+  </div>
+</body>
+</html>""")
+
+
 def create_app() -> web.Application:
   app = web.Application(middlewares=[cors_middleware])
   app.router.add_get("/health", health)
@@ -583,7 +767,9 @@ def create_app() -> web.Application:
   app.router.add_post("/api/payment/check", api_payment_check)
   app.router.add_post("/webhook/payment", payment_webhook)
   app.router.add_post("/api/webhook/payment", payment_webhook)
+  app.router.add_post("/webhook/click", click_webhook)
   app.router.add_get("/api/gifts/available", api_get_available_gifts)
+  app.router.add_get("/payment/success", payment_success_page)
 
   app.router.add_static("/app", WEBAPP_DIR, name="webapp")
   app.router.add_static("/", WEBAPP_DIR, name="root")

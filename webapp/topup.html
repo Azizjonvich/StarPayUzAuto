@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="uz">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,279 +9,408 @@
         window.API_BASE = 'https://worker-production-679d.up.railway.app';
     </script>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #030712;
+            color: #fff;
+            padding: 20px;
+            padding-bottom: 200px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .header-left__image {
+            width: 60px;
+            height: 60px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .balance-badge {
+            color: #fff;
+            font-weight: 600;
+            border: 2px solid #3B82F6;
+            background: #031632;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 14px;
+            transition: .3s;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .page-title h2 {
+            color: #3B82F6;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .balance-card .label {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .balance-card .amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: #3B82F6;
+        }
+
+        .balance-card .amount span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .section-title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .amount-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .amount-btn {
+            background: #1e293b;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s ease;
+            color: #fff;
+        }
+
+        .amount-btn:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: #253247;
+            transform: translateY(-1px);
+        }
+
+        .amount-btn.active {
+            border-color: #3B82F6;
+            background: #031632;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .amount-btn .value {
+            font-size: 18px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .amount-btn .label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .custom-amount {
+            margin-bottom: 24px;
+        }
+
+        .custom-amount input {
+            width: 100%;
+            background: #1e293b;
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            border-radius: 14px;
+            padding: 16px 20px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            outline: none;
+            transition: .3s;
+        }
+
+        .custom-amount input:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .custom-amount input::placeholder {
+            color: #475569;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .method-btn {
+            background: #1e293b;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s ease;
+            color: #fff;
+        }
+
+        .method-btn:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: #253247;
+        }
+
+        .method-btn.active {
+            border-color: #3B82F6;
+            background: #031632;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .method-btn .icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .method-btn .name {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .method-btn .desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            height: 58px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563eb 100%);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-pay:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-pay:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-pay .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+        }
+
+        .btn-pay.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-pay.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-text {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 28px;
+            padding: 15px 10px;
+            display: flex;
+            justify-content: space-around;
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .nav-item.active {
+            color: #3B82F6;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+        }
+
+        .nav-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .nav-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+    </style>
 </head>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Inter', sans-serif;
-    }
-
-    body {
-        background: #030712;
-        color: #fff;
-        padding: 20px;
-        padding-bottom: 200px;
-    }
-
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 35px;
-    }
-
-    .header-left__image {
-        width: 60px;
-        height: 60px;
-    }
-
-    .header-right {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .balance-badge {
-        color: #fff;
-        font-weight: 600;
-        border: 2px solid #3B82F6;
-        background: #031632;
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-size: 14px;
-        transition: .3s;
-    }
-
-    .add-button {
-        width: 42px;
-        height: 42px;
-        border: none;
-        border-radius: 50%;
-        background: #3B82F6;
-        color: #fff;
-        font-size: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: .3s;
-        box-shadow: 0 0 20px rgba(59, 130, 246, .3);
-    }
-
-    .page-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 25px;
-    }
-
-    .page-title h2 {
-        color: #3B82F6;
-        font-size: 22px;
-        font-weight: 700;
-    }
-
-    .info-card {
-        background: #111827;
-        border: 2px solid #3B82F6;
-        border-radius: 22px;
-        padding: 32px 24px;
-        text-align: center;
-        margin-bottom: 25px;
-    }
-
-    .info-icon {
-        font-size: 64px;
-        margin-bottom: 16px;
-    }
-
-    .info-text {
-        color: #9CA3AF;
-        font-size: 15px;
-        line-height: 1.6;
-        margin-bottom: 24px;
-    }
-
-    .section-label {
-        display: block;
-        color: #fff;
-        font-weight: 600;
-        margin-bottom: 12px;
-        font-size: 16px;
-    }
-
-    .menu-section {
-        background: #111827;
-        border: 2px solid #3B82F6;
-        border-radius: 22px;
-        padding: 8px;
-        margin-bottom: 16px;
-    }
-
-    .menu-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px;
-        cursor: pointer;
-        border-radius: 16px;
-        transition: .3s;
-        opacity: 0.5;
-    }
-
-    .menu-item-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .menu-icon {
-        font-size: 22px;
-    }
-
-    .menu-text {
-        font-size: 16px;
-        font-weight: 600;
-        color: #fff;
-    }
-
-    .badge {
-        background: #1E293B;
-        color: #9CA3AF;
-        padding: 4px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .btn-primary {
-        width: 100%;
-        height: 58px;
-        border: none;
-        border-radius: 18px;
-        background: #3B82F6;
-        color: #fff;
-        font-size: 18px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: .3s;
-        box-shadow: 0 0 25px rgba(59, 130, 246, .3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 35px rgba(59, 130, 246, .45);
-    }
-
-    .bottom-nav {
-        position: fixed;
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
-        background: #111827;
-        border: 1px solid rgba(255, 255, 255, .05);
-        border-radius: 28px;
-        padding: 15px 10px;
-        display: flex;
-        justify-content: space-around;
-        backdrop-filter: blur(20px);
-    }
-
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        color: #9CA3AF;
-        cursor: pointer;
-        transition: .3s;
-    }
-
-    .nav-item.active {
-        color: #3B82F6;
-    }
-
-    .nav-icon {
-        font-size: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 34px;
-    }
-
-    .nav-icon img {
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-    }
-
-    .nav-label {
-        font-size: 13px;
-        font-weight: 600;
-    }
-</style>
-
 <body>
     <!-- Header -->
     <div class="header">
         <div class="header-left">
             <a href="/">
-                <img src="./images/logo.png" alt="" class="header-left__image">
+                <img src="./images/logo.png" alt="StarPayUz" class="header-left__image">
             </a>
         </div>
         <div class="header-right">
             <div class="balance-badge" id="balance">0 so'm</div>
-            <button class="add-button" onclick="window.location.reload()">↻</button>
         </div>
     </div>
 
     <!-- Content -->
-    <div class="content">
-        <div class="page-title">
-            <span style="font-size: 28px;">💰</span>
-            <h2>Hisobni to'ldirish</h2>
-        </div>
+    <div class="page-title">
+        <span style="font-size: 28px;">💰</span>
+        <h2>Hisobni to'ldirish</h2>
+    </div>
 
-        <div class="info-card">
-            <div class="info-icon">💳</div>
-            <p class="info-text">
-                Hisobni to'ldirish funksiyasi tez orada qo'shiladi.<br><br>
-                Hozircha admin bilan bog'laning:
-            </p>
-            <button class="btn-primary" onclick="contactAdmin()">
-                💬 Admin bilan bog'lanish
-            </button>
-        </div>
+    <!-- Balance Card -->
+    <div class="balance-card">
+        <div class="label">Joriy balans</div>
+        <div class="amount" id="currentBalance">0 <span>so'm</span></div>
+    </div>
 
-        <!-- Payment Methods -->
-        <h3 class="section-label">To'lov usullari</h3>
-        <div class="menu-section">
-            <div class="menu-item">
-                <div class="menu-item-left">
-                    <span class="menu-icon">💳</span>
-                    <span class="menu-text">Bank kartasi</span>
-                </div>
-                <span class="badge">Tez orada</span>
-            </div>
-            <div class="menu-item">
-                <div class="menu-item-left">
-                    <span class="menu-icon">📱</span>
-                    <span class="menu-text">Click / Payme</span>
-                </div>
-                <span class="badge">Tez orada</span>
-            </div>
-            <div class="menu-item">
-                <div class="menu-item-left">
-                    <span class="menu-icon">⭐</span>
-                    <span class="menu-text">Telegram Stars</span>
-                </div>
-                <span class="badge">Tez orada</span>
-            </div>
+    <!-- Preset Amounts -->
+    <div class="section-title">📦 Summani tanlang</div>
+    <div class="amount-grid" id="amountGrid">
+        <div class="amount-btn" data-amount="10000">
+            <span class="value">10 000</span>
+            <span class="label">so'm</span>
         </div>
+        <div class="amount-btn" data-amount="25000">
+            <span class="value">25 000</span>
+            <span class="label">so'm</span>
+        </div>
+        <div class="amount-btn active" data-amount="50000">
+            <span class="value">50 000</span>
+            <span class="label">so'm</span>
+        </div>
+        <div class="amount-btn" data-amount="100000">
+            <span class="value">100 000</span>
+            <span class="label">so'm</span>
+        </div>
+        <div class="amount-btn" data-amount="200000">
+            <span class="value">200 000</span>
+            <span class="label">so'm</span>
+        </div>
+        <div class="amount-btn" data-amount="500000">
+            <span class="value">500 000</span>
+            <span class="label">so'm</span>
+        </div>
+    </div>
+
+    <!-- Custom Amount -->
+    <div class="custom-amount">
+        <input type="number" id="customAmount" placeholder="Boshqa summa..." min="10000" max="10000000">
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="section-title">💳 To'lov usulini tanlang</div>
+    <div class="method-grid" id="methodGrid">
+        <div class="method-btn active" data-method="fragment">
+            <span class="icon">💳</span>
+            <span class="name">Bank kartasi</span>
+            <span class="desc">Visa/Mastercard/UzCard</span>
+        </div>
+        <div class="method-btn" data-method="click">
+            <span class="icon">📱</span>
+            <span class="name">Click</span>
+            <span class="desc">Click UZ orqali to'lov</span>
+        </div>
+    </div>
+
+    <!-- Pay Button -->
+    <button class="btn-pay" id="payBtn" onclick="handlePay()">
+        <span class="btn-text">💳 To'lovni amalga oshirish</span>
+        <span class="spinner"></span>
+    </button>
+
+    <div class="info-text">
+        Minimal: 10 000 so'm · Maksimal: 10 000 000 so'm<br>
+        To'lov xavfsiz amalga oshiriladi
     </div>
 
     <!-- Bottom Navigation -->
@@ -299,13 +427,13 @@
             </div>
             <div class="nav-label">Gifts</div>
         </div>
-        <div class="nav-item" onclick="openReyting()">
+        <div class="nav-item" onclick="openRating()">
             <div class="nav-icon">
                 <img src="./images/rating.webp" alt="Rating">
             </div>
             <div class="nav-label">Rating</div>
         </div>
-        <div class="nav-item" onclick="openProfile()">
+        <div class="nav-item active" onclick="openProfile()">
             <div class="nav-icon">
                 <img src="./images/profile.webp" alt="profile">
             </div>
@@ -315,26 +443,152 @@
 
     <script src="js/common.js"></script>
     <script>
-        function contactAdmin() {
-            tg.openTelegramLink('https://t.me/StarPayUz_Admin');
+        let selectedAmount = 50000;
+        let selectedMethod = 'fragment';
+
+        // Amount selection
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedAmount = parseInt(this.dataset.amount);
+                document.getElementById('customAmount').value = '';
+                updatePayButton();
+            });
+        });
+
+        // Custom amount input
+        document.getElementById('customAmount').addEventListener('input', function() {
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+            const val = this.value.replace(/\s/g, '');
+            if (val) {
+                selectedAmount = parseInt(val);
+            }
+            updatePayButton();
+        });
+
+        // Method selection
+        document.querySelectorAll('.method-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedMethod = this.dataset.method;
+                updatePayButton();
+            });
+        });
+
+        function updatePayButton() {
+            const btn = document.getElementById('payBtn');
+            const text = btn.querySelector('.btn-text');
+            if (selectedAmount && selectedAmount >= 10000 && selectedAmount <= 10000000) {
+                btn.disabled = false;
+                const methodNames = { fragment: '💳', click: '📱' };
+                text.textContent = `${methodNames[selectedMethod] || '💳'} ${selectedAmount.toLocaleString('uz-UZ')} so'm to'lash`;
+            } else {
+                btn.disabled = true;
+                if (selectedAmount < 10000) {
+                    text.textContent = 'Minimal: 10 000 so\'m';
+                } else if (selectedAmount > 10000000) {
+                    text.textContent = 'Maksimal: 10 000 000 so\'m';
+                } else {
+                    text.textContent = '💳 Summani tanlang';
+                }
+            }
         }
 
-        function openStars() {
-            window.location.href = 'stars.html';
+        async function handlePay() {
+            if (!selectedAmount || selectedAmount < 10000 || selectedAmount > 10000000) {
+                tg.showPopup({
+                    title: '❌ Xatolik',
+                    message: 'Summa 10,000 — 10,000,000 so\'m oralig\'ida bo\'lishi kerak',
+                    buttons: [{ type: 'close' }]
+                });
+                return;
+            }
+
+            const btn = document.getElementById('payBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const userId = tg.initDataUnsafe?.user?.id;
+            if (!userId) {
+                tg.showPopup({
+                    title: '❌ Xatolik',
+                    message: 'Telegram ID topilmadi. Bot orqali qayta urinib ko\'ring.',
+                    buttons: [{ type: 'close' }]
+                });
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                return;
+            }
+
+            // Generate unique order ID
+            const orderId = 'topup_' + Date.now() + '_' + userId;
+
+            try {
+                // Step 1: Create topup order
+                const orderResp = await fetch(getApiBase() + '/api/order/topup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-Init-Data': tg.initData || '',
+                    },
+                    body: JSON.stringify({
+                        telegram_id: userId,
+                        order_id: orderId,
+                        amount: selectedAmount
+                    })
+                });
+
+                const orderResult = await orderResp.json();
+                if (!orderResult.ok) {
+                    throw new Error(orderResult.error || 'Buyurtma yaratishda xatolik');
+                }
+
+                // Step 2: Create payment invoice
+                const paymentResp = await fetch(getApiBase() + '/api/payment/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-Init-Data': tg.initData || '',
+                    },
+                    body: JSON.stringify({
+                        telegram_id: userId,
+                        order_id: orderId,
+                        amount: selectedAmount,
+                        method: selectedMethod
+                    })
+                });
+
+                const paymentResult = await paymentResp.json();
+                btn.classList.remove('loading');
+                btn.disabled = false;
+
+                if (paymentResult.ok && paymentResult.payment_url) {
+                    // Open payment URL in Telegram browser
+                    tg.openLink(paymentResult.payment_url);
+                } else {
+                    tg.showPopup({
+                        title: '❌ Xatolik',
+                        message: paymentResult.error || 'To\'lov yaratishda xatolik. Qayta urinib ko\'ring.',
+                        buttons: [{ type: 'close' }]
+                    });
+                }
+            } catch (e) {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                tg.showPopup({
+                    title: '❌ Tarmoq xatoligi',
+                    message: e.message || 'Serverga ulanib bo\'lmadi. Qayta urinib ko\'ring.',
+                    buttons: [{ type: 'close' }]
+                });
+            }
         }
 
-        function openGifts() {
-            window.location.href = 'gift.html';
-        }
-
-        function openReyting() {
-            window.location.href = 'index.html';
-        }
-
-        function openProfile() {
-            window.location.href = 'index.html';
-        }
+        function openStars() { window.location.href = 'stars.html'; }
+        function openGifts() { window.location.href = 'gift.html'; }
+        function openRating() { window.location.href = 'index.html'; }
+        function openProfile() { window.location.href = 'index.html'; }
     </script>
 </body>
-
 </html>
