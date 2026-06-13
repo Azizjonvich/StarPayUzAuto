@@ -46,11 +46,11 @@ python bot.py
 
 ### Твои данные уже настроены:
 ```
-BOT_TOKEN: 8270083145:AAHnNn4VhkjaIkO4Eopa5DqPWXTFpnYHgHo
-ADMIN_ID: 8784918764
-FRAGMENT_API_KEY: 9621fbdcb35922779aaf152e94c3a0b53ce9223b
-SHOP_ID: 665210
-SHOP_KEY: 8TJY3PDQ5C
+BOT_TOKEN: твой_новый_токен_бота
+ADMIN_ID: твой_telegram_id
+FRAGMENT_API_KEY: твой_fragment_api_key
+SHOP_ID: твой_shop_id
+SHOP_KEY: твой_shop_key
 ```
 
 ## 📊 Цены
