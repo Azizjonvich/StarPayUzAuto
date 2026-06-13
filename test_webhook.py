@@ -7,8 +7,8 @@ import hmac
 
 # Configuration
 RAILWAY_URL = "https://worker-production-679d.up.railway.app"
-SHOP_ID = "304216"
-SHOP_KEY = "5QLEKZ625U"
+SHOP_ID = "665210"
+SHOP_KEY = "8TJY3PDQ5C"
 TEST_USER_ID = 8784918764  # Your Telegram ID
 TEST_AMOUNT = 50000  # 50,000 sum
 

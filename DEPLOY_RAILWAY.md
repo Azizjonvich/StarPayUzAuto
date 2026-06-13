@@ -41,8 +41,8 @@ git push -u origin main
 BOT_TOKEN=8270083145:AAHnNn4VhkjaIkO4Eopa5DqPWXTFpnYHgHo
 FRAGMENT_API_KEY=9621fbdcb35922779aaf152e94c3a0b53ce9223b
 FRAGMENT_API_URL=https://fragment-api.uz/api
-SHOP_ID=304216
-SHOP_KEY=5QLEKZ625U
+SHOP_ID=665210
+SHOP_KEY=8TJY3PDQ5C
 DATABASE_URL=sqlite:///database.db
 WEBAPP_URL=https://твой-проект.railway.app
 ```

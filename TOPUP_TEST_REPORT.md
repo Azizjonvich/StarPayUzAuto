@@ -152,8 +152,8 @@ headers = {
 
 ### Environment Variables (Railway)
 ```env
-SHOP_ID=304216
-SHOP_KEY=5QLEKZ625U
+SHOP_ID=665210
+SHOP_KEY=8TJY3PDQ5C
 FRAGMENT_API_KEY=29de7688acb19ccc97c7bbb7e9e31d69ef26aeb2
 FRAGMENT_API_URL=https://fragment-api.uz/api/v1
 ```

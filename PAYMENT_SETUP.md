@@ -22,7 +22,7 @@
 3. Создайте магазин (Shop)
 4. Получите:
    - **API Key** (например: `29de7688acb19ccc97c7bbb7e9e31d69ef26aeb2`)
-   - **Shop ID** (например: `304216`)
+   - **Shop ID** (например: `665210`)
    - **Shop Key** (для проверки подписи вебхуков)
 
 ### 2. Настройте переменные окружения
@@ -33,7 +33,7 @@
 # Fragment API
 FRAGMENT_API_KEY=29de7688acb19ccc97c7bbb7e9e31d69ef26aeb2
 FRAGMENT_API_URL=https://fragment-api.uz/api
-SHOP_ID=304216
+SHOP_ID=665210
 SHOP_KEY=ваш_shop_key
 
 # Webhook URL (ваш Railway URL)
@@ -84,7 +84,7 @@ WEBHOOK_URL=https://worker-production-679d.up.railway.app/webhook/payment
 
 ```json
 {
-  "shop_id": "304216",
+  "shop_id": "665210",
   "order_id": "topup_1234567890",
   "amount": 50000,
   "status": "paid",
@@ -180,7 +180,7 @@ async def record_payment(...) -> bool:
 curl -X POST https://worker-production-679d.up.railway.app/webhook/payment \
   -H "Content-Type: application/json" \
   -d '{
-    "shop_id": "304216",
+    "shop_id": "665210",
     "order_id": "test_' $(date +%s) '",
     "amount": 10000,
     "status": "paid",

@@ -22,7 +22,7 @@ payload = {
     "amount": amount,
     "status": "paid",
     "user_id": user_id,
-    "shop_id": "304216",
+    "shop_id": "665210",
     "payment_method": "manual_test"
 }
 

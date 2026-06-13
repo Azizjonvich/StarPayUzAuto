@@ -68,8 +68,8 @@ WEBAPP_URL=https://твой-домен.com
 ### 3. Fragment API
 API уже настроен с твоими ключами:
 - API Key: 9621fbdcb35922779aaf152e94c3a0b53ce9223b
-- Shop ID: 304216
-- Shop Key: 5QLEKZ625U
+- Shop ID: 665210
+- Shop Key: 8TJY3PDQ5C
 
 ## 🎨 Дизайн Web App
 
