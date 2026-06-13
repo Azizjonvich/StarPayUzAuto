@@ -69,8 +69,14 @@ class TelethonGiftSender:
 
         try:
             # Получаем пользователя (InputPeer)
+            # Сначала пробуем кэш, потом резолвим через API
             try:
-                receiver_peer = await self.client.get_input_entity(username)
+                try:
+                    receiver_peer = await self.client.get_input_entity(username)
+                except Exception:
+                    # Если нет в кэше — резолвим через API Telegram
+                    entity = await self.client.get_entity(username)
+                    receiver_peer = await self.client.get_input_entity(entity)
                 logger.info(f"Got receiver peer for @{username}: {receiver_peer}")
             except Exception as e:
                 logger.error(f"User not found: @{username}, error: {e}")
