@@ -699,12 +699,14 @@
             tg.expand(); // Разворачиваем WebApp на весь экран
         }
 
-        // Настройка Swiper (оптимальная для кликов)
+        // Инициализация Swiper слайдера
         const swiper = new Swiper('.mySwiper', {
-            slidesPerView: 'auto',  
-            spaceBetween: 15,  
-            freeMode: true,
-            allowTouchMove: true
+            slidesPerView: 'auto',
+            spaceBetween: 15,
+            grabCursor: true,
+            touchRatio: 1,
+            resistance: true,
+            resistanceRatio: 0.85
         });
 
         let selectedGift = null;
