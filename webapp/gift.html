@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="uz">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>StarPayUz - Gift</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>window.API_BASE = 'https://worker-production-679d.up.railway.app';</script>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
+    <link rel="stylesheet" href="css/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -31,7 +28,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 35px;
+            margin-bottom: 28px;
         }
 
         .header-left__image {
@@ -53,6 +50,12 @@
             padding: 8px 14px;
             border-radius: 999px;
             font-size: 14px;
+            transition: .3s;
+        }
+
+        .balance-badge:hover {
+            background: #3B82F6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, .35);
         }
 
         .add-button {
@@ -67,14 +70,20 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: .3s;
             box-shadow: 0 0 20px rgba(59, 130, 246, .3);
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 0 30px rgba(59, 130, 246, .5);
         }
 
         .page-title {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .page-title h2 {
@@ -85,9 +94,43 @@
 
         .page-subtitle {
             color: #9CA3AF;
-            font-size: 15px;
-            margin-bottom: 25px;
+            font-size: 14px;
+            margin-bottom: 20px;
             text-align: center;
+        }
+
+        /* Tabs */
+        .gift-tabs {
+            display: flex;
+            padding: 5px;
+            background: #111827;
+            border-radius: 999px;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .gift-tab {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #9CA3AF;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .gift-tab:hover {
+            color: #fff;
+            background: rgba(59, 130, 246, .15);
+        }
+
+        .gift-tab.active {
+            background: #3B82F6;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(59, 130, 246, .4);
         }
 
         .section-label {
@@ -122,12 +165,18 @@
             color: #fff;
             font-size: 16px;
             outline: none;
+            transition: .3s;
         }
 
         .input::placeholder {
             color: #9CA3AF;
         }
 
+        .input:focus {
+            box-shadow: 0 0 20px rgba(59, 130, 246, .35);
+        }
+
+        /* Selected gift info */
         .selected-gift-info {
             background: #111827;
             border: 2px solid #3B82F6;
@@ -143,124 +192,111 @@
             color: #3B82F6;
         }
 
-        /* Swiper Styles */
-        .swiper {
-            width: 100%;
-            padding: 20px 0;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .swiper-slide {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: auto !important;
-        }
-
-        .swiper-pagination {
+        /* Gift Grid */
+        .gift-section {
             display: none;
+        }
+        .gift-section.active {
+            display: block;
+        }
+
+        .gift-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .gift-card {
             background: #111827;
-            border: none;
-            border-radius: 22px;
-            padding: 20px;
+            border: 2px solid transparent;
+            border-radius: 18px;
+            padding: 20px 14px;
             text-align: center;
             cursor: pointer;
-            transition: .3s;
-            width: 140px;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            transition: all .25s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .gift-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 25px rgba(59, 130, 246, .4);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
         }
 
         .gift-card.selected {
-            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-            box-shadow: 0 0 30px rgba(59, 130, 246, .5);
+            border-color: #3B82F6;
+            background: #031632;
+            box-shadow: 0 0 25px rgba(59, 130, 246, .2);
         }
 
-        .gift-emoji {
+        .gift-card .gift-emoji {
             font-size: 48px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             width: 70px;
             height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0 auto 10px;
         }
 
-        .gift-emoji img {
-            width: 70px;
-            height: 70px;
+        .gift-card .gift-emoji img {
+            width: 60px;
+            height: 60px;
             object-fit: contain;
         }
 
-        .gift-name {
-            font-size: 15px;
+        .gift-card .gift-name {
+            font-size: 14px;
             font-weight: 700;
             color: #fff;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
-        .gift-price {
+        .gift-card .gift-price {
             font-size: 14px;
             font-weight: 600;
             color: #3B82F6;
         }
 
-        .nft-section {
-            margin-top: 40px;
-            padding-top: 30px;
+        .gift-card .gift-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
-        .nft-header {
-            text-align: center;
-            margin-bottom: 25px;
+        .gift-card .gift-badge.limited {
+            background: rgba(255, 107, 157, 0.9);
+            color: #fff;
         }
 
-        .nft-title {
-            font-size: 24px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #FFD700 0%, #FF6B9D 50%, #9F7AEA 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+        .gift-card .gift-badge.rare {
+            background: rgba(147, 51, 234, 0.9);
+            color: #fff;
         }
 
-        .nft-subtitle {
-            color: #9CA3AF;
-            font-size: 14px;
+        .gift-card .gift-badge.epic {
+            background: rgba(255, 215, 0, 0.9);
+            color: #000;
         }
 
-        .nft-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
+        .gift-card .gift-badge.mythic {
+            background: linear-gradient(135deg, #FF6B9D, #FFD700);
+            color: #fff;
         }
 
-        .nft-card {
+        /* NFT card special style */
+        .gift-card.nft {
             background: linear-gradient(135deg, #1a1f35 0%, #0f1219 100%);
-            border: 2px solid transparent;
-            border-radius: 20px;
-            padding: 20px 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: .3s;
-            position: relative;
-            overflow: hidden;
         }
 
-        .nft-card::before {
+        .gift-card.nft::before {
             content: '';
             position: absolute;
             top: -2px;
@@ -268,53 +304,25 @@
             right: -2px;
             bottom: -2px;
             background: linear-gradient(135deg, #FFD700, #FF6B9D, #9F7AEA);
-            border-radius: 20px;
+            border-radius: 18px;
             z-index: -1;
             opacity: 0;
             transition: .3s;
         }
 
-        .nft-card:hover::before {
+        .gift-card.nft:hover::before {
             opacity: 1;
         }
 
-        .nft-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 10px 40px rgba(255, 107, 157, .3);
-        }
-
-        .nft-card.selected {
+        .gift-card.nft.selected {
             background: linear-gradient(135deg, #FFD700 0%, #FF6B9D 100%);
         }
 
-        .nft-card.selected::before {
-            opacity: 1;
-        }
-
-        .nft-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 107, 157, 0.9);
-            color: #fff;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 999px;
-            text-transform: uppercase;
-        }
-
-        .nft-emoji-wrapper {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .gift-card.nft .gift-emoji {
             position: relative;
         }
 
-        .nft-glow {
+        .gift-card.nft .gift-glow {
             position: absolute;
             inset: 0;
             border-radius: 50%;
@@ -327,33 +335,26 @@
             50% { opacity: 1; transform: scale(1.1); }
         }
 
-        .nft-emoji-wrapper img,
-        .nft-emoji-wrapper div {
+        .gift-card.nft .gift-emoji img,
+        .gift-card.nft .gift-emoji div {
             position: relative;
             z-index: 1;
         }
 
-        .nft-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
+        .gift-card.nft .gift-name {
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .nft-price {
-            font-size: 15px;
-            font-weight: 700;
+        .gift-card.nft .gift-price {
             background: linear-gradient(135deg, #FFD700, #FFA500);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        /* Buy button */
         .btn-primary {
             width: 100%;
             height: 58px;
-            margin-top: 8px;
-            margin-bottom: 20px;
             border: none;
             border-radius: 18px;
             background: #3B82F6;
@@ -361,14 +362,28 @@
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
+            transition: .3s;
             box-shadow: 0 0 25px rgba(59, 130, 246, .3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(59, 130, 246, .45);
         }
 
         .btn-primary:disabled {
             opacity: .5;
             cursor: not-allowed;
+            transform: none;
         }
 
+        /*** Bottom Navigation ***/
         .bottom-nav {
             position: fixed;
             left: 15px;
@@ -381,16 +396,25 @@
             padding: 12px 10px;
             display: flex;
             justify-content: space-around;
+            align-items: center;
             backdrop-filter: blur(20px);
+            pointer-events: auto;
         }
 
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            gap: 4px;
+            width: 70px;
             color: #9CA3AF;
             cursor: pointer;
+            transition: .3s;
+        }
+
+        .nav-item:hover {
+            color: #fff;
         }
 
         .nav-item.active {
@@ -411,13 +435,36 @@
         }
 
         .nav-label {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
+            color: inherit;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .section-header h3 {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .section-count {
+            color: #9CA3AF;
+            font-size: 12px;
+            background: #1E293B;
+            padding: 4px 10px;
+            border-radius: 999px;
         }
     </style>
 </head>
-
 <body>
+
+    <!-- Header -->
     <div class="header">
         <div class="header-left">
             <a href="/"><img src="./images/logo.png" alt="" class="header-left__image"></a>
@@ -428,248 +475,182 @@
         </div>
     </div>
 
-    <div class="content">
-        <div class="page-title">
-            <span><img src="./images/gift.webp" alt="" style="width: 30px;"></span>
-            <h2>Gift olish</h2>
-        </div>
-        <p class="page-subtitle">O'zingizga yoki do'stingizga gift yuboring</p>
+    <!-- Page title -->
+    <div class="page-title">
+        <span><img src="./images/gift.webp" alt="" style="width: 30px;"></span>
+        <h2>Gift olish</h2>
+    </div>
+    <p class="page-subtitle">O'zingizga yoki do'stingizga gift yuboring</p>
 
-        <h3 class="section-label">Qabul qiluvchi</h3>
-        <div class="input-wrapper">
-            <img src="./images/user.webp" class="inside-icon" alt="">
-            <input type="text" id="username" placeholder="Username kiriting" class="input">
-        </div>
-
-        <h3 class="section-label">Gift tanlang</h3>
-        <div id="selectedGiftInfo" class="selected-gift-info">Gift tanlanmagan</div>
-
-        <div class="swiper mySwiper">
-            <div class="swiper-wrapper">
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Yurak', 3000, 'heart')">
-                        <div class="gift-emoji"><img src="./images/heart.webp" alt="Heart"></div>
-                        <div class="gift-name">Yurak</div>
-                        <div class="gift-price">3 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Ayiq', 3000, 'bear')">
-                        <div class="gift-emoji"><img src="./images/bear.webp" alt="Bear"></div>
-                        <div class="gift-name">Ayiq</div>
-                        <div class="gift-price">3 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Quti', 5000, 'box')">
-                        <div class="gift-emoji"><img src="./images/box.webp" alt="Box"></div>
-                        <div class="gift-name">Quti</div>
-                        <div class="gift-price">5 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Atirgul', 5000, 'rose')">
-                        <div class="gift-emoji"><img src="./images/rose.webp" alt="Rose"></div>
-                        <div class="gift-name">Atirgul</div>
-                        <div class="gift-price">5 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Tort', 10000, 'cake')">
-                        <div class="gift-emoji"><img src="./images/cake.webp" alt="Cake"></div>
-                        <div class="gift-name">Tort</div>
-                        <div class="gift-price">10 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Raketa', 10000, 'rocket')">
-                        <div class="gift-emoji"><img src="./images/rocket.webp" alt="Rocket"></div>
-                        <div class="gift-name">Raketa</div>
-                        <div class="gift-price">10 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Shampan', 10000, 'champagne')">
-                        <div class="gift-emoji"><img src="./images/shampen.webp" alt="Champagne"></div>
-                        <div class="gift-name">Shampan</div>
-                        <div class="gift-price">10 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Guldasta', 10000, 'bouquet')">
-                        <div class="gift-emoji"><img src="./images/bouqet.webp" alt="Bouquet"></div>
-                        <div class="gift-name">Guldasta</div>
-                        <div class="gift-price">10 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Olmos', 20000, 'diamond')">
-                        <div class="gift-emoji"><img src="./images/diamond.webp" alt="Diamond"></div>
-                        <div class="gift-name">Olmos</div>
-                        <div class="gift-price">20 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Kubok', 20000, 'trophy')">
-                        <div class="gift-emoji"><img src="./images/trophy.webp" alt="Trophy"></div>
-                        <div class="gift-name">Kubok</div>
-                        <div class="gift-price">20 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Uzuk', 20000, 'ring')">
-                        <div class="gift-emoji"><img src="./images/ring.webp" alt="Ring"></div>
-                        <div class="gift-name">Uzuk</div>
-                        <div class="gift-price">20 000 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Yangi yil archasi', 10500, 'newyear_tree')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/newyear__tree.webp" alt="New Year Tree"></div>
-                        <div class="gift-name">Yangi yil archasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Yangi yil ayiqchasi', 10500, 'newyear_bear')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/newyear__bear.webp" alt="New Year Bear"></div>
-                        <div class="gift-name">Yangi yil ayiqchasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Sevgi yuragi', 10500, 'valentine_heart')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/valentine__heart.webp" alt="Valentine Heart"></div>
-                        <div class="gift-name">Sevgi yuragi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Sevgi ayiqchasi', 10500, 'valentine_bear')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/valentine__bear.webp" alt="Valentine Bear"></div>
-                        <div class="gift-name">Sevgi ayiqchasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Sent-Patrik ayiqchasi', 10500, 'patrick_bear')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/patrick__bear.webp" alt="St. Patrick Bear"></div>
-                        <div class="gift-name">Sent-Patrik ayiqchasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, '1-aprel ayiqchasi', 10500, 'april_bear')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/aprel__bear.webp" alt="April Fools Bear"></div>
-                        <div class="gift-name">1-aprel ayiqchasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-                <div class="swiper-slide">
-                    <div class="gift-card" onclick="pickGift(this, 'Pasxa ayiqchasi', 10500, 'easter_bear')">
-                        <div class="gift-emoji"><img src="./images/deletedgifts/easter__bear.webp" alt="Easter Bear"></div>
-                        <div class="gift-name">Pasxa ayiqchasi</div>
-                        <div class="gift-price">10 500 so'm</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="nft-section">
-            <div class="nft-header">
-                <h2 class="nft-title">✨ NFT Gifts ✨</h2>
-                <p class="nft-subtitle">Chegaralangan miqdordagi kolleksiya sovg'alari</p>
-            </div>
-
-            <div class="nft-grid">
-                <div class="nft-card" onclick="pickGift(this, 'Deluxe Atirgul', 50000, 'deluxe_rose')">
-                    <span class="nft-badge">Limited</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <img src="./images/rose.webp" alt="Deluxe Rose" width="80" height="80">
-                    </div>
-                    <div class="nft-name">Deluxe Atirgul</div>
-                    <div class="nft-price">50 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Deluxe Yurak', 50000, 'deluxe_heart')">
-                    <span class="nft-badge">Limited</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <img src="./images/heart.webp" alt="Deluxe Heart" width="80" height="80">
-                    </div>
-                    <div class="nft-name">Deluxe Yurak</div>
-                    <div class="nft-price">50 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Deluxe Tort', 75000, 'deluxe_cake')">
-                    <span class="nft-badge">Rare</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <img src="./images/cake.webp" alt="Deluxe Cake" width="80" height="80">
-                    </div>
-                    <div class="nft-name">Deluxe Tort</div>
-                    <div class="nft-price">75 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Deluxe Olmos', 100000, 'deluxe_diamond')">
-                    <span class="nft-badge">Rare</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <img src="./images/diamond.webp" alt="Deluxe Diamond" width="80" height="80">
-                    </div>
-                    <div class="nft-name">Deluxe Olmos</div>
-                    <div class="nft-price">100 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Oltin Kubok', 150000, 'golden_trophy')">
-                    <span class="nft-badge">Epic</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <img src="./images/trophy.webp" alt="Golden Trophy" width="80" height="80"
-                            style="filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));">
-                    </div>
-                    <div class="nft-name">Oltin Kubok</div>
-                    <div class="nft-price">150 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Yulduz Toj', 200000, 'star_crown')">
-                    <span class="nft-badge">Epic</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <div style="font-size: 60px;">👑✨</div>
-                    </div>
-                    <div class="nft-name">Yulduz Toj</div>
-                    <div class="nft-price">200 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Ko\'k Javohir', 250000, 'blue_gem')">
-                    <span class="nft-badge">Legendary</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"></div>
-                        <div style="font-size: 60px;">💠</div>
-                    </div>
-                    <div class="nft-name">Ko'k Javohir</div>
-                    <div class="nft-price">250 000 so'm</div>
-                </div>
-
-                <div class="nft-card" onclick="pickGift(this, 'Olovli Qanot', 500000, 'fire_phoenix')">
-                    <span class="nft-badge">Mythic</span>
-                    <div class="nft-emoji-wrapper">
-                        <div class="nft-glow"
-                            style="background: radial-gradient(circle, rgba(255,107,157,0.4) 0%, transparent 70%);">
-                        </div>
-                        <div style="font-size: 60px;">🔥🦅</div>
-                    </div>
-                    <div class="nft-name">Olovli Qanot</div>
-                    <div class="nft-price">500 000 so'm</div>
-                </div>
-            </div>
-        </div>
-
-        <button class="btn-primary" id="buyBtn" onclick="buyGift()" disabled>Sotib olish</button>
+    <!-- Username Input -->
+    <h3 class="section-label">Qabul qiluvchi</h3>
+    <div class="input-wrapper">
+        <img src="./images/user.webp" class="inside-icon" alt="">
+        <input type="text" id="username" placeholder="Username kiriting" class="input">
     </div>
 
+    <!-- Tabs -->
+    <div class="gift-tabs">
+        <button class="gift-tab active" onclick="switchTab('regular')">🎁 Giftlar</button>
+        <button class="gift-tab" onclick="switchTab('nft')">✨ NFT Giftlar</button>
+    </div>
+
+    <!-- Selected info -->
+    <div id="selectedGiftInfo" class="selected-gift-info">Gift tanlanmagan</div>
+
+    <!-- Regular Gifts Section -->
+    <div id="sectionRegular" class="gift-section active">
+        <div class="section-header">
+            <h3>🎁 Oddiy giftlar</h3>
+            <span class="section-count">11 ta</span>
+        </div>
+        <div class="gift-grid">
+            <div class="gift-card" onclick="pickGift(this, 'Yurak', 3000, 'heart')">
+                <div class="gift-emoji"><img src="./images/heart.webp" alt="Heart"></div>
+                <div class="gift-name">Yurak</div>
+                <div class="gift-price">3 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Ayiq', 3000, 'bear')">
+                <div class="gift-emoji"><img src="./images/bear.webp" alt="Bear"></div>
+                <div class="gift-name">Ayiq</div>
+                <div class="gift-price">3 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Quti', 5000, 'box')">
+                <div class="gift-emoji"><img src="./images/box.webp" alt="Box"></div>
+                <div class="gift-name">Quti</div>
+                <div class="gift-price">5 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Atirgul', 5000, 'rose')">
+                <div class="gift-emoji"><img src="./images/rose.webp" alt="Rose"></div>
+                <div class="gift-name">Atirgul</div>
+                <div class="gift-price">5 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Tort', 10000, 'cake')">
+                <div class="gift-emoji"><img src="./images/cake.webp" alt="Cake"></div>
+                <div class="gift-name">Tort</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Raketa', 10000, 'rocket')">
+                <div class="gift-emoji"><img src="./images/rocket.webp" alt="Rocket"></div>
+                <div class="gift-name">Raketa</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Shampan', 10000, 'champagne')">
+                <div class="gift-emoji"><img src="./images/shampen.webp" alt="Champagne"></div>
+                <div class="gift-name">Shampan</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Guldasta', 10000, 'bouquet')">
+                <div class="gift-emoji"><img src="./images/bouqet.webp" alt="Bouquet"></div>
+                <div class="gift-name">Guldasta</div>
+                <div class="gift-price">10 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Olmos', 20000, 'diamond')">
+                <div class="gift-emoji"><img src="./images/diamond.webp" alt="Diamond"></div>
+                <div class="gift-name">Olmos</div>
+                <div class="gift-price">20 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Kubok', 20000, 'trophy')">
+                <div class="gift-emoji"><img src="./images/trophy.webp" alt="Trophy"></div>
+                <div class="gift-name">Kubok</div>
+                <div class="gift-price">20 000 so'm</div>
+            </div>
+            <div class="gift-card" onclick="pickGift(this, 'Uzuk', 20000, 'ring')">
+                <div class="gift-emoji"><img src="./images/ring.webp" alt="Ring"></div>
+                <div class="gift-name">Uzuk</div>
+                <div class="gift-price">20 000 so'm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NFT Gifts Section -->
+    <div id="sectionNft" class="gift-section">
+        <div class="section-header">
+            <h3>✨ NFT kolleksiya</h3>
+            <span class="section-count">8 ta</span>
+        </div>
+        <div class="gift-grid">
+            <div class="gift-card nft" onclick="pickGift(this, 'Deluxe Atirgul', 50000, 'deluxe_rose')">
+                <span class="gift-badge limited">Limited</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <img src="./images/rose.webp" alt="Deluxe Rose">
+                </div>
+                <div class="gift-name">Deluxe Atirgul</div>
+                <div class="gift-price">50 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Deluxe Yurak', 50000, 'deluxe_heart')">
+                <span class="gift-badge limited">Limited</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <img src="./images/heart.webp" alt="Deluxe Heart">
+                </div>
+                <div class="gift-name">Deluxe Yurak</div>
+                <div class="gift-price">50 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Deluxe Tort', 75000, 'deluxe_cake')">
+                <span class="gift-badge rare">Rare</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <img src="./images/cake.webp" alt="Deluxe Cake">
+                </div>
+                <div class="gift-name">Deluxe Tort</div>
+                <div class="gift-price">75 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Deluxe Olmos', 100000, 'deluxe_diamond')">
+                <span class="gift-badge rare">Rare</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <img src="./images/diamond.webp" alt="Deluxe Diamond">
+                </div>
+                <div class="gift-name">Deluxe Olmos</div>
+                <div class="gift-price">100 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Oltin Kubok', 150000, 'golden_trophy')">
+                <span class="gift-badge epic">Epic</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <img src="./images/trophy.webp" alt="Golden Trophy" style="filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));">
+                </div>
+                <div class="gift-name">Oltin Kubok</div>
+                <div class="gift-price">150 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Yulduz Toj', 200000, 'star_crown')">
+                <span class="gift-badge epic">Epic</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <div style="font-size: 48px; position: relative; z-index: 1;">👑✨</div>
+                </div>
+                <div class="gift-name">Yulduz Toj</div>
+                <div class="gift-price">200 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Ko\'k Javohir', 250000, 'blue_gem')">
+                <span class="gift-badge legend">Legendary</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow"></div>
+                    <div style="font-size: 48px; position: relative; z-index: 1;">💠</div>
+                </div>
+                <div class="gift-name">Ko'k Javohir</div>
+                <div class="gift-price">250 000 so'm</div>
+            </div>
+            <div class="gift-card nft" onclick="pickGift(this, 'Olovli Qanot', 500000, 'fire_phoenix')">
+                <span class="gift-badge mythic">Mythic</span>
+                <div class="gift-emoji">
+                    <div class="gift-glow" style="background: radial-gradient(circle, rgba(255,107,157,0.4) 0%, transparent 70%);"></div>
+                    <div style="font-size: 48px; position: relative; z-index: 1;">🔥🦅</div>
+                </div>
+                <div class="gift-name">Olovli Qanot</div>
+                <div class="gift-price">500 000 so'm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy button -->
+    <button class="btn-primary" id="buyBtn" onclick="buyGift()" disabled>
+        <span>🎁</span> Sotib olish
+    </button>
+
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item" onclick="openStars()">
             <div class="nav-icon"><img src="./images/home.webp" alt="home"></div>
@@ -689,42 +670,42 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="js/common.js"></script>
     <script>
-        // Telegram WebApp уже инициализирован в common.js
-        if (typeof tg !== 'undefined' && tg) {
-            tg.expand();
-        }
-
-        // Инициализация Swiper слайдера (бесконечная карусель)
-        const swiper = new Swiper('.mySwiper', {
-            slidesPerView: 'auto',
-            spaceBetween: 15,
-            grabCursor: true,
-            loop: true,
-            autoplay: {
-                delay: 2500,
-                disableOnInteraction: false,
-            },
-            speed: 600
-        });
-
         let selectedGift = null;
         let selectedGiftPrice = 0;
+        let selectedGiftName = '';
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.gift-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.gift-section').forEach(s => s.classList.remove('active'));
+
+            if (tab === 'regular') {
+                document.querySelector('.gift-tab').classList.add('active');
+                document.getElementById('sectionRegular').classList.add('active');
+            } else {
+                document.querySelectorAll('.gift-tab')[1].classList.add('active');
+                document.getElementById('sectionNft').classList.add('active');
+            }
+        }
 
         function pickGift(el, name, price, slug) {
             selectedGift = slug || name.toLowerCase();
             selectedGiftPrice = price;
-            document.querySelectorAll('.gift-card, .nft-card').forEach(c => c.classList.remove('selected'));
+            selectedGiftName = name;
+
+            // Deselect all
+            document.querySelectorAll('.gift-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
+
+            // Update info
             document.getElementById('selectedGiftInfo').innerHTML =
                 `Tanlandi: <strong>${name}</strong> — ${price.toLocaleString('uz-UZ')} so'm`;
             document.getElementById('buyBtn').disabled = false;
         }
 
         function buyGift() {
-            // Безопасное получение юзернейма напрямую из DOM
             const usernameInput = document.getElementById('username');
             const username = usernameInput ? usernameInput.value.trim() : '';
 
@@ -735,7 +716,7 @@
                         message: 'Iltimos, username kiriting!',
                         buttons: [{ type: 'close' }]
                     });
-                } else alert('Iltimos, username kiriting!');
+                }
                 return;
             }
             if (!selectedGift) {
@@ -745,11 +726,10 @@
                         message: 'Gift tanlang!',
                         buttons: [{ type: 'close' }]
                     });
-                } else alert('Gift tanlang!');
+                }
                 return;
             }
 
-            // Отправка данных на ваш бэкенд
             if (typeof submitOrder === 'function') {
                 submitOrder({
                     action: 'buy_gift',
@@ -757,8 +737,6 @@
                     price: selectedGiftPrice,
                     username: username
                 });
-            } else {
-                console.log('submitOrder funksiyasi topilmadi', { selectedGift, selectedGiftPrice, username });
             }
         }
 
@@ -769,9 +747,4 @@
         function openGifts() { window.location.href = 'gift.html'; }
     </script>
 </body>
-
 </html>
-
-
-
-
