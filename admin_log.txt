@@ -2082,3 +2082,419 @@ INFO:     127.0.0.1:10032 - "WebSocket /api/admin/ws" [accepted]
 INFO:     connection open
 WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
 INFO:     connection closed
+INFO:     127.0.0.1:6215 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4990 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1235 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8602 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8716 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2384 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3663 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9798 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13593 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5631 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1174 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3183 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10482 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13310 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:11330 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3681 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4114 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14217 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5368 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8696 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10965 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8081 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2778 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14201 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6192 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14312 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3843 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1274 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2271 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1648 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5376 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7104 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2476 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7863 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8612 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6853 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4843 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5227 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14076 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3513 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8381 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14110 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13863 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4691 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10083 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2421 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14755 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7095 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13298 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6462 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7732 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4456 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10957 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5573 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10525 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9505 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3898 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9842 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5160 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4075 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7829 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9253 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9180 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3697 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:12522 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13330 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1751 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5698 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6741 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1460 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13536 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5683 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2828 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7987 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9972 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14324 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1672 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8007 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4097 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3522 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9700 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1354 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6460 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:2414 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:12962 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:5220 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:12981 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14284 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:11705 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14681 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13110 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:11975 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:1453 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:10677 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8881 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4792 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:4513 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:9910 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:8558 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:3493 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:14500 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:6957 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:13020 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed
+INFO:     127.0.0.1:7536 - "WebSocket /api/admin/ws" [accepted]
+INFO:     connection open
+WebSocket error: Expected ASGI message "websocket.send" or "websocket.close", but got 'websocket.accept'
+INFO:     connection closed

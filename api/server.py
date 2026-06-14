@@ -409,7 +409,8 @@ async def api_payment_create(request: web.Request) -> web.Response:
     redirect_url=redirect_url
   )
   
-  if result.get("ok") and result.get("payment_url"):
+  payment_ok = result.get("ok") or result.get("success") or False
+  if payment_ok and result.get("payment_url"):
     return web.json_response({
       "ok": True,
       "payment_url": result["payment_url"],
@@ -418,7 +419,7 @@ async def api_payment_create(request: web.Request) -> web.Response:
   else:
     return web.json_response({
       "ok": False,
-      "error": result.get("message", "To'lov yaratishda xatolik")
+      "error": result.get("message") or result.get("error") or "To'lov yaratishda xatolik"
     }, status=400)
 
 
@@ -511,12 +512,19 @@ async def payment_webhook(request: web.Request) -> web.Response:
   )
   if not inserted:
     logger.info("Payment %s already processed, skipping", order_id)
-    return web.json_response({"ok": True, "message": "already processed"})
-
-  # Начисляем баланс только если есть user_id
+    return web.json_response({"ok": True, "message": "already processed"})    # Начисляем баланс только если есть user_id
   if user_int:
     new_balance = await add_balance(user_int, amount_int)
     logger.info("Balance credited: user=%s, amount=%s, new_balance=%s", user_int, amount_int, new_balance)
+    
+    # Обновляем статус заказа на completed
+    from services.database import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+      await conn.execute(
+        "UPDATE orders SET status = 'completed' WHERE external_id = $1",
+        order_id
+      )
     
     # Отправляем уведомление в Telegram
     from aiogram import Bot

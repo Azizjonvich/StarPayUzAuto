@@ -66,7 +66,7 @@ async def process_topup_amount(message: Message, state: FSMContext):
             description=f"Hisobni to'ldirish - {amount:,.0f} so'm"
         )
         
-        if payment_result and payment_result.get("success"):
+        if payment_result and (payment_result.get("ok") or payment_result.get("success") or payment_result.get("payment_url")):
             payment_url = payment_result.get("payment_url")
             
             # Update order with payment URL
@@ -103,10 +103,16 @@ async def check_payment_status(callback: CallbackQuery):
     
     order_id = callback.data.split("_", 2)[2]
     
-    # Check payment status via API
-    payment_status = await api_client.check_payment(order_id)
+    # Check payment status in local database
+    from services.database import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        payment = await conn.fetchrow(
+            "SELECT * FROM payments WHERE shop_order_id = $1 AND status = 'paid'",
+            order_id
+        )
     
-    if payment_status and payment_status.get("status") == "paid":
+    if payment:
         # Update order and user balance
         order = await db.get_order(order_id)
         
