@@ -282,22 +282,3 @@ async def callback_support(callback: CallbackQuery):
     )
     
     await callback.message.answer(text, parse_mode="HTML")
-
-
-@router.message(Command("admin"))
-async def cmd_admin(message: Message):
-    """Admin panel inside the bot"""
-    if not message.from_user:
-        return
-    from config import ADMINS
-    if message.from_user.id not in ADMINS:
-        await message.answer(
-            "❌ <b>Bu buyruq faqat administratorlar uchun.</b>",
-            parse_mode="HTML"
-        )
-        return
-    import keyboards
-    await message.answer(
-        "🔐 <b>Admin Panel</b>\n\nXush kelibsiz, administrator!",
-        reply_markup=keyboards.get_admin_main_keyboard()
-    )

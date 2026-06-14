@@ -78,12 +78,12 @@ async def main():
     dp.update.middleware(AccessControlMiddleware())
     logger.info("Access control middleware enabled - only @StarPayUzAdmin can use the bot")
 
+    dp.include_router(admin.router)   # Admin first — to prevent /admin being caught by start.router
     dp.include_router(start.router)
     dp.include_router(webapp.router)
     dp.include_router(shop.router)
     dp.include_router(balance.router)
     dp.include_router(profile.router)
-    dp.include_router(admin.router)
 
     await database.init_db()
     logger.info("Database initialized, bot starting...")

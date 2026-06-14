@@ -406,6 +406,11 @@ async def admin_broadcast_cancel_cb(callback: CallbackQuery, state: FSMContext):
 # 5. ЗАКАЗЫ
 # ═══════════════════════════════════════════════════════════════════
 
+@router.callback_query(F.data == "admin_orders_skip")
+async def admin_orders_skip(callback: CallbackQuery):
+    await callback.answer()
+
+
 @router.callback_query(F.data == "admin_orders")
 async def admin_orders_menu(callback: CallbackQuery):
     await callback.answer()
@@ -485,12 +490,126 @@ async def admin_order_detail(callback: CallbackQuery):
 # 6. НАСТРОЙКИ
 # ═══════════════════════════════════════════════════════════════════
 
+# Настройки хранятся в памяти (можно сохранить в БД позже)
+_runtime_settings = {
+    "stars_price_per_unit": 200,        # Цена за 1 star (сум)
+    "min_topup_amount": 1000,           # Минимальное пополнение
+    "max_topup_amount": 100_000_000,    # Максимальное пополнение
+    "referral_bonus": 300,              # Бонус за реферала
+    "gift_enabled": True,               # Включить/выключить подарки
+    "stars_enabled": True,              # Включить/выключить Stars
+    "maintenance_mode": False,          # Режим обслуживания
+}
+
+SETTINGS_LABELS = {
+    "stars_price_per_unit": "⭐ Stars narxi (so'm/1 star)",
+    "min_topup_amount": "💳 Min to'ldirish (so'm)",
+    "max_topup_amount": "💳 Max to'ldirish (so'm)",
+    "referral_bonus": "👥 Referal bonusi (so'm)",
+    "gift_enabled": "🎁 Sovg'alar (true/false)",
+    "stars_enabled": "⭐ Stars xizmati (true/false)",
+    "maintenance_mode": "🔧 Texnik ishlar rejimi (true/false)",
+}
+
+
+def _settings_text() -> str:
+    lines = ["⚙️ <b>Sozlamalar</b>\n"]
+    for key, label in SETTINGS_LABELS.items():
+        val = _runtime_settings.get(key)
+        lines.append(f"• {label}\n  <code>{key}</code> = <b>{val}</b>")
+    lines.append("\n✏️ O'zgartirish uchun kalit nomini yuboring")
+    return "\n".join(lines)
+
+
+def _settings_keyboard():
+    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    builder = InlineKeyboardBuilder()
+    for key in SETTINGS_LABELS:
+        builder.row(InlineKeyboardButton(
+            text=f"✏️ {SETTINGS_LABELS[key].split('(')[0].strip()}",
+            callback_data=f"admin_set_{key}"
+        ))
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
 @router.callback_query(F.data == "admin_settings")
 async def admin_settings_menu(callback: CallbackQuery):
     await callback.answer()
-    text = (
-        "⚙️ <b>Admin sozlamalari</b>\n\n"
-        "Hozircha sozlamalar faqat kod orqali o'zgartiriladi.\n"
-        "Tez orada qo'shiladi."
+    await callback.message.edit_text(
+        _settings_text(),
+        reply_markup=_settings_keyboard(),
     )
-    await callback.message.edit_text(text, reply_markup=keyboards.get_admin_back_keyboard())
+
+
+@router.callback_query(F.data.startswith("admin_set_"))
+async def admin_set_key(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    key = callback.data[len("admin_set_"):]
+    if key not in _runtime_settings:
+        await callback.answer("❌ Noma'lum kalit", show_alert=True)
+        return
+    current = _runtime_settings[key]
+    label = SETTINGS_LABELS.get(key, key)
+    await callback.message.edit_text(
+        f"✏️ <b>{label}</b>\n\n"
+        f"Hozirgi qiymat: <code>{current}</code>\n\n"
+        f"Yangi qiymatni kiriting:\n"
+        f"<i>(raqam yoki true/false)</i>"
+    )
+    await state.update_data(settings_key=key)
+    await state.set_state(AdminStates.settings_value)
+
+
+@router.message(AdminStates.settings_value)
+async def admin_set_value(message: Message, state: FSMContext):
+    data = await state.get_data()
+    key = data.get("settings_key")
+    raw = (message.text or "").strip()
+
+    if key not in _runtime_settings:
+        await message.answer("❌ Xatolik. Qaytadan /admin")
+        await state.clear()
+        return
+
+    current = _runtime_settings[key]
+    # Определяем тип по текущему значению
+    try:
+        if isinstance(current, bool):
+            if raw.lower() in ("true", "1", "ha", "yes"):
+                new_val = True
+            elif raw.lower() in ("false", "0", "yoq", "no"):
+                new_val = False
+            else:
+                raise ValueError("bool kerak: true yoki false")
+        elif isinstance(current, int):
+            new_val = int(raw.replace(",", "").replace(" ", ""))
+        elif isinstance(current, float):
+            new_val = float(raw)
+        else:
+            new_val = raw
+    except ValueError as e:
+        await message.answer(f"❌ Noto'g'ri qiymat: {e}\nQayta kiriting:")
+        return
+
+    _runtime_settings[key] = new_val
+    label = SETTINGS_LABELS.get(key, key)
+    logger.info(f"Admin {message.from_user.id} changed setting {key}: {current} → {new_val}")
+
+    await message.answer(
+        f"✅ <b>Sozlama yangilandi</b>\n\n"
+        f"{label}\n"
+        f"Eski: <code>{current}</code>\n"
+        f"Yangi: <b><code>{new_val}</code></b>",
+    )
+    await state.clear()
+    await message.answer(
+        _settings_text(),
+        reply_markup=_settings_keyboard(),
+    )
+
+
+def get_setting(key: str):
+    """Get runtime setting value — use in API/handlers"""
+    return _runtime_settings.get(key)
