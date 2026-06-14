@@ -30,6 +30,7 @@ class Settings:
     custom_emoji_phone: str | None
     custom_emoji_check: str | None
     custom_emoji_money: str | None
+    custom_emoji_cross: str | None
     admin_panel_url: str
 
     @classmethod
@@ -55,8 +56,9 @@ class Settings:
             custom_emoji_premium=os.getenv("CUSTOM_EMOJI_PREMIUM") or "6053186856688814091",
             custom_emoji_gift=os.getenv("CUSTOM_EMOJI_GIFT") or None,
             custom_emoji_phone=os.getenv("CUSTOM_EMOJI_PHONE") or None,
-            custom_emoji_check=os.getenv("CUSTOM_EMOJI_CHECK") or "5260463209562776385",
+            custom_emoji_check=os.getenv("CUSTOM_EMOJI_CHECK") or "5980930633298350051",
             custom_emoji_money=os.getenv("CUSTOM_EMOJI_MONEY") or "5287231198098117669",
+            custom_emoji_cross=os.getenv("CUSTOM_EMOJI_CROSS") or "5273914604752216432",
             admin_panel_url=os.getenv("ADMIN_PANEL_URL", "http://localhost:8000"),
         )
 
