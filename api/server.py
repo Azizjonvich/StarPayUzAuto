@@ -443,9 +443,10 @@ async def payment_webhook(request: web.Request) -> web.Response:
   logger.info("Payment webhook received: %s", json.dumps(payload, ensure_ascii=False)[:200])
 
   # Проверка shop_id (для Fragment API / Click)
-  shop_id = str(payload.get("shop_id", ""))
-  if settings.shop_id and shop_id and shop_id != str(settings.shop_id):
-    logger.warning("Invalid shop_id: %s (expected %s)", shop_id, settings.shop_id)
+  shop_id = str(payload.get("shop_id", "")).strip()
+  expected_shop_id = str(settings.shop_id).strip()
+  if expected_shop_id and shop_id and shop_id != expected_shop_id:
+    logger.warning("Invalid shop_id: %s (expected %s)", shop_id, expected_shop_id)
     return web.json_response({"ok": False, "error": "Invalid shop_id"}, status=403)
 
   # Проверка подписи (не блокируем — разные платёжки используют разные алгоритмы)

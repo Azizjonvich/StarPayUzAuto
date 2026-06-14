@@ -50,8 +50,8 @@ class Settings:
             fragment_api_key=clean_api_key,
             fragment_api_base=os.getenv("FRAGMENT_API_BASE")
                 or os.getenv("FRAGMENT_API_URL", "https://fragment-api.uz/api/v1").rstrip("/"),
-            shop_id=os.getenv("SHOP_ID", ""),
-            shop_key=os.getenv("SHOP_KEY", ""),
+            shop_id=os.getenv("SHOP_ID", "").strip(),
+            shop_key=os.getenv("SHOP_KEY", "").strip(),
             webapp_base_url=base,
             api_public_url=(
                 os.getenv("API_PUBLIC_URL")
