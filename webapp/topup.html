@@ -138,51 +138,7 @@
             font-size: 18px;
         }
 
-        .method-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 28px;
-        }
 
-        .method-btn {
-            background: #1e293b;
-            border: 2px solid transparent;
-            border-radius: 16px;
-            padding: 20px 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .25s ease;
-            color: #fff;
-        }
-
-        .method-btn:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-            background: #253247;
-        }
-
-        .method-btn.active {
-            border-color: #3B82F6;
-            background: #031632;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
-        }
-
-        .method-btn .icon {
-            font-size: 32px;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .method-btn .name {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .method-btn .desc {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 4px;
-        }
 
         .btn-pay {
             width: 100%;
@@ -319,23 +275,10 @@
     <!-- Amount Input -->
     <div class="amount-input-wrapper">
         <div class="section-title">💵 Summani kiriting</div>
-        <input type="number" id="amountInput" class="amount-input" placeholder="Masalan: 50 000" min="10000" max="10000000">
+        <input type="number" id="amountInput" class="amount-input" placeholder="Masalan: 50 000" min="1000" max="100000000">
     </div>
 
-    <!-- Payment Methods -->
-    <div class="section-title">💳 To'lov usulini tanlang</div>
-    <div class="method-grid" id="methodGrid">
-        <div class="method-btn active" data-method="fragment">
-            <span class="icon">💳</span>
-            <span class="name">Bank kartasi</span>
-            <span class="desc">Visa/Mastercard/UzCard</span>
-        </div>
-        <div class="method-btn" data-method="click">
-            <span class="icon">📱</span>
-            <span class="name">Click</span>
-            <span class="desc">Click UZ orqali to'lov</span>
-        </div>
-    </div>
+
 
     <!-- Pay Button -->
     <button class="btn-pay" id="payBtn" onclick="handlePay()">
@@ -344,7 +287,7 @@
     </button>
 
     <div class="info-text">
-        Minimal: 10 000 so'm · Maksimal: 10 000 000 so'm<br>
+        Minimal: 1 000 so'm · Maksimal: 100 000 000 so'm<br>
         To'lov xavfsiz amalga oshiriladi
     </div>
 
@@ -379,57 +322,40 @@
     <script src="js/common.js"></script>
     <script>
         let selectedAmount = 0;
-        let selectedMethod = 'fragment';
 
         // Amount input
         document.getElementById('amountInput').addEventListener('input', function() {
             const val = this.value.replace(/\s/g, '');
-            if (val) {
-                selectedAmount = parseInt(val);
-            } else {
-                selectedAmount = 0;
-            }
+            selectedAmount = val ? parseInt(val) : 0;
             updatePayButton();
         });
 
-        // Focus input on load
         document.getElementById('amountInput').focus();
         updatePayButton();
-
-        // Method selection
-        document.querySelectorAll('.method-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedMethod = this.dataset.method;
-                updatePayButton();
-            });
-        });
 
         function updatePayButton() {
             const btn = document.getElementById('payBtn');
             const text = btn.querySelector('.btn-text');
-            if (selectedAmount && selectedAmount >= 10000 && selectedAmount <= 10000000) {
+            if (selectedAmount >= 1000 && selectedAmount <= 100000000) {
                 btn.disabled = false;
-                const methodNames = { fragment: '💳', click: '📱' };
-                text.textContent = `${methodNames[selectedMethod] || '💳'} ${selectedAmount.toLocaleString('uz-UZ')} so'm to'lash`;
+                text.textContent = '💳 ' + selectedAmount.toLocaleString('uz-UZ') + " so'm to'lash";
             } else {
                 btn.disabled = true;
-                if (selectedAmount < 10000) {
-                    text.textContent = 'Minimal: 10 000 so\'m';
-                } else if (selectedAmount > 10000000) {
-                    text.textContent = 'Maksimal: 10 000 000 so\'m';
+                if (selectedAmount > 0 && selectedAmount < 1000) {
+                    text.textContent = "Minimal: 1 000 so'm";
+                } else if (selectedAmount > 100000000) {
+                    text.textContent = "Maksimal: 100 000 000 so'm";
                 } else {
-                    text.textContent = '💳 Summani tanlang';
+                    text.textContent = "💳 Summani kiriting";
                 }
             }
         }
 
         async function handlePay() {
-            if (!selectedAmount || selectedAmount < 10000 || selectedAmount > 10000000) {
+            if (!selectedAmount || selectedAmount < 1000 || selectedAmount > 100000000) {
                 tg.showPopup({
                     title: '❌ Xatolik',
-                    message: 'Summa 10,000 — 10,000,000 so\'m oralig\'ida bo\'lishi kerak',
+                    message: "Summa 1,000 — 100,000,000 so'm oralig'ida bo'lishi kerak",
                     buttons: [{ type: 'close' }]
                 });
                 return;
@@ -443,7 +369,7 @@
             if (!userId) {
                 tg.showPopup({
                     title: '❌ Xatolik',
-                    message: 'Telegram ID topilmadi. Bot orqali qayta urinib ko\'ring.',
+                    message: "Telegram ID topilmadi. Bot orqali qayta urinib ko'ring.",
                     buttons: [{ type: 'close' }]
                 });
                 btn.classList.remove('loading');
@@ -451,7 +377,6 @@
                 return;
             }
 
-            // Generate unique order ID
             const orderId = 'topup_' + Date.now() + '_' + userId;
 
             try {
@@ -485,7 +410,7 @@
                         telegram_id: userId,
                         order_id: orderId,
                         amount: selectedAmount,
-                        method: selectedMethod
+                        method: 'fragment'
                     })
                 });
 
@@ -494,12 +419,11 @@
                 btn.disabled = false;
 
                 if (paymentResult.ok && paymentResult.payment_url) {
-                    // Open payment URL in Telegram browser
                     tg.openLink(paymentResult.payment_url);
                 } else {
                     tg.showPopup({
                         title: '❌ Xatolik',
-                        message: paymentResult.error || 'To\'lov yaratishda xatolik. Qayta urinib ko\'ring.',
+                        message: paymentResult.error || "To'lov yaratishda xatolik. Qayta urinib ko'ring.",
                         buttons: [{ type: 'close' }]
                     });
                 }
@@ -508,7 +432,7 @@
                 btn.disabled = false;
                 tg.showPopup({
                     title: '❌ Tarmoq xatoligi',
-                    message: e.message || 'Serverga ulanib bo\'lmadi. Qayta urinib ko\'ring.',
+                    message: e.message || "Serverga ulanib bo'lmadi. Qayta urinib ko'ring.",
                     buttons: [{ type: 'close' }]
                 });
             }
