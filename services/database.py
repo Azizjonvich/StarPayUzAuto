@@ -114,6 +114,11 @@ async def ensure_user(
                 "UPDATE users SET referrals = referrals + 1 WHERE telegram_id = $1",
                 referred_by,
             )
+            # Начисляем реферальный бонус рефереру (300 so'm за Stars)
+            await conn.execute(
+                "UPDATE users SET balance = balance + 300 WHERE telegram_id = $1",
+                referred_by,
+            )
         row = await conn.fetchrow(
             "SELECT * FROM users WHERE telegram_id = $1", telegram_id
         )
