@@ -79,6 +79,10 @@ async def health(_: web.Request) -> web.Response:
   return web.json_response({"ok": True, "service": "StarPayUz"})
 
 
+async def webapp_index(_: web.Request) -> web.FileResponse:
+  return web.FileResponse(WEBAPP_DIR / "index.html")
+
+
 async def api_user_balance(request: web.Request) -> web.Response:
   auth = await _auth_user(request)
   user_id = _user_id_from_auth(auth)
@@ -785,6 +789,9 @@ async def payment_success_page(request: web.Request) -> web.Response:
 
 def create_app() -> web.Application:
   app = web.Application(middlewares=[cors_middleware])
+  app.router.add_get("/", webapp_index)
+  app.router.add_get("/app", webapp_index)
+  app.router.add_get("/app/", webapp_index)
   app.router.add_get("/health", health)
   app.router.add_post("/api/user/balance", api_user_balance)
   app.router.add_post("/api/stars/price", api_stars_price)
