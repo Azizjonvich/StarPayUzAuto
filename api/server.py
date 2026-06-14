@@ -397,8 +397,8 @@ async def api_payment_create(request: web.Request) -> web.Response:
   from api_client import api_client
   
   # Определяем callback_url для вебхуков
-  callback_url = f"{settings.webapp_base_url}/webhook/payment"
-  redirect_url = f"{settings.webapp_base_url}/payment/success"
+  callback_url = f"{settings.api_public_url}/webhook/payment"
+  redirect_url = f"{settings.api_public_url}/payment/success"
   
   result = await api_client.create_payment(
     amount=amount_int,
@@ -456,9 +456,10 @@ async def payment_webhook(request: web.Request) -> web.Response:
   raw_status = str(payload.get("status", "")).lower()
   action = str(payload.get("action", "")).lower()
   error_code = payload.get("error")
+  error_text = str(error_code).strip().lower()
   
   # Click: action="1" (complete) и error=0 значит успех
-  is_click_success = (action == "1" and error_code == 0)
+  is_click_success = (action == "1" and error_text in ("0", "0.0"))
   # Payme: status="paid" / status="completed"
   is_paid = raw_status in ("paid", "success", "completed", "1", "true")
   
@@ -496,6 +497,25 @@ async def payment_webhook(request: web.Request) -> web.Response:
     user_int = int(user_id) if user_id else None
   except (TypeError, ValueError):
     user_int = None
+
+  if not user_int:
+    from services.database import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+      order = await conn.fetchrow(
+        "SELECT telegram_id, amount FROM orders WHERE external_id = $1",
+        order_id,
+      )
+    if order:
+      user_int = int(order["telegram_id"])
+      logger.info("Resolved payment user from order: order=%s user=%s", order_id, user_int)
+      if order["amount"] is not None and int(order["amount"]) != amount_int:
+        logger.warning(
+          "Payment amount differs from order: order=%s webhook_amount=%s order_amount=%s",
+          order_id,
+          amount_int,
+          order["amount"],
+        )
 
   if not user_int:
     logger.warning("Payment webhook missing user_id — cannot credit balance. Payload: %s", json.dumps(payload, ensure_ascii=False)[:300])

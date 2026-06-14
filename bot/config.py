@@ -20,6 +20,7 @@ class Settings:
     shop_id: str
     shop_key: str
     webapp_base_url: str
+    api_public_url: str
     support_url: str
     admin_ids: list[int]
     api_host: str
@@ -35,7 +36,11 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        base = os.getenv("WEBAPP_BASE_URL", "http://localhost:8080").rstrip("/")
+        base = (
+            os.getenv("WEBAPP_BASE_URL")
+            or os.getenv("WEBAPP_URL")
+            or "http://localhost:8080"
+        ).rstrip("/")
         # Clean API key - remove all whitespace including newlines
         raw_api_key = os.getenv("FRAGMENT_API_KEY") or os.getenv("FRAGMENT_API_KEY", "")
         clean_api_key = "".join(raw_api_key.split()) if raw_api_key else ""
@@ -48,6 +53,11 @@ class Settings:
             shop_id=os.getenv("SHOP_ID", ""),
             shop_key=os.getenv("SHOP_KEY", ""),
             webapp_base_url=base,
+            api_public_url=(
+                os.getenv("API_PUBLIC_URL")
+                or os.getenv("API_BASE_URL")
+                or base
+            ).rstrip("/"),
             support_url=os.getenv("SUPPORT_URL", "https://t.me/"),
             admin_ids=_list_ints(os.getenv("ADMIN_IDS", "")),
             api_host=os.getenv("API_HOST", "0.0.0.0"),

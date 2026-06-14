@@ -60,8 +60,8 @@ async def process_topup_amount(message: Message, state: FSMContext):
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
         
         # Create payment link with callback URL for webhook
-        callback_url = f"{settings.webapp_base_url}/webhook/payment"
-        redirect_url = f"{settings.webapp_base_url}/payment/success"
+        callback_url = f"{settings.api_public_url}/webhook/payment"
+        redirect_url = f"{settings.api_public_url}/payment/success"
         payment_result = await api_client.create_payment(
             amount=amount,
             order_id=order_id,
