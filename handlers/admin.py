@@ -6,7 +6,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, MessageEntity
 
 import config
 import keyboards
@@ -339,9 +339,14 @@ async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext):
 
 @router.message(AdminStates.broadcast_text)
 async def admin_broadcast_preview(message: Message, state: FSMContext):
-    msg_type = message.content_type  # text, photo, video, document, etc.
+    msg_type = message.content_type
     file_id = None
-    content = message.text or message.caption or ""
+
+    # Store plain text + original entities (incl. custom_emoji for premium emoji)
+    # Entities are serialized to dicts so they work with any FSM storage backend
+    text = message.text or message.caption or ""
+    entities_raw = message.entities or message.caption_entities or None
+    entities_data = [e.model_dump() for e in entities_raw] if entities_raw else None
 
     if message.photo:
         file_id = message.photo[-1].file_id
@@ -355,13 +360,28 @@ async def admin_broadcast_preview(message: Message, state: FSMContext):
 
     await state.update_data(
         broadcast_type=msg_type,
-        broadcast_content=content,
+        broadcast_text=text,
+        broadcast_entities=entities_data,
         broadcast_file_id=file_id,
     )
 
-    preview = content if content else f"({msg_type})"
+    # Preview — send original message with its entities (premium emoji, bold, etc.)
+    entities = [MessageEntity(**e) for e in entities_data] if entities_data else None
+    if msg_type == "text" or not file_id:
+        await message.answer(text or "(bo'sh xabar)", entities=entities)
+    elif msg_type == "photo":
+        await message.answer_photo(file_id, caption=text or None, caption_entities=entities)
+    elif msg_type == "video":
+        await message.answer_video(file_id, caption=text or None, caption_entities=entities)
+    elif msg_type == "document":
+        await message.answer_document(file_id, caption=text or None, caption_entities=entities)
+    else:
+        await message.answer(text or "(bo'sh xabar)", entities=entities)
+
+    # Confirm buttons in a separate message (avoids entity offset shifting)
     await message.answer(
-        f"📢 <b>Xabar ko'rinishi:</b>\n\n{preview}",
+        "📢 <b>Yuqoridagi xabarni yuborish?</b>",
+        parse_mode="HTML",
         reply_markup=keyboards.get_admin_broadcast_confirm_keyboard(),
     )
 
@@ -371,8 +391,12 @@ async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext)
     await callback.answer("⏳ Yuborilmoqda...")
     data = await state.get_data()
     msg_type = data.get("broadcast_type", "text")
-    content = data.get("broadcast_content", "")
+    text = data.get("broadcast_text", "")
+    entities_data = data.get("broadcast_entities")
     file_id = data.get("broadcast_file_id")
+
+    # Reconstruct entities from stored dicts
+    entities = [MessageEntity(**e) for e in entities_data] if entities_data else None
 
     await callback.message.edit_text("⏳ Xabar yuborilmoqda, biroz kuting...")
     try:
@@ -381,16 +405,16 @@ async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext)
         for tid in tgs:
             try:
                 if msg_type == "photo" and file_id:
-                    await callback.bot.send_photo(tid, file_id, caption=content or None)
+                    await callback.bot.send_photo(tid, file_id, caption=text or None, caption_entities=entities)
                 elif msg_type == "video" and file_id:
-                    await callback.bot.send_video(tid, file_id, caption=content or None)
+                    await callback.bot.send_video(tid, file_id, caption=text or None, caption_entities=entities)
                 elif msg_type == "document" and file_id:
-                    await callback.bot.send_document(tid, file_id, caption=content or None)
+                    await callback.bot.send_document(tid, file_id, caption=text or None, caption_entities=entities)
                 else:
-                    await callback.bot.send_message(tid, content or "📢 Xabar")
+                    await callback.bot.send_message(tid, text or "📢 Xabar", entities=entities)
                 sent += 1
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(f"Broadcast send failed to {tid}: {exc}")
             await asyncio.sleep(0.05)
         await callback.message.answer(f"✅ Xabar {sent}/{len(tgs)} foydalanuvchiga yuborildi.")
     except Exception as e:
