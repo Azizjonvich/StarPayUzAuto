@@ -497,62 +497,6 @@
         left: 15px;
         right: 15px;
         bottom: 15px;
-        background: #111827;
-        border: 1px solid rgba(255, 255, 255, .05);
-        border-radius: 28px;
-        padding: 15px 10px;
-        display: flex;
-        justify-content: space-around;
-        backdrop-filter: blur(20px);
-    }
-
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        color: #9CA3AF;
-        cursor: pointer;
-        transition: .3s;
-    }
-
-    .nav-item.active {
-        color: #3B82F6;
-    }
-
-    .nav-icon {
-        font-size: 24px;
-    }
-
-    .nav-label {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .gift-emoji img {
-        width: 70px;
-        height: 70px;
-        object-fit: contain;
-    }
-
-    .nav-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 34px;
-    }
-
-    .nav-icon img {
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-    }
-
-    .bottom-nav {
-        position: fixed;
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
         z-index: 50;
         background: #111827;
         border: 1px solid rgba(255, 255, 255, .05);
@@ -563,6 +507,51 @@
         align-items: center;
         backdrop-filter: blur(20px);
         pointer-events: auto;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 70px;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .nav-item:hover {
+        color: #fff;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+    }
+
+    .nav-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: inherit;
+    }
+
+    .gift-emoji img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+    }
+
+    .nav-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
     }
 </style>
 

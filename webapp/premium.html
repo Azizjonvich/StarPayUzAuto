@@ -228,43 +228,6 @@
         cursor: not-allowed;
     }
 
-    .bottom-nav {
-        position: fixed;
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
-        background: #111827;
-        border: 1px solid rgba(255, 255, 255, .05);
-        border-radius: 28px;
-        padding: 15px 10px;
-        display: flex;
-        justify-content: space-around;
-        backdrop-filter: blur(20px);
-    }
-
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        color: #9CA3AF;
-        cursor: pointer;
-        transition: .3s;
-    }
-
-    .nav-item.active {
-        color: #3B82F6;
-    }
-
-    .nav-icon {
-        font-size: 24px;
-    }
-
-    .nav-label {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
     .features-list {
         background: #111827;
         border: 2px solid #3B82F6;
@@ -286,19 +249,6 @@
         font-size: 20px;
     }
 
-    .nav-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 34px;
-    }
-
-    .nav-icon img {
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-    }
-
     .bottom-nav {
         position: fixed;
         left: 15px;
@@ -314,6 +264,45 @@
         align-items: center;
         backdrop-filter: blur(20px);
         pointer-events: auto;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 70px;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .nav-item:hover {
+        color: #fff;
+    }
+
+    .nav-item.active {
+        color: #3B82F6;
+    }
+
+    .nav-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+    }
+
+    .nav-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+
+    .nav-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: inherit;
     }
 </style>
 
@@ -369,26 +358,6 @@
 
         <!-- Buy Button -->
         <button class="btn-primary" id="buyBtn" onclick="buyPremium()" disabled>Sotib olish</button>
-    </div>
-
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item" onclick="openStars()">
-            <div class="nav-icon">🏠</div>
-            <div class="nav-label">Menu</div>
-        </div>
-        <div class="nav-item" onclick="openGifts()">
-            <div class="nav-icon">🎁</div>
-            <div class="nav-label">Gifts</div>
-        </div>
-        <div class="nav-item" onclick="openReyting()">
-            <div class="nav-icon">🏆</div>
-            <div class="nav-label">Reyting</div>
-        </div>
-        <div class="nav-item" onclick="openProfile()">
-            <div class="nav-icon">👤</div>
-            <div class="nav-label">Profil</div>
-        </div>
     </div>
 
     <script src="js/common.js"></script>

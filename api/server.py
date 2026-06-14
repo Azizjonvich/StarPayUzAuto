@@ -448,13 +448,10 @@ async def payment_webhook(request: web.Request) -> web.Response:
     logger.warning("Invalid shop_id: %s (expected %s)", shop_id, settings.shop_id)
     return web.json_response({"ok": False, "error": "Invalid shop_id"}, status=403)
 
-  # Проверка подписи
+  # Проверка подписи (не блокируем — разные платёжки используют разные алгоритмы)
   if settings.shop_key:
-    if not verify_shop_signature(payload, settings.shop_key):
-      logger.warning("Payment webhook signature mismatch — check SHOP_KEY / payload format")
-      # Не блокируем обработку, т.к. разные платёжные системы используют разные алгоритмы
-    else:
-      logger.info("Payment webhook signature verified")
+    sig_ok = verify_shop_signature(payload, settings.shop_key)
+    logger.info("Payment webhook signature: %s", "OK" if sig_ok else "MISMATCH (non-blocking)")
 
   # Определяем статус (Click использует поле "error": 0 для успеха)
   raw_status = str(payload.get("status", "")).lower()
@@ -503,28 +500,29 @@ async def payment_webhook(request: web.Request) -> web.Response:
     user_int = None
 
   if not user_int:
+    # Ищем telegram_id через сохранённый заказ по external_id
     from services.database import get_pool
     pool = await get_pool()
     async with pool.acquire() as conn:
       order = await conn.fetchrow(
-        "SELECT telegram_id, amount FROM orders WHERE external_id = $1",
+        "SELECT telegram_id, amount FROM orders WHERE external_id = $1 ORDER BY id DESC LIMIT 1",
         order_id,
       )
     if order:
       user_int = int(order["telegram_id"])
-      logger.info("Resolved payment user from order: order=%s user=%s", order_id, user_int)
+      logger.info("Resolved user from order: order=%s user=%s", order_id, user_int)
+      # Проверяем расхождение суммы (логируем, но не блокируем)
       if order["amount"] is not None and int(order["amount"]) != amount_int:
         logger.warning(
-          "Payment amount differs from order: order=%s webhook_amount=%s order_amount=%s",
-          order_id,
-          amount_int,
-          order["amount"],
+          "Amount mismatch: order=%s webhook=%s order_db=%s",
+          order_id, amount_int, order["amount"],
         )
 
   if not user_int:
-    logger.warning("Payment webhook missing user_id — cannot credit balance. Payload: %s", json.dumps(payload, ensure_ascii=False)[:300])
-    # Всё равно записываем платеж, но баланс не начисляем
-    # (админ сможет вручную проверить и начислить)
+    logger.warning(
+      "Payment webhook: cannot resolve user for order=%s — balance NOT credited. Payload: %s",
+      order_id, json.dumps(payload, ensure_ascii=False)[:300]
+    )
 
   # Записываем платеж (если уже был — вернёт False)
   inserted = await record_payment(
@@ -599,12 +597,12 @@ async def api_order_topup(request: web.Request) -> web.Response:
   
   try:
     amount_int = int(amount)
-    if amount_int < 10000 or amount_int > 10000000:
-      return web.json_response({"ok": False, "error": "Summa noto'g'ri"}, status=400)
+    if amount_int < 1000 or amount_int > 10000000:
+      return web.json_response({"ok": False, "error": "Summa noto'g'ri (1,000 — 10,000,000)"}, status=400)
   except (TypeError, ValueError):
     return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
 
-  # Create order in database
+  # Сохраняем заказ с telegram_id чтобы webhook смог найти пользователя
   await create_order(int(user_id), "topup", "", None, amount_int, order_id, "pending")
   
   return web.json_response({"ok": True, "order_id": order_id})

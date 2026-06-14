@@ -244,23 +244,32 @@
         left: 15px;
         right: 15px;
         bottom: 15px;
+        z-index: 50;
         background: #111827;
         border: 1px solid rgba(255, 255, 255, .05);
         border-radius: 28px;
-        padding: 15px 10px;
+        padding: 12px 10px;
         display: flex;
         justify-content: space-around;
+        align-items: center;
         backdrop-filter: blur(20px);
+        pointer-events: auto;
     }
 
     .nav-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 5px;
+        justify-content: center;
+        gap: 4px;
+        width: 70px;
         color: #9CA3AF;
         cursor: pointer;
         transition: .3s;
+    }
+
+    .nav-item:hover {
+        color: #fff;
     }
 
     .nav-item.active {
@@ -268,12 +277,22 @@
     }
 
     .nav-icon {
-        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+    }
+
+    .nav-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
     }
 
     .nav-label {
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 600;
+        color: inherit;
     }
 </style>
 
@@ -393,23 +412,34 @@
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item" onclick="openStars()">
-            <div class="nav-icon">🏠</div>
+            <div class="nav-icon">
+                <img src="./images/home.webp" alt="home">
+            </div>
             <div class="nav-label">Menu</div>
         </div>
+
         <div class="nav-item" onclick="openGifts()">
-            <div class="nav-icon">🎁</div>
+            <div class="nav-icon">
+                <img src="./images/gift.webp" alt="Gifts">
+            </div>
             <div class="nav-label">Gifts</div>
         </div>
-        <div class="nav-item">
-            <div class="nav-icon">🏆</div>
-            <div class="nav-label">Reyting</div>
+
+        <div class="nav-item" onclick="openReyting()">
+            <div class="nav-icon">
+                <img src="./images/rating.webp" alt="Rating">
+            </div>
+            <div class="nav-label">Rating</div>
         </div>
-        <div class="nav-item active">
-            <div class="nav-icon">👤</div>
+
+        <div class="nav-item active" onclick="openProfile()">
+            <div class="nav-icon">
+                <img src="./images/profile.webp" alt="profile">
+            </div>
             <div class="nav-label">Profil</div>
         </div>
-    </div>
 
+    </div>
     <script src="js/common.js"></script>
     <script>
         const initData = tg.initDataUnsafe;
@@ -434,6 +464,14 @@
 
         function openGifts() {
             window.location.href = 'gift.html';
+        }
+
+        function openReyting() {
+            window.location.href = 'index.html';
+        }
+
+        function openProfile() {
+            window.location.href = 'index.html';
         }
 
         function openBalance() {
