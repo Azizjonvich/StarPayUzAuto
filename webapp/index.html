@@ -136,6 +136,32 @@
 
     .menu-icon {
         font-size: 22px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .menu-icon img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+    }
+
+    .section-title img {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+        object-fit: contain;
+    }
+
+    .referral-title img {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+        object-fit: contain;
     }
 
     .menu-text {
@@ -195,6 +221,18 @@
 
     .referral-item-icon {
         font-size: 20px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .referral-item-icon img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
     }
 
     .referral-item-text {
@@ -325,51 +363,44 @@
     </div>
 
     <!-- ASOSIY Section -->
-    <div class="section-title">📊 ASOSIY</div>
+    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> ASOSIY</div>
     <div class="menu-section">
         <div class="menu-item" onclick="openBalance()">
             <div class="menu-item-left">
-                <span class="menu-icon"><img src="./images/money.webp" alt="" style="width: 24px; height: 24px; vertical-align: middle;"></span>
+                <span class="menu-icon"><img src="./images/wallet__settings.webp" alt="" style="width: 24px; height: 24px; vertical-align: middle;"></span>
                 <span class="menu-text">Hisobni to'ldirish</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="openGiftlarim()">
             <div class="menu-item-left">
-                <span class="menu-icon">🎁</span>
+                <span class="menu-icon"><img src="./images/gift__settings.webp" alt=""></span>
                 <span class="menu-text">Giftlarim</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="openTakliflarim()">
             <div class="menu-item-left">
-                <span class="menu-icon">👥</span>
+                <span class="menu-icon"><img src="./images/referall__settings.webp" alt=""></span>
                 <span class="menu-text">Takliflarim</span>
-            </div>
-            <span class="menu-arrow">›</span>
-        </div>
-        <div class="menu-item" onclick="openTasks()">
-            <div class="menu-item-left">
-                <span class="menu-icon">📝</span>
-                <span class="menu-text">Taskr</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
     </div>
 
     <!-- SOZLAMALAR Section -->
-    <div class="section-title">⚙️ SOZLAMALAR</div>
+    <div class="section-title"><img src="./images/settings__settings.webp" alt=""> SOZLAMALAR</div>
     <div class="menu-section">
         <div class="menu-item" onclick="openSupport()">
             <div class="menu-item-left">
-                <span class="menu-icon">🔔</span>
+                <span class="menu-icon"><img src="./images/bildirishnoma__settings.webp" alt=""></span>
                 <span class="menu-text">Qo'llab-quvvatlash</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="openChannel()">
             <div class="menu-item-left">
-                <span class="menu-icon">📱</span>
+                <span class="menu-icon"><img src="./images/chanel__settings.webp" alt=""></span>
                 <span class="menu-text">Yangiliklar kanali</span>
             </div>
             <span class="menu-arrow">›</span>
@@ -378,7 +409,7 @@
 
     <!-- REFERRAL Section -->
     <div class="referral-card">
-        <div class="referral-title">👥 REFERRAL</div>
+        <div class="referral-title"><img src="./images/referall-stars__settings.webp" alt=""> REFERRAL</div>
         <div class="referral-text">
             Do'stlaringizni taklif qiling va ullarning xaridlaridan bonus oling!
         </div>
@@ -386,18 +417,10 @@
         <div class="referral-items">
             <div class="referral-item">
                 <div class="referral-item-left">
-                    <span class="referral-item-icon">⭐</span>
+                    <span class="referral-item-icon"><img src="./images/star-input.webp" alt=""></span>
                     <span class="referral-item-text">Telegram Stars</span>
                 </div>
                 <div class="referral-item-value">+300 so'm</div>
-            </div>
-
-            <div class="referral-item">
-                <div class="referral-item-left">
-                    <span class="referral-item-icon">💎</span>
-                    <span class="referral-item-text">Telegram Premium</span>
-                </div>
-                <div class="referral-item-value">+500 so'm</div>
             </div>
         </div>
 
