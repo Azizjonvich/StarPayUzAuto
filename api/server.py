@@ -389,8 +389,8 @@ async def api_payment_create(request: web.Request) -> web.Response:
   
   try:
     amount_int = int(amount)
-    if amount_int < 10000 or amount_int > 10000000:
-      return web.json_response({"ok": False, "error": "Summa 10,000 dan 10,000,000 oralig'ida bo'lishi kerak"}, status=400)
+    if amount_int < 1000 or amount_int > 100000000:
+      return web.json_response({"ok": False, "error": "Summa 1,000 dan 100,000,000 oralig'ida bo'lishi kerak"}, status=400)
   except (TypeError, ValueError):
     return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
 
@@ -599,8 +599,8 @@ async def api_order_topup(request: web.Request) -> web.Response:
   
   try:
     amount_int = int(amount)
-    if amount_int < 1000 or amount_int > 10000000:
-      return web.json_response({"ok": False, "error": "Summa noto'g'ri (1,000 — 10,000,000)"}, status=400)
+    if amount_int < 1000 or amount_int > 100000000:
+      return web.json_response({"ok": False, "error": "Summa noto'g'ri (1,000 — 100,000,000)"}, status=400)
   except (TypeError, ValueError):
     return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
 
