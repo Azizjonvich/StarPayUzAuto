@@ -56,6 +56,24 @@ async def init_db() -> None:
         )
         await conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS admin_logs (
+                id SERIAL PRIMARY KEY,
+                admin_id BIGINT NOT NULL,
+                action TEXT NOT NULL,
+                details TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE TABLE IF NOT EXISTS balance_history (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT NOT NULL,
+                amount INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                balance_before INTEGER NOT NULL DEFAULT 0,
+                balance_after INTEGER NOT NULL DEFAULT 0,
+                reason TEXT,
+                admin_id BIGINT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
             CREATE TABLE IF NOT EXISTS payments (
                 id SERIAL PRIMARY KEY,
                 telegram_id BIGINT,
@@ -219,6 +237,196 @@ async def record_payment(
             return True
         except asyncpg.UniqueViolationError:
             return False
+
+
+
+# ─── Admin methods ───────────────────────────────────────────────
+
+async def get_users_paginated(page: int = 1, page_size: int = 20) -> tuple[list[dict], int]:
+    """Get paginated list of all users"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        total = await conn.fetchval("SELECT COUNT(*) FROM users")
+        offset = (page - 1) * page_size
+        rows = await conn.fetch(
+            "SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            page_size, offset
+        )
+        return [dict(r) for r in rows], total or 0
+
+
+async def search_users_db(query: str, search_by: str = "telegram_id") -> list[dict]:
+    """Search users by telegram_id, username, or sp_id"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if search_by == "telegram_id" and query.isdigit():
+            row = await conn.fetchrow("SELECT * FROM users WHERE telegram_id = $1", int(query))
+            return [dict(row)] if row else []
+        elif search_by == "sp_id" and query.isdigit():
+            row = await conn.fetchrow("SELECT * FROM users WHERE sp_id = $1", int(query))
+            return [dict(row)] if row else []
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM users WHERE username ILIKE $1 ORDER BY created_at DESC LIMIT 20",
+                f"%{query}%"
+            )
+            return [dict(r) for r in rows]
+
+
+async def block_user_db(telegram_id: int) -> bool:
+    """Block a user (set is_blocked=true)"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        # Add column if not exists
+        await conn.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false"
+        )
+        result = await conn.execute(
+            "UPDATE users SET is_blocked = true WHERE telegram_id = $1", telegram_id
+        )
+        return result != "UPDATE 0"
+
+
+async def unblock_user_db(telegram_id: int) -> bool:
+    """Unblock a user"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "UPDATE users SET is_blocked = false WHERE telegram_id = $1", telegram_id
+        )
+        return result != "UPDATE 0"
+
+
+async def delete_user_db(telegram_id: int) -> bool:
+    """Delete a user"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute("DELETE FROM users WHERE telegram_id = $1", telegram_id)
+        return result != "UPDATE 0"
+
+
+async def get_orders_paginated(
+    page: int = 1,
+    page_size: int = 20,
+    status: str | None = None,
+    product_type: str | None = None,
+    telegram_id: int | None = None,
+) -> tuple[list[dict], int]:
+    """Get paginated orders with optional filters"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        where = []
+        params = []
+        idx = 1
+
+        if status:
+            where.append(f"status = ${idx}")
+            params.append(status)
+            idx += 1
+        if product_type:
+            where.append(f"product_type = ${idx}")
+            params.append(product_type)
+            idx += 1
+        if telegram_id:
+            where.append(f"telegram_id = ${idx}")
+            params.append(telegram_id)
+            idx += 1
+
+        where_sql = " WHERE " + " AND ".join(where) if where else ""
+        
+        total = await conn.fetchval(f"SELECT COUNT(*) FROM orders{where_sql}", *params)
+        offset = (page - 1) * page_size
+        params.extend([page_size, offset])
+        rows = await conn.fetch(
+            f"SELECT * FROM orders{where_sql} ORDER BY id DESC LIMIT ${idx} OFFSET ${idx+1}",
+            *params
+        )
+        return [dict(r) for r in rows], total or 0
+
+
+async def update_order_status(order_id: int, new_status: str) -> bool:
+    """Update order status"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "UPDATE orders SET status = $1 WHERE id = $2", new_status, order_id
+        )
+        return result != "UPDATE 0"
+
+
+async def get_dashboard_stats() -> dict:
+    """Get dashboard statistics"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        total_users = await conn.fetchval("SELECT COUNT(*) FROM users") or 0
+        total_balance = await conn.fetchval("SELECT COALESCE(SUM(balance), 0) FROM users") or 0
+        total_orders = await conn.fetchval("SELECT COUNT(*) FROM orders") or 0
+        
+        # Today
+        today = await conn.fetchval(
+            "SELECT COUNT(*) FROM users WHERE created_at >= CURRENT_DATE"
+        ) or 0
+        week = await conn.fetchval(
+            "SELECT COUNT(*) FROM users WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'"
+        ) or 0
+        month = await conn.fetchval(
+            "SELECT COUNT(*) FROM users WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'"
+        ) or 0
+        
+        return {
+            "total_users": total_users,
+            "total_balance": total_balance,
+            "total_orders": total_orders,
+            "new_today": today,
+            "new_week": week,
+            "new_month": month,
+        }
+
+
+async def admin_broadcast_save(
+    admin_id: int, message_type: str, content: str | None,
+    file_id: str | None = None, filters: str | None = None
+) -> int:
+    """Save broadcast to admin_logs"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "INSERT INTO admin_logs (admin_id, action, details, created_at) "
+            "VALUES ($1, 'broadcast', $2, NOW()) RETURNING id",
+            admin_id, f"type={message_type}, content={content or ''}, filters={filters or ''}"
+        )
+        return row["id"] if row else 0
+
+
+async def get_order_by_id(order_id: int) -> dict | None:
+    """Get order by its ID"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM orders WHERE id = $1", order_id)
+        return dict(row) if row else None
+
+
+async def add_balance_history(
+    telegram_id: int, amount: int, tx_type: str,
+    balance_before: int, balance_after: int,
+    reason: str | None = None, admin_id: int | None = None,
+):
+    """Record a balance change in history"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "INSERT INTO balance_history (telegram_id, amount, type, balance_before, balance_after, reason, admin_id) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            telegram_id, amount, tx_type, balance_before, balance_after, reason, admin_id,
+        )
+
+
+async def get_all_users_telegram_ids() -> list[int]:
+    """Get all user Telegram IDs for broadcasting"""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT telegram_id FROM users")
+        return [r["telegram_id"] for r in rows]
 
 
 # Legacy API compatibility layer for handlers that use "from services.database import db"

@@ -125,21 +125,124 @@ def get_webapp_keyboard() -> ReplyKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def get_admin_keyboard() -> InlineKeyboardMarkup:
-    """Admin panel keyboard"""
+def get_admin_main_keyboard() -> InlineKeyboardMarkup:
+    """Admin panel main menu"""
     builder = InlineKeyboardBuilder()
-    
-    builder.row(
-        InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats")
-    )
-    builder.row(
-        InlineKeyboardButton(text="📢 Xabar yuborish", callback_data="admin_broadcast")
-    )
-    builder.row(
-        InlineKeyboardButton(text="👥 Foydalanuvchilar", callback_data="admin_users")
-    )
-    
+    builder.row(InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats"))
+    builder.row(InlineKeyboardButton(text="👥 Foydalanuvchilar", callback_data="admin_users"))
+    builder.row(InlineKeyboardButton(text="💰 Balans boshqaruvi", callback_data="admin_balance"))
+    builder.row(InlineKeyboardButton(text="📢 Xabar yuborish", callback_data="admin_broadcast"))
+    builder.row(InlineKeyboardButton(text="📦 Buyurtmalar", callback_data="admin_orders"))
+    builder.row(InlineKeyboardButton(text="⚙️ Sozlamalar", callback_data="admin_settings"))
     return builder.as_markup()
+
+
+def get_admin_back_keyboard() -> InlineKeyboardMarkup:
+    """Back to admin main menu"""
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
+def get_admin_users_keyboard() -> InlineKeyboardMarkup:
+    """Users management menu"""
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="📋 Ro'yxat", callback_data="admin_users_list_1"))
+    builder.row(InlineKeyboardButton(text="🔍 Qidirish", callback_data="admin_users_search"))
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
+def get_admin_users_list_keyboard(page: int, has_next: bool) -> InlineKeyboardMarkup:
+    """Users list pagination"""
+    builder = InlineKeyboardBuilder()
+    nav = []
+    if page > 1:
+        nav.append(InlineKeyboardButton(text="⬅️", callback_data=f"admin_users_list_{page-1}"))
+    nav.append(InlineKeyboardButton(text=f"{page}", callback_data="admin_users_list_skip"))
+    if has_next:
+        nav.append(InlineKeyboardButton(text="➡️", callback_data=f"admin_users_list_{page+1}"))
+    if nav:
+        builder.row(*nav)
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_users"))
+    return builder.as_markup()
+
+
+def get_admin_user_actions_keyboard(telegram_id: int) -> InlineKeyboardMarkup:
+    """Single user actions"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="🔒 Bloklash", callback_data=f"admin_user_block_{telegram_id}"),
+        InlineKeyboardButton(text="🔓 Blokdan chiqarish", callback_data=f"admin_user_unblock_{telegram_id}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"admin_user_delete_{telegram_id}"),
+    )
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_users"))
+    return builder.as_markup()
+
+
+def get_admin_orders_keyboard(orders: list, page: int = 1, total: int = 0) -> InlineKeyboardMarkup:
+    """Orders list with clickable order buttons + pagination"""
+    builder = InlineKeyboardBuilder()
+    for o in orders:
+        status_emoji = {"pending": "⏳", "processing": "🔄", "completed": "✅",
+                        "failed": "❌", "cancelled": "🚫"}.get(o["status"], "❓")
+        label = f"{status_emoji} #{o['id']} — {o.get('product_type', '?')}"
+        builder.row(InlineKeyboardButton(
+            text=label, callback_data=f"admin_order_detail_{o['id']}"
+        ))
+    # Pagination
+    has_next = (page * 5) < total
+    nav = []
+    if page > 1:
+        nav.append(InlineKeyboardButton(text="⬅️", callback_data=f"admin_orders_page_{page-1}"))
+    nav.append(InlineKeyboardButton(text=f"{page}", callback_data="admin_orders_skip"))
+    if has_next:
+        nav.append(InlineKeyboardButton(text="➡️", callback_data=f"admin_orders_page_{page+1}"))
+    if nav:
+        builder.row(*nav)
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
+def get_admin_order_detail_keyboard(order_id: int, current_status: str) -> InlineKeyboardMarkup:
+    """Order detail actions"""
+    builder = InlineKeyboardBuilder()
+    statuses = ["pending", "processing", "completed", "failed", "cancelled"]
+    for s in statuses:
+        if s != current_status:
+            builder.row(InlineKeyboardButton(
+                text=f"➡️ {s.title()}", callback_data=f"admin_order_status_{order_id}_{s}"
+            ))
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_orders"))
+    return builder.as_markup()
+
+
+def get_admin_balance_actions_keyboard() -> InlineKeyboardMarkup:
+    """Balance actions: add or deduct"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="➕ Qo'shish", callback_data="admin_balance_act_add"),
+        InlineKeyboardButton(text="➖ Ayirish", callback_data="admin_balance_act_deduct"),
+    )
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
+def get_admin_broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
+    """Broadcast confirm: Yes/No"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Yuborish", callback_data="admin_broadcast_confirm"),
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_broadcast_cancel"),
+    )
+    return builder.as_markup()
+
+
+def get_admin_keyboard() -> InlineKeyboardMarkup:
+    """Legacy admin panel keyboard"""
+    return get_admin_main_keyboard()
 
 
 def get_confirm_keyboard(action: str, data: str) -> InlineKeyboardMarkup:

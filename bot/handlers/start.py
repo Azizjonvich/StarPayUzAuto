@@ -47,36 +47,21 @@ def menu_text(
 
 @router.message(Command("admin"))
 async def cmd_admin(message: Message) -> None:
-    """Open admin panel (admins only)"""
+    """Admin panel inside the bot"""
     if not message.from_user:
         return
-
     user_id = message.from_user.id
     admin_ids = settings.admin_ids or []
-
     if user_id not in admin_ids:
         await message.answer(
             "❌ <b>Bu buyruq faqat administratorlar uchun.</b>",
             parse_mode="HTML",
         )
         return
-
-    admin_panel_url = settings.admin_panel_url
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text="🔐 Admin Panelni ochish",
-                web_app=WebAppInfo(url=admin_panel_url),
-            )
-        ]
-    ])
-
+    from keyboards import get_admin_main_keyboard
     await message.answer(
-        "🔐 <b>Admin Panel</b>\n\n"
-        "Xush kelibsiz, administrator!\n"
-        "Quyidagi tugma orqali admin panelni oching:",
-        reply_markup=keyboard,
+        "🔐 <b>Admin Panel</b>\n\nXush kelibsiz, administrator!",
+        reply_markup=get_admin_main_keyboard(),
         parse_mode="HTML",
     )
 
