@@ -127,6 +127,18 @@
             background: rgba(59, 130, 246, .15);
         }
 
+        .gift-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .gift-tab img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
         .gift-tab.active {
             background: #3B82F6;
             color: #fff;
@@ -496,8 +508,8 @@
 
     <!-- Tabs -->
     <div class="gift-tabs">
-        <button class="gift-tab active" onclick="switchTab('regular')">🎁 Giftlar</button>
-        <button class="gift-tab" onclick="switchTab('nft')">✨ NFT Giftlar</button>
+        <button class="gift-tab active" onclick="switchTab('regular')"><img src="./images/giftoption.webp" alt=""> Giftlar</button>
+        <button class="gift-tab" onclick="switchTab('nft')"><img src="./images/nft__option.webp" alt=""> NFT Giftlar</button>
     </div>
 
     <!-- Selected info -->
