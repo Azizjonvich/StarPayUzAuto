@@ -1,8 +1,8 @@
-"""Authentication router"""
+"""Authentication router — sync version"""
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from admin.database import get_db
 from admin.schemas.auth import (
@@ -33,13 +33,13 @@ def get_client_ip(request: Request) -> str:
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(
+def login(
     request: LoginRequest,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Login with username and password"""
-    admin, token = await authenticate_admin_by_credentials(
+    admin, token = authenticate_admin_by_credentials(
         db, request.username, request.password
     )
     if not admin:
@@ -49,7 +49,7 @@ async def login(
         )
 
     ip = get_client_ip(req)
-    await log_admin_action(
+    log_admin_action(
         db,
         admin.id,
         admin.username,
@@ -71,13 +71,13 @@ async def login(
 
 
 @router.post("/telegram", response_model=LoginResponse)
-async def telegram_login(
+def telegram_login(
     request: TelegramAuthRequest,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Login via Telegram WebApp initData"""
-    admin, token = await authenticate_admin_by_telegram(db, request.init_data)
+    admin, token = authenticate_admin_by_telegram(db, request.init_data)
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -85,7 +85,7 @@ async def telegram_login(
         )
 
     ip = get_client_ip(req)
-    await log_admin_action(
+    log_admin_action(
         db,
         admin.id,
         admin.username,
@@ -107,9 +107,9 @@ async def telegram_login(
 
 
 @router.get("/me", response_model=AdminUserInfo)
-async def get_current_admin(
+def get_current_admin(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Get current admin info from Authorization header"""
     auth_header = request.headers.get("Authorization", "")
@@ -120,7 +120,7 @@ async def get_current_admin(
         )
 
     token = auth_header[7:]
-    admin = await get_admin_from_token(db, token)
+    admin = get_admin_from_token(db, token)
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -136,10 +136,10 @@ async def get_current_admin(
 
 
 @router.post("/change-password")
-async def change_password(
+def change_password(
     request: ChangePasswordRequest,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Change admin password"""
     auth_header = req.headers.get("Authorization", "")
@@ -147,7 +147,7 @@ async def change_password(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     token = auth_header[7:]
-    admin = await get_admin_from_token(db, token)
+    admin = get_admin_from_token(db, token)
     if not admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
@@ -158,10 +158,10 @@ async def change_password(
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
 
     admin.password_hash = hash_password(request.new_password)
-    await db.commit()
+    db.commit()
 
     ip = get_client_ip(req)
-    await log_admin_action(
+    log_admin_action(
         db, admin.id, admin.username, "password_change",
         entity_type="auth", details="Password changed", ip_address=ip,
     )
@@ -169,9 +169,9 @@ async def change_password(
     return {"ok": True, "message": "Password changed successfully"}
 
 
-async def require_admin(
+def require_admin(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ) -> AdminUserInfo:
     """Dependency to require admin authentication"""
     auth_header = request.headers.get("Authorization", "")
@@ -182,7 +182,7 @@ async def require_admin(
         )
 
     token = auth_header[7:]
-    admin = await get_admin_from_token(db, token)
+    admin = get_admin_from_token(db, token)
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

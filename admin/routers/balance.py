@@ -1,9 +1,10 @@
-"""Balance management router"""
+"""Balance management router — sync version"""
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from admin.database import get_db
 from admin.routers.auth import require_admin
@@ -23,9 +24,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin/balance", tags=["balance"])
 
 
-async def _get_user_balance(db: AsyncSession, telegram_id: int) -> int | None:
-    """Get user's current balance"""
-    result = await db.execute(
+def _get_user_balance(db: Session, telegram_id: int) -> int | None:
+    result = db.execute(
         text("SELECT balance FROM users WHERE telegram_id = :tid"),
         {"tid": telegram_id},
     )
@@ -33,20 +33,17 @@ async def _get_user_balance(db: AsyncSession, telegram_id: int) -> int | None:
     return row[0] if row else None
 
 
-async def _update_user_balance(
-    db: AsyncSession, telegram_id: int, new_balance: int
-) -> bool:
-    """Update user's balance"""
-    result = await db.execute(
+def _update_user_balance(db: Session, telegram_id: int, new_balance: int) -> bool:
+    result = db.execute(
         text("UPDATE users SET balance = :bal WHERE telegram_id = :tid"),
         {"bal": new_balance, "tid": telegram_id},
     )
-    await db.commit()
+    db.commit()
     return result.rowcount > 0
 
 
-async def _record_transaction(
-    db: AsyncSession,
+def _record_transaction(
+    db: Session,
     telegram_id: int,
     amount: int,
     tx_type: str,
@@ -55,12 +52,12 @@ async def _record_transaction(
     reason: str | None,
     admin_id: int,
 ):
-    """Record a balance transaction"""
-    await db.execute(
+    now = datetime.now(timezone.utc)
+    db.execute(
         text(
             "INSERT INTO transactions (telegram_id, amount, type, balance_before, "
             "balance_after, reason, admin_id, created_at) "
-            "VALUES (:tid, :amt, :typ, :bb, :ba, :reason, :aid, NOW())"
+            "VALUES (:tid, :amt, :typ, :bb, :ba, :reason, :aid, :now)"
         ),
         {
             "tid": telegram_id,
@@ -70,42 +67,32 @@ async def _record_transaction(
             "ba": balance_after,
             "reason": reason or "",
             "aid": admin_id,
+            "now": now,
         },
     )
-    await db.commit()
+    db.commit()
 
 
 @router.post("/add")
-async def add_balance(
+def add_balance(
     request: BalanceChangeRequest,
     admin: AdminUserInfo = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    """Add balance to a user"""
-    current_balance = await _get_user_balance(db, request.telegram_id)
+    current_balance = _get_user_balance(db, request.telegram_id)
     if current_balance is None:
         raise HTTPException(status_code=404, detail="User not found")
 
     new_balance = current_balance + request.amount
-    await _update_user_balance(db, request.telegram_id, new_balance)
-    await _record_transaction(
-        db,
-        request.telegram_id,
-        request.amount,
-        "credit",
-        current_balance,
-        new_balance,
-        request.reason,
-        admin.id,
+    _update_user_balance(db, request.telegram_id, new_balance)
+    _record_transaction(
+        db, request.telegram_id, request.amount, "credit",
+        current_balance, new_balance, request.reason, admin.id,
     )
 
-    await log_admin_action(
-        db,
-        admin.id,
-        admin.username,
-        "balance_change",
-        entity_type="user",
-        entity_id=str(request.telegram_id),
+    log_admin_action(
+        db, admin.id, admin.username, "balance_change",
+        entity_type="user", entity_id=str(request.telegram_id),
         details=f"Added {request.amount} to user {request.telegram_id}. Balance: {current_balance} -> {new_balance}. Reason: {request.reason or 'N/A'}",
     )
 
@@ -119,13 +106,12 @@ async def add_balance(
 
 
 @router.post("/deduct")
-async def deduct_balance(
+def deduct_balance(
     request: BalanceDeductRequest,
     admin: AdminUserInfo = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    """Deduct balance from a user"""
-    current_balance = await _get_user_balance(db, request.telegram_id)
+    current_balance = _get_user_balance(db, request.telegram_id)
     if current_balance is None:
         raise HTTPException(status_code=404, detail="User not found")
     if current_balance < request.amount:
@@ -135,25 +121,15 @@ async def deduct_balance(
         )
 
     new_balance = current_balance - request.amount
-    await _update_user_balance(db, request.telegram_id, new_balance)
-    await _record_transaction(
-        db,
-        request.telegram_id,
-        request.amount,
-        "debit",
-        current_balance,
-        new_balance,
-        request.reason,
-        admin.id,
+    _update_user_balance(db, request.telegram_id, new_balance)
+    _record_transaction(
+        db, request.telegram_id, request.amount, "debit",
+        current_balance, new_balance, request.reason, admin.id,
     )
 
-    await log_admin_action(
-        db,
-        admin.id,
-        admin.username,
-        "balance_change",
-        entity_type="user",
-        entity_id=str(request.telegram_id),
+    log_admin_action(
+        db, admin.id, admin.username, "balance_change",
+        entity_type="user", entity_id=str(request.telegram_id),
         details=f"Deducted {request.amount} from user {request.telegram_id}. Balance: {current_balance} -> {new_balance}. Reason: {request.reason or 'N/A'}",
     )
 
@@ -167,36 +143,26 @@ async def deduct_balance(
 
 
 @router.post("/set")
-async def set_balance(
+def set_balance(
     request: BalanceSetRequest,
     admin: AdminUserInfo = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    """Set exact balance for a user"""
-    current_balance = await _get_user_balance(db, request.telegram_id)
+    current_balance = _get_user_balance(db, request.telegram_id)
     if current_balance is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    await _update_user_balance(db, request.telegram_id, request.amount)
+    _update_user_balance(db, request.telegram_id, request.amount)
     difference = request.amount - current_balance
-    await _record_transaction(
-        db,
-        request.telegram_id,
-        abs(difference),
+    _record_transaction(
+        db, request.telegram_id, abs(difference),
         "set" if difference >= 0 else "debit",
-        current_balance,
-        request.amount,
-        request.reason,
-        admin.id,
+        current_balance, request.amount, request.reason, admin.id,
     )
 
-    await log_admin_action(
-        db,
-        admin.id,
-        admin.username,
-        "balance_change",
-        entity_type="user",
-        entity_id=str(request.telegram_id),
+    log_admin_action(
+        db, admin.id, admin.username, "balance_change",
+        entity_type="user", entity_id=str(request.telegram_id),
         details=f"Set balance to {request.amount} for user {request.telegram_id}. Previous: {current_balance}. Reason: {request.reason or 'N/A'}",
     )
 
@@ -210,35 +176,24 @@ async def set_balance(
 
 
 @router.post("/reset")
-async def reset_balance(
+def reset_balance(
     request: BalanceResetRequest,
     admin: AdminUserInfo = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    """Reset user balance to zero"""
-    current_balance = await _get_user_balance(db, request.telegram_id)
+    current_balance = _get_user_balance(db, request.telegram_id)
     if current_balance is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    await _update_user_balance(db, request.telegram_id, 0)
-    await _record_transaction(
-        db,
-        request.telegram_id,
-        current_balance,
-        "reset",
-        current_balance,
-        0,
-        request.reason,
-        admin.id,
+    _update_user_balance(db, request.telegram_id, 0)
+    _record_transaction(
+        db, request.telegram_id, current_balance, "reset",
+        current_balance, 0, request.reason, admin.id,
     )
 
-    await log_admin_action(
-        db,
-        admin.id,
-        admin.username,
-        "balance_change",
-        entity_type="user",
-        entity_id=str(request.telegram_id),
+    log_admin_action(
+        db, admin.id, admin.username, "balance_change",
+        entity_type="user", entity_id=str(request.telegram_id),
         details=f"Reset balance to 0 for user {request.telegram_id}. Previous: {current_balance}. Reason: {request.reason or 'N/A'}",
     )
 
@@ -252,69 +207,57 @@ async def reset_balance(
 
 
 @router.get("/history", response_model=TransactionHistoryResponse)
-async def get_balance_history(
+def get_balance_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     telegram_id: int | None = Query(None),
     admin: AdminUserInfo = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Get balance change history"""
-    # Check if transactions table has data, if not return empty
-    result = await db.execute(
-        text("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'transactions'")
-    )
-    table_exists = result.scalar() or 0
-
-    if not table_exists:
-        return TransactionHistoryResponse(total=0, page=page, page_size=page_size, transactions=[])
-
-    if telegram_id:
-        count_result = await db.execute(
-            text("SELECT COUNT(*) FROM transactions WHERE telegram_id = :tid"),
-            {"tid": telegram_id},
-        )
-        total = count_result.scalar() or 0
-
-        result = await db.execute(
-            text(
-                "SELECT id, telegram_id, amount, type, balance_before, balance_after, "
-                "reason, admin_id, created_at "
-                "FROM transactions WHERE telegram_id = :tid "
-                "ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-            ),
-            {"tid": telegram_id, "limit": page_size, "offset": (page - 1) * page_size},
-        )
-    else:
-        count_result = await db.execute(text("SELECT COUNT(*) FROM transactions"))
-        total = count_result.scalar() or 0
-
-        result = await db.execute(
-            text(
-                "SELECT id, telegram_id, amount, type, balance_before, balance_after, "
-                "reason, admin_id, created_at "
-                "FROM transactions ORDER BY created_at DESC "
-                "LIMIT :limit OFFSET :offset"
-            ),
-            {"limit": page_size, "offset": (page - 1) * page_size},
-        )
-
-    rows = result.fetchall()
-    transactions = []
-    for row in rows:
-        transactions.append(
-            TransactionInfo(
-                id=row[0],
-                telegram_id=row[1],
-                amount=row[2],
-                type=row[3],
-                balance_before=row[4],
-                balance_after=row[5],
-                reason=row[6],
-                admin_id=row[7],
-                created_at=row[8],
+    # Check if table exists via try/except (SQLite compatible)
+    try:
+        if telegram_id:
+            count_result = db.execute(
+                text("SELECT COUNT(*) FROM transactions WHERE telegram_id = :tid"),
+                {"tid": telegram_id},
             )
-        )
+            total = count_result.scalar() or 0
+
+            result = db.execute(
+                text(
+                    "SELECT id, telegram_id, amount, type, balance_before, balance_after, "
+                    "reason, admin_id, created_at "
+                    "FROM transactions WHERE telegram_id = :tid "
+                    "ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+                ),
+                {"tid": telegram_id, "limit": page_size, "offset": (page - 1) * page_size},
+            )
+        else:
+            count_result = db.execute(text("SELECT COUNT(*) FROM transactions"))
+            total = count_result.scalar() or 0
+
+            result = db.execute(
+                text(
+                    "SELECT id, telegram_id, amount, type, balance_before, balance_after, "
+                    "reason, admin_id, created_at "
+                    "FROM transactions ORDER BY created_at DESC "
+                    "LIMIT :limit OFFSET :offset"
+                ),
+                {"limit": page_size, "offset": (page - 1) * page_size},
+            )
+
+        rows = result.fetchall()
+        transactions = [
+            TransactionInfo(
+                id=row[0], telegram_id=row[1], amount=row[2],
+                type=row[3], balance_before=row[4], balance_after=row[5],
+                reason=row[6], admin_id=row[7], created_at=str(row[8]) if row[8] else None,
+            ) for row in rows
+        ]
+    except Exception:
+        total = 0
+        transactions = []
 
     return TransactionHistoryResponse(
         total=total, page=page, page_size=page_size, transactions=transactions

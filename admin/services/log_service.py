@@ -1,16 +1,16 @@
-"""Admin activity logging service"""
+"""Admin activity logging service — sync version"""
 import logging
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from admin.models.log import AdminLog
 
 logger = logging.getLogger(__name__)
 
 
-async def log_admin_action(
-    db: AsyncSession,
+def log_admin_action(
+    db: Session,
     admin_id: int,
     admin_username: str,
     action: str,
@@ -30,14 +30,14 @@ async def log_admin_action(
         ip_address=ip_address,
     )
     db.add(log_entry)
-    await db.commit()
-    await db.refresh(log_entry)
+    db.commit()
+    db.refresh(log_entry)
     logger.info(f"Admin action: {action} by {admin_username} - {details}")
     return log_entry
 
 
-async def get_logs(
-    db: AsyncSession,
+def get_logs(
+    db: Session,
     page: int = 1,
     page_size: int = 50,
     action: str | None = None,
@@ -54,18 +54,16 @@ async def get_logs(
         query = query.where(AdminLog.admin_id == admin_id)
         count_query = count_query.where(AdminLog.admin_id == admin_id)
 
-    # Get total count
-    total_result = await db.execute(count_query)
+    total_result = db.execute(count_query)
     total = total_result.scalar() or 0
 
-    # Get paginated logs
     query = (
         query
         .order_by(AdminLog.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    result = await db.execute(query)
+    result = db.execute(query)
     logs = list(result.scalars().all())
 
     return logs, total

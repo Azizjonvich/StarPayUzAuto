@@ -1,4 +1,4 @@
-"""Authentication service"""
+"""Authentication service — sync version"""
 import hashlib
 import hmac
 import logging
@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from admin.config import (
     BOT_TOKEN,
@@ -58,7 +58,6 @@ def validate_telegram_init_data(init_data: str) -> dict | None:
     Returns the parsed data dict if valid, None otherwise.
     """
     try:
-        # Parse the query string
         import urllib.parse
         parsed = urllib.parse.parse_qs(init_data)
         data = {k: v[0] for k, v in parsed.items()}
@@ -67,14 +66,10 @@ def validate_telegram_init_data(init_data: str) -> dict | None:
         if not received_hash:
             return None
 
-        # Build data check string
         items = sorted(data.items())
         check_string = "\n".join(f"{k}={v}" for k, v in items)
 
-        # Create secret key from bot token
         secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
-
-        # Compute HMAC-SHA256
         expected_hash = hmac.new(
             secret_key, check_string.encode(), hashlib.sha256
         ).hexdigest()
@@ -87,8 +82,8 @@ def validate_telegram_init_data(init_data: str) -> dict | None:
         return None
 
 
-async def authenticate_admin_by_telegram(
-    db: AsyncSession, init_data: str
+def authenticate_admin_by_telegram(
+    db: Session, init_data: str
 ) -> tuple[AdminUser | None, str | None]:
     """Authenticate admin via Telegram WebApp initData"""
     data = validate_telegram_init_data(init_data)
@@ -105,8 +100,7 @@ async def authenticate_admin_by_telegram(
     if not telegram_id:
         return None, "No user ID in init data"
 
-    # Find admin by telegram_id
-    result = await db.execute(
+    result = db.execute(
         select(AdminUser).where(AdminUser.telegram_id == int(telegram_id))
     )
     admin = result.scalar_one_or_none()
@@ -116,19 +110,18 @@ async def authenticate_admin_by_telegram(
     if not admin.is_active:
         return None, "Admin account is disabled"
 
-    # Update last login
     admin.last_login_at = datetime.now(timezone.utc)
-    await db.commit()
+    db.commit()
 
     token = create_access_token(admin.id, admin.username, admin.role)
     return admin, token
 
 
-async def authenticate_admin_by_credentials(
-    db: AsyncSession, username: str, password: str
+def authenticate_admin_by_credentials(
+    db: Session, username: str, password: str
 ) -> tuple[AdminUser | None, str | None]:
     """Authenticate admin by username/password"""
-    result = await db.execute(
+    result = db.execute(
         select(AdminUser).where(AdminUser.username == username)
     )
     admin = result.scalar_one_or_none()
@@ -141,14 +134,14 @@ async def authenticate_admin_by_credentials(
         return None, "Invalid credentials"
 
     admin.last_login_at = datetime.now(timezone.utc)
-    await db.commit()
+    db.commit()
 
     token = create_access_token(admin.id, admin.username, admin.role)
     return admin, token
 
 
-async def get_admin_from_token(
-    db: AsyncSession, token: str
+def get_admin_from_token(
+    db: Session, token: str
 ) -> AdminUser | None:
     """Get admin user from JWT token"""
     payload = decode_access_token(token)
@@ -156,7 +149,7 @@ async def get_admin_from_token(
         return None
 
     admin_id = int(payload.get("sub", 0))
-    result = await db.execute(
+    result = db.execute(
         select(AdminUser).where(
             AdminUser.id == admin_id,
             AdminUser.is_active == True,

@@ -1,45 +1,43 @@
-"""SQLAlchemy database setup"""
+"""SQLAlchemy database setup — sync mode for Windows without greenlet"""
 import logging
-from typing import AsyncGenerator
+from typing import Generator
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from admin.config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
-
-# Convert postgresql:// to postgresql+asyncpg:// for async
+# SQLite requires check_same_thread=False for FastAPI
 _engine_url = DATABASE_URL
-if _engine_url.startswith("postgresql://"):
-    _engine_url = _engine_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-elif _engine_url.startswith("postgres://"):
-    _engine_url = _engine_url.replace("postgres://", "postgresql+asyncpg://", 1)
+connect_args = {}
+if _engine_url.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
 
-engine = create_async_engine(_engine_url, pool_size=10, max_overflow=20, echo=False)
-async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_engine(_engine_url, connect_args=connect_args, echo=False)
+SessionFactory = sessionmaker(engine, class_=Session, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
     pass
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_factory() as session:
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI dependency that provides a sync SQLAlchemy session."""
+    with SessionFactory() as session:
         try:
             yield session
         finally:
-            await session.close()
+            session.close()
 
 
-async def init_models():
+def init_models():
     """Create all tables defined in models."""
-    async with engine.begin() as conn:
-        from admin.models import admin_user, log, setting, broadcast, transaction
-        await conn.run_sync(Base.metadata.create_all)
+    from admin.models import admin_user, log, setting, broadcast, transaction
+    Base.metadata.create_all(engine)
     logger.info("Admin panel database tables created/verified")
 
 
-async def dispose_engine():
-    await engine.dispose()
+def dispose_engine():
+    engine.dispose()

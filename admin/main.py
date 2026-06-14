@@ -1,4 +1,4 @@
-"""Admin Panel — FastAPI application entry point"""
+"""Admin Panel — FastAPI application entry point (sync mode)"""
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from admin.config import ADMIN_IDS, CORS_ORIGINS, DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME, STATIC_DIR
-from admin.database import async_session_factory, init_models
+from admin.database import SessionFactory, dispose_engine, init_models
 from admin.models.admin_user import AdminUser
 from admin.routers import auth, balance, broadcasts, dashboard, logs, orders, settings as settings_router, users, ws
 from admin.services.auth_service import hash_password
@@ -21,35 +21,21 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown"""
     # Startup
     logger.info("Starting admin panel...")
-    await init_models()
-    await _ensure_default_admin()
-    await _init_redis()
+    init_models()  # sync
+    _ensure_default_admin()
     logger.info("Admin panel startup complete")
     yield
     # Shutdown
-    from admin.database import dispose_engine
-    await dispose_engine()
+    dispose_engine()
     logger.info("Admin panel shutdown complete")
 
 
-async def _init_redis():
-    """Initialize Redis connection on startup"""
-    try:
-        from admin.services.cache import get_redis
-        r = await get_redis()
-        if r:
-            logger.info("Redis cache initialized successfully")
-        else:
-            logger.warning("Redis not available - caching disabled")
-    except Exception as e:
-        logger.warning(f"Redis initialization skipped: {e}")
-
-
-async def _ensure_default_admin():
+def _ensure_default_admin():
     """Create default admin user if none exists"""
-    async with async_session_factory() as db:
+    db = SessionFactory()
+    try:
         from sqlalchemy import select
-        result = await db.execute(select(AdminUser).limit(1))
+        result = db.execute(select(AdminUser).limit(1))
         existing = result.scalar_one_or_none()
         if not existing:
             admin = AdminUser(
@@ -58,14 +44,13 @@ async def _ensure_default_admin():
                 role="superadmin",
                 is_active=True,
             )
-            # Also link telegram admins if ADMIN_IDS are set
             db.add(admin)
-            await db.commit()
+            db.commit()
             logger.info(f"Default admin created: {DEFAULT_ADMIN_USERNAME} / {DEFAULT_ADMIN_PASSWORD}")
 
         # Ensure admins from ADMIN_IDS env exist
         for tid in ADMIN_IDS:
-            result = await db.execute(
+            result = db.execute(
                 select(AdminUser).where(AdminUser.telegram_id == tid)
             )
             admin = result.scalar_one_or_none()
@@ -78,11 +63,13 @@ async def _ensure_default_admin():
                     is_active=True,
                 )
                 db.add(admin)
-                await db.commit()
+                db.commit()
                 logger.info(f"Admin created from ADMIN_IDS: telegram_id={tid}")
             elif not admin.telegram_id:
                 admin.telegram_id = tid
-                await db.commit()
+                db.commit()
+    finally:
+        db.close()
 
 
 def create_app() -> FastAPI:
@@ -103,7 +90,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Include routers
+    # Include ALL API routers FIRST
     app.include_router(auth.router)
     app.include_router(dashboard.router)
     app.include_router(users.router)
@@ -114,14 +101,31 @@ def create_app() -> FastAPI:
     app.include_router(orders.router)
     app.include_router(ws.router)
 
-    # Serve static files (SPA frontend)
-    if STATIC_DIR.exists():
-        app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
-
     # Health check
     @app.get("/health")
-    async def health():
+    def health():
         return {"ok": True, "service": "StarPayUz Admin Panel", "version": "1.0.0"}
+
+    # SPA catch-all: serve index.html for all non-API routes
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        """Serve SPA: static files directly, otherwise index.html for client-side routing"""
+        # Skip API paths (FastAPI handles them via routers above)
+        if full_path.startswith("api/"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        # Check if the path is a real static file (css, js, images, etc.)
+        file_path = STATIC_DIR / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+        # Otherwise serve index.html for SPA client-side routing
+        index_html = STATIC_DIR / "index.html"
+        if index_html.exists():
+            return FileResponse(str(index_html))
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
 
     return app
 
