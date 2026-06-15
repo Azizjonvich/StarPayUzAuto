@@ -19,11 +19,12 @@ CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
 
-# ElderPay Node.js API client
-from config import BOT_TOKEN
-import os
-ELDERPAY_NODE_API_URL = os.getenv("ELDERPAY_NODE_API_URL", "https://web-production-3d7ba.up.railway.app")
-elderpay_client = ElderPayNodeClient(ELDERPAY_NODE_API_URL)
+# ElderPay Node.js API client (disabled - not deployed yet)
+# ELDERPAY_NODE_API_URL = os.getenv("ELDERPAY_NODE_API_URL", "")
+# elderpay_client = ElderPayNodeClient(ELDERPAY_NODE_API_URL) if ELDERPAY_NODE_API_URL else None
+
+# Temporarily disabled - using webhook/manual check only
+elderpay_client = None
 
 
 class BalanceStates(StatesGroup):
@@ -138,41 +139,8 @@ async def check_payment_status(callback: CallbackQuery):
     order_id = callback.data.split("_", 2)[2]
     order = await db.get_order(order_id)
 
-    # ── 1. Check via ElderPay Node.js API (if configured) ──────────────
-    if elderpay_client.is_configured and order:
-        try:
-            result = await elderpay_client.check_order(order_id)
-            elderpay_status = result.get("status", "").lower().strip()
-
-            logger.info(
-                "ElderPay Node check: order=%s status=%s",
-                order_id, elderpay_status,
-            )
-
-            if elderpay_status == "paid":
-                await db.update_order(order_id, status="completed")
-                await db.update_balance(order['telegram_id'], order['amount'], 'add')
-                user = await db.get_user(order['telegram_id'])
-                await callback.message.edit_text(
-                    f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-                    f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
-                    f"Yangi balans: {user['balance']:,.0f} so'm",
-                    parse_mode="HTML"
-                )
-                await callback.message.answer(
-                    "🏠 Bosh menyu:",
-                    reply_markup=keyboards.get_webapp_main_keyboard()
-                )
-                return
-            elif elderpay_status == "cancel":
-                await callback.answer(
-                    "❌ To'lov bekor qilingan. Qayta urinib ko'ring.",
-                    show_alert=True,
-                )
-                return
-        except Exception as e:
-            logger.warning("ElderPay Node check failed: %s", e)
-            # fallback to local DB
+    # ── 1. Check via ElderPay Node.js API (disabled) ──────────────
+    # Node.js API not deployed yet - skip to local DB check
 
     # ── 2. Fallback: check local DB ──────────────────────
     pool = await get_pool()
