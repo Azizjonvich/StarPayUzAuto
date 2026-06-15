@@ -10,6 +10,7 @@ from bot.config import settings
 from bot.keyboards import main_inline_keyboard, topup_back_keyboard, topup_payment_keyboard
 from bot.handlers.start import menu_text
 from services.database import ensure_user, get_user, get_user_orders, db, get_pool
+from services.elderpay import ElderPayAPI, ElderPayError
 
 import logging
 logger = logging.getLogger(__name__)
@@ -26,6 +27,13 @@ STATUS_UZ = {
 CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
+
+# ElderPay client — используем те же shop_id/shop_key (или отдельные ELDERPAY_* переменные)
+elderpay = ElderPayAPI(
+    shop_id=settings.elderpay_shop_id,
+    shop_key=settings.elderpay_shop_key,
+    api_url=settings.elderpay_api_url,
+)
 
 
 class TopupStates(StatesGroup):
@@ -127,22 +135,55 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
     await message.answer("❌ Foydalanuvchi topilmadi! /start bosing.")
     return
 
-  # Create order with external_id for webhook matching
+  # Создаём order_id для локальной БД
   order_id = f"topup_{uuid.uuid4().hex[:10]}"
   await db.create_order(order_id, user_id, "topup", amount, amount)
+
+  # Создаём заказ в ElderPay (если настроен)
+  elderpay_order_id = None
+  elderpay_error = None
+  if elderpay.is_configured:
+    try:
+      result = await elderpay.create_order(amount)
+      # ElderPay может вернуть order ID в разных форматах
+      elderpay_order_id = result.get("order") or str(result)
+      logger.info(
+        "ElderPay order created: local=%s elderpay=%s amount=%s",
+        order_id, elderpay_order_id, amount,
+      )
+    except ElderPayError as e:
+      elderpay_error = str(e)
+      logger.warning("ElderPay create failed for %s: %s", user_id, elderpay_error)
+  else:
+    logger.info("ElderPay not configured — skipping create_order")
 
   # Calculate 5-minute window (Tashkent time)
   now = tashkent_now()
   expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
 
-  await message.answer(
+  card_text = (
     f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
     f"🆔 Buyurtma: <code>{order_id}</code>\n"
     f"💰 Miqdori: {int(amount):,} so'm\n\n"
     f"💳 <b>To'lov uchun karta:</b>\n"
     f"<code>{CARD_NUMBER}</code>\n\n"
     f"⏰ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-    f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!",
+    f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
+  )
+
+  if elderpay_error:
+    card_text += (
+      f"\n\n⚠️ ElderPay xatosi: {elderpay_error}\n"
+      f"To'lovni amalga oshirib, «To'lovni tekshirish» tugmasini bosing."
+    )
+  elif elderpay.is_configured:
+    card_text += (
+      f"\n\n🤖 ElderPay orqali avtomatik tekshiriladi.\n"
+      f"Pul tushgach, balans avtomatik to'ldiriladi!"
+    )
+
+  await message.answer(
+    card_text,
     parse_mode="HTML",
     reply_markup=topup_payment_keyboard(order_id),
   )
@@ -150,13 +191,44 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def cb_check_payment(query: CallbackQuery) -> None:
-  """Check payment status in local payments table"""
+  """Check payment status — сначала ElderPay, потом локальная БД"""
   if not query.from_user:
     return
   await query.answer("Tekshirilmoqda...")
 
   order_id = query.data.split("_", 2)[2]
+  order = await db.get_order(order_id)
 
+  # ── 1. Проверка через ElderPay (если настроен) ──────────────
+  if elderpay.is_configured and order:
+    try:
+      result = await elderpay.check_order(order_id)
+      elderpay_data = result.get("data", result)
+      elderpay_status = (
+        elderpay_data.get("status", "").lower().strip()
+        if isinstance(elderpay_data, dict)
+        else str(elderpay_data).lower().strip()
+      )
+
+      logger.info(
+        "ElderPay check: order=%s status=%s raw=%s",
+        order_id, elderpay_status, str(result)[:200],
+      )
+
+      if elderpay_status == "paid":
+        await _credit_user(query, order)
+        return
+      elif elderpay_status == "cancel":
+        await query.answer(
+          "❌ To'lov bekor qilingan. Qayta urinib ko'ring.",
+          show_alert=True,
+        )
+        return
+    except ElderPayError as e:
+      logger.warning("ElderPay check failed for %s: %s", order_id, e)
+      # Продолжаем — проверяем локальную БД как fallback
+
+  # ── 2. Fallback: проверка локальной БД (для webhook/Click/Payme) ──
   pool = await get_pool()
   async with pool.acquire() as conn:
     payment = await conn.fetchrow(
@@ -165,25 +237,34 @@ async def cb_check_payment(query: CallbackQuery) -> None:
     )
 
   if payment:
-    order = await db.get_order(order_id)
     if order and order['status'] == "pending":
-      await db.update_order(order_id, status="completed")
-      await db.update_balance(order['telegram_id'], order['amount'], 'add')
-      user = await get_user(order['telegram_id'])
-      await query.message.edit_text(
-        f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-        f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
-        f"Yangi balans: {user['balance']:,.0f} so'm",
-        parse_mode="HTML"
-      )
-      await query.message.answer(
-        "🏠 Bosh menyu:", reply_markup=main_inline_keyboard()
-      )
+      await _credit_user(query, order)
+    else:
+      await query.answer("✅ To'lov allaqachon tasdiqlangan.", show_alert=True)
   else:
+    elderpay_note = ""
+    if elderpay.is_configured:
+      elderpay_note = "\n\nElderPay orqali ham tekshirildi — to'lov topilmadi."
     await query.answer(
-      "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
-      show_alert=True
+      f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.{elderpay_note}",
+      show_alert=True,
     )
+
+
+async def _credit_user(query: CallbackQuery, order: dict) -> None:
+  """Credit balance to user and update order status."""
+  await db.update_order(order.get("external_id") or order.get("id"), status="completed")
+  await db.update_balance(order['telegram_id'], order['amount'], 'add')
+  user = await get_user(order['telegram_id'])
+  await query.message.edit_text(
+    f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
+    f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
+    f"Yangi balans: {user['balance']:,.0f} so'm",
+    parse_mode="HTML"
+  )
+  await query.message.answer(
+    "🏠 Bosh menyu:", reply_markup=main_inline_keyboard()
+  )
 
 
 @router.callback_query(F.data.startswith("cancel_order_"))
