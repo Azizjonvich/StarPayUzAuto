@@ -792,16 +792,19 @@ async def _notify_user_paid(user_id: int, amount: int, new_balance: int) -> None
 
 async def on_startup(app: web.Application) -> None:
   from services.database import init_db
-
   await init_db()
+  logger.info("Database initialized")
   
-  # Запускаем фоновый checker ElderPay
-  global _elderpay_background_task
-  if elderpay.is_configured:
-    _elderpay_background_task = asyncio.create_task(_elderpay_background_checker(app))
-    logger.info("ElderPay background checker started (interval: 10s)")
-  else:
-    logger.info("ElderPay not configured — background checker disabled")
+  # ElderPay background checker disabled — using webhook only
+  logger.info("ElderPay background checker: DISABLED (webhook mode)")
+  
+  # Initialize Telethon gift sender
+  try:
+    from services.telethon_client import init_gift_sender
+    await init_gift_sender()
+    logger.info("Telethon gift sender initialized")
+  except Exception as e:
+    logger.warning("Failed to initialize Telethon: %s", e)
   
   logger.info("API server ready — webapp at /app/")
 
