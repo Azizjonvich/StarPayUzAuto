@@ -113,27 +113,12 @@ async def process_topup_amount(message: Message, state: FSMContext):
             f"💰 Miqdori: {int(amount):,} so'm\n\n"
             f"💳 <b>To'lov uchun karta:</b>\n"
             f"<code>{CARD_NUMBER}</code>\n\n"
-            f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
-            f"yoki bot avtomatik aniqlaydi.\n\n"
+            f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing.\n\n"
             f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
             f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
         )
 
-        if elderpay_error:
-            text += (
-                f"\n\n⚠️ ElderPay xatosi: {elderpay_error}\n"
-                f"To'lovdan keyin 'To'lovni tekshirish' tugmasini bosing."
-            )
-        elif elderpay_client.is_configured and elderpay_order_id:
-            text += (
-                f"\n\n🤖 ElderPay order: <code>{elderpay_order_id}</code>\n"
-                f"Bot avtomatik tekshiradi."
-            )
-        elif elderpay_client.is_configured:
-            text += (
-                f"\n\n⚠️ ElderPay order yaratilmadi.\n"
-                f"To'lovdan keyin 'To'lovni tekshirish' tugmasini bosing."
-            )
+        # ElderPay integration disabled - no error message shown
 
         await message.answer(
             text,
