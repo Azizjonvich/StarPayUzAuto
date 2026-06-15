@@ -370,7 +370,7 @@ async def api_order_phone(request: web.Request) -> web.Response:
 
 
 async def api_payment_create(request: web.Request) -> web.Response:
-  """Create payment invoice"""
+  """Create topup order — оплата через карту в боте"""
   auth = await _auth_user(request)
   user_id = _user_id_from_auth(auth)
   body = await _json_body(request)
@@ -381,7 +381,6 @@ async def api_payment_create(request: web.Request) -> web.Response:
     return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
 
   amount = body.get("amount")
-  method = body.get("method", "click")
   order_id = body.get("order_id")
   
   if not amount or not order_id:
@@ -394,37 +393,14 @@ async def api_payment_create(request: web.Request) -> web.Response:
   except (TypeError, ValueError):
     return web.json_response({"ok": False, "error": "Noto'g'ri summa"}, status=400)
 
-  # Create order in database
+  # Create order in database — вебхук сам обработает при поступлении
   await create_order(int(user_id), "topup", "", None, amount_int, order_id, "pending")
   
-  # Import api_client to create payment
-  from api_client import api_client
-  
-  # Определяем callback_url для вебхуков
-  callback_url = f"{settings.api_public_url}/webhook/payment"
-  redirect_url = f"{settings.api_public_url}/payment/success"
-  
-  result = await api_client.create_payment(
-    amount=amount_int,
-    order_id=order_id,
-    user_id=int(user_id),
-    description=f"StarPayUz - Hisobni to'ldirish {amount_int:,} so'm",
-    callback_url=callback_url,
-    redirect_url=redirect_url
-  )
-  
-  payment_ok = result.get("ok") or result.get("success") or False
-  if payment_ok and result.get("payment_url"):
-    return web.json_response({
-      "ok": True,
-      "payment_url": result["payment_url"],
-      "order_id": order_id
-    })
-  else:
-    return web.json_response({
-      "ok": False,
-      "error": result.get("message") or result.get("error") or "To'lov yaratishda xatolik"
-    }, status=400)
+  return web.json_response({
+    "ok": True,
+    "order_id": order_id,
+    "message": "Buyurtma yaratildi. Kartaga pul tashlang va botda 'To'lovni tekshirish' tugmasini bosing."
+  })
 
 
 async def payment_webhook(request: web.Request) -> web.Response:

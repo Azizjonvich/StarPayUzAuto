@@ -7,8 +7,6 @@ import uuid
 
 import keyboards
 from services.database import db, get_pool
-from api_client import api_client
-from bot.config import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -76,22 +74,6 @@ async def process_topup_amount(message: Message, state: FSMContext):
         # Create order in database (external_id = order_id for webhook matching)
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
 
-        # Register order with StarPayUz (non-blocking — card always shown)
-        try:
-            callback_url = f"{settings.api_public_url}/webhook/payment"
-            redirect_url = f"{settings.api_public_url}/payment/success"
-            pay_result = await api_client.create_payment(
-                amount=int(amount),
-                order_id=order_id,
-                user_id=user_id,
-                description=f"StarPayUz - Hisobni to'ldirish {int(amount):,} so'm",
-                callback_url=callback_url,
-                redirect_url=redirect_url,
-            )
-            logger.info("create_payment for %s: %s", order_id, pay_result)
-        except Exception as e:
-            logger.warning("create_payment failed for %s: %s", order_id, e)
-
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
         expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
@@ -120,12 +102,11 @@ async def process_topup_amount(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def check_payment_status(callback: CallbackQuery):
-    """Check payment status — local DB table + StarPayUz API"""
+    """Check payment status in local payments table"""
     await callback.answer("Tekshirilmoqda...")
 
     order_id = callback.data.split("_", 2)[2]
 
-    # 1. Check local payments table
     pool = await get_pool()
     async with pool.acquire() as conn:
         payment = await conn.fetchrow(
@@ -149,40 +130,11 @@ async def check_payment_status(callback: CallbackQuery):
                 "🏠 Bosh menyu:",
                 reply_markup=keyboards.get_webapp_main_keyboard()
             )
-        return
-
-    # 2. Not found locally — try StarPayUz API
-    try:
-        api_result = await api_client.check_payment(order_id)
-        logger.info("StarPayUz check_payment for %s: %s", order_id, api_result)
-        if api_result.get("ok") and api_result.get("paid"):
-            order = await db.get_order(order_id)
-            if order and order['status'] == "pending":
-                from services.database import record_payment
-                amount = int(api_result.get("amount", order['amount']))
-                await record_payment(order_id, order['telegram_id'], amount, "paid", f"starPayUz:{api_result}")
-                await db.update_order(order_id, status="completed")
-                await db.update_balance(order['telegram_id'], amount, 'add')
-                user = await db.get_user(order['telegram_id'])
-                await callback.message.edit_text(
-                    f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-                    f"Hisobingizga {amount:,.0f} so'm qo'shildi.\n"
-                    f"Yangi balans: {user['balance']:,.0f} so'm",
-                    parse_mode="HTML"
-                )
-                await callback.message.answer(
-                    "🏠 Bosh menyu:",
-                    reply_markup=keyboards.get_webapp_main_keyboard()
-                )
-                return
-    except Exception as e:
-        logger.warning("StarPayUz check_payment error: %s", e)
-
-    # 3. Not found anywhere
-    await callback.answer(
-        "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
-        show_alert=True
-    )
+    else:
+        await callback.answer(
+            "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
+            show_alert=True
+        )
 
 
 @router.callback_query(F.data.startswith("cancel_order_"))
