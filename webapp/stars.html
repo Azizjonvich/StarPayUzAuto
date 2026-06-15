@@ -453,67 +453,7 @@
             <div class="nav-label">Profil</div>
         </div>
 
-    </div>
-        <div class="modal-content-removed">
-                <input 
-                    type="number" 
-                    class="topup-input" 
-                    id="topupAmount" 
-                    placeholder="1 000 — 100 000 000 so'm"
-                    min="1000"
-                    max="100000000"
-                >
-                <div class="topup-hint">Min: 1 000 so'm | Max: 100 000 000 so'm</div>
-            </div>
 
-            <div class="payment-info" id="paymentInfo">
-                <div class="success-note">
-                    ✅ To'lov so'rovi yaratildi!
-                </div>
-
-                <div class="payment-row">
-                    <div class="payment-label">🆔 ID</div>
-                    <div class="payment-value">
-                        <span id="orderId">-</span>
-                        <button class="copy-btn" onclick="copyText('orderId')">Copy</button>
-                    </div>
-                </div>
-
-                <div class="payment-row">
-                    <div class="payment-label">� Karta</div>
-                    <div class="payment-value">
-                        <span id="cardNumber">****</span>
-                        <button class="copy-btn" onclick="copyCardNumber()">Copy</button>
-                    </div>
-                </div>
-
-                <div class="payment-row">
-                    <div class="payment-label">� Summa</div>
-                    <div class="payment-value" id="paymentAmount">0</div>
-                </div>
-
-                <div class="timer-block">
-                    <div class="timer-label">⏰ Qolgan vaqt</div>
-                    <div class="timer-value" id="timerDisplay">05:00</div>
-                </div>
-
-                <div class="warning-box">
-                    <div class="warning-icon">⚠️</div>
-                    <div class="warning-text">
-                        AYNAN ko'rsatilgan summani to'lang! 1 so'm farq = qabul qilinmaydi.
-                    </div>
-                </div>
-
-                <button class="btn-primary" onclick="checkPaymentStatus()">
-                    ✅ To'lovni tekshirish
-                </button>
-            </div>
-
-            <button class="btn-primary" id="createPaymentBtn" onclick="createPayment()">
-                To'ldirish
-            </button>
-        </div>
-    </div>
 
     <script src="js/common.js"></script>
     <script>
