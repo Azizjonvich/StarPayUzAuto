@@ -7,14 +7,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from bot.config import settings
-from bot.keyboards import main_inline_keyboard, topup_back_keyboard, topup_payment_keyboard
+from bot.keyboards import main_inline_keyboard, topup_back_keyboard
 from bot.handlers.start import menu_text
+from api_client import api_client
 from services.database import ensure_user, get_user, get_user_orders, db, get_pool
 
 router = Router()
-
-# Karta raqami (USER TO'LOV UCHUN)
-CARD_NUMBER = "5614686700537437"
 
 STATUS_UZ = {
   "pending": "⏳ Kutilmoqda",
@@ -115,27 +113,52 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
     return
 
   # Create order
-  order_id = uuid.uuid4().hex[:10]
+  order_id = f"topup_{uuid.uuid4().hex[:8]}"
   await db.create_order(order_id, user_id, "topup", amount, amount)
 
-  # Calculate time window (Tashkent UTC+5)
-  now = datetime.utcnow() + timedelta(hours=5)
-  end_time = now + timedelta(minutes=5)
-  time_str = f"{now.strftime('%H:%M:%S')} — {end_time.strftime('%H:%M:%S')} (Toshkent)"
+  # Create payment via Fragment API
+  callback_url = f"{settings.api_public_url}/webhook/payment"
+  redirect_url = f"{settings.api_public_url}/payment/success"
 
-  text = (
-    f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
-    f"🆔 Buyurtma: <code>{order_id}</code>\n"
-    f"💰 Miqdori: {amount:,} so'm\n\n"
-    f"💳 To'lov uchun karta:\n"
-    f"<code>{CARD_NUMBER}</code>\n\n"
-    f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
-    f"yoki bot avtomatik aniqlaydi.\n\n"
-    f"⚠️ Muddat: {time_str}\n"
-    f"Aniq 5 daqiqa. Undan keyin avtomatik bekor qilinadi!"
-  )
+  try:
+    payment_result = await api_client.create_payment(
+      amount=int(amount),
+      order_id=order_id,
+      user_id=user_id,
+      description=f"Hisobni to'ldirish - {int(amount):,} so'm",
+      callback_url=callback_url,
+      redirect_url=redirect_url,
+    )
+  except Exception as e:
+    import logging
+    logging.getLogger(__name__).exception("create_payment error")
+    await message.answer("❌ To'lov yaratishda xatolik yuz berdi. Qayta urinib ko'ring.", reply_markup=main_inline_keyboard())
+    return
 
-  await message.answer(text, parse_mode="HTML", reply_markup=topup_payment_keyboard(order_id))
+  if payment_result and (payment_result.get("ok") or payment_result.get("success") or payment_result.get("payment_url")):
+    payment_url = payment_result.get("payment_url")
+    await db.update_order(order_id, payment_url=payment_url)
+
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    payment_kb = InlineKeyboardMarkup(inline_keyboard=[
+      [InlineKeyboardButton(text="💳 To'lash", url=payment_url)],
+      [InlineKeyboardButton(text="✅ To'lovni tekshirish", callback_data=f"check_payment_{order_id}")],
+      [InlineKeyboardButton(text="❌ Bekor qilish", callback_data=f"cancel_order_{order_id}")],
+    ])
+
+    await message.answer(
+      f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+      f"🆔 Buyurtma: <code>{order_id}</code>\n"
+      f"💰 Miqdori: {int(amount):,} so'm\n\n"
+      f"💳 Quyidagi tugma orqali to'lovni amalga oshiring:",
+      parse_mode="HTML",
+      reply_markup=payment_kb,
+    )
+  else:
+    await message.answer(
+      "❌ To'lov yaratishda xatolik yuz berdi. Qayta urinib ko'ring.",
+      reply_markup=main_inline_keyboard(),
+    )
 
 
 @router.callback_query(F.data.startswith("check_payment_"))
