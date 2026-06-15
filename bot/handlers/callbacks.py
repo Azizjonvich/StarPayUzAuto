@@ -1,12 +1,20 @@
+import uuid
+from datetime import datetime, timedelta
+
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import CallbackQuery, Message
 
 from bot.config import settings
-from bot.keyboards import main_inline_keyboard
+from bot.keyboards import main_inline_keyboard, topup_back_keyboard, topup_payment_keyboard
 from bot.handlers.start import menu_text
-from services.database import ensure_user, get_user, get_user_orders
+from services.database import ensure_user, get_user, get_user_orders, db, get_pool
 
 router = Router()
+
+# Karta raqami (USER TO'LOV UCHUN)
+CARD_NUMBER = "5614686700537437"
 
 STATUS_UZ = {
   "pending": "⏳ Kutilmoqda",
@@ -14,6 +22,10 @@ STATUS_UZ = {
   "failed": "❌ Xato",
   "paid": "✅ To'langan",
 }
+
+
+class TopupStates(StatesGroup):
+    waiting_amount = State()
 
 
 @router.callback_query(F.data == "orders")
@@ -56,17 +68,133 @@ async def cb_referrals(query: CallbackQuery) -> None:
 
 
 @router.callback_query(F.data == "topup")
-async def cb_topup(query: CallbackQuery) -> None:
+async def cb_topup(query: CallbackQuery, state: FSMContext) -> None:
+  """Ask user to enter amount"""
   if not query.from_user:
     return
-  await query.message.answer(
-    f"💸 <b>Hisobni to'ldirish</b>\n\n"
-    f"Shop ID: <code>{settings.shop_id}</code>\n"
-    f"To'lov tizimi orqali to'lang — balans avtomatik yangilanadi.\n\n"
-    f"To'lovda Telegram ID ni ko'rsating: <code>{query.from_user.id}</code>",
-    parse_mode="HTML",
+  user_id = query.from_user.id
+  user = await get_user(user_id)
+  balance = user["balance"] if user else 0
+
+  text = (
+    f"💰 <b>Balansni to'ldirish</b>\n\n"
+    f"Quyidagi miqdorni kiriting:\n\n"
+    f"🔻Minimal: 1 000 so'm\n"
+    f"🔺Maksimal: 2 500 000 so'm"
   )
+  await query.message.edit_text(text, parse_mode="HTML", reply_markup=topup_back_keyboard())
+  await state.set_state(TopupStates.waiting_amount)
   await query.answer()
+
+
+@router.message(TopupStates.waiting_amount)
+async def process_topup_amount(message: Message, state: FSMContext) -> None:
+  """Process entered amount and show payment info"""
+  if not message.from_user or not message.text:
+    return
+
+  try:
+    amount = int(message.text.replace(",", "").replace(" ", ""))
+  except ValueError:
+    await message.answer("❌ Noto'g'ri format! Faqat raqam kiriting.")
+    return
+
+  if amount < 1000:
+    await message.answer("❌ Minimal summa: 1 000 so'm. Qayta urinib ko'ring.")
+    return
+  if amount > 2500000:
+    await message.answer("❌ Maksimal summa: 2 500 000 so'm. Qayta urinib ko'ring.")
+    return
+
+  await state.clear()
+
+  user_id = message.from_user.id
+  user = await get_user(user_id)
+  if not user:
+    await message.answer("❌ Foydalanuvchi topilmadi! /start bosing.")
+    return
+
+  # Create order
+  order_id = uuid.uuid4().hex[:10]
+  await db.create_order(order_id, user_id, "topup", amount, amount)
+
+  # Calculate time window (Tashkent UTC+5)
+  now = datetime.utcnow() + timedelta(hours=5)
+  end_time = now + timedelta(minutes=5)
+  time_str = f"{now.strftime('%H:%M:%S')} — {end_time.strftime('%H:%M:%S')} (Toshkent)"
+
+  text = (
+    f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+    f"🆔 Buyurtma: <code>{order_id}</code>\n"
+    f"💰 Miqdori: {amount:,} so'm\n\n"
+    f"💳 To'lov uchun karta:\n"
+    f"<code>{CARD_NUMBER}</code>\n\n"
+    f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
+    f"yoki bot avtomatik aniqlaydi.\n\n"
+    f"⚠️ Muddat: {time_str}\n"
+    f"Aniq 5 daqiqa. Undan keyin avtomatik bekor qilinadi!"
+  )
+
+  await message.answer(text, parse_mode="HTML", reply_markup=topup_payment_keyboard(order_id))
+
+
+@router.callback_query(F.data.startswith("check_payment_"))
+async def cb_check_payment(query: CallbackQuery) -> None:
+  """Check payment status"""
+  if not query.from_user:
+    return
+  await query.answer("Tekshirilmoqda...")
+
+  order_id = query.data.split("_", 2)[2]
+
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    payment = await conn.fetchrow(
+      "SELECT * FROM payments WHERE shop_order_id = $1 AND status = 'paid'",
+      order_id
+    )
+
+  if payment:
+    order = await db.get_order(order_id)
+    if order and order['status'] == "pending":
+      await db.update_order(order_id, status="completed")
+      await db.update_balance(order['telegram_id'], order['amount'], 'add')
+      user = await get_user(order['telegram_id'])
+      await query.message.edit_text(
+        f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
+        f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
+        f"Yangi balans: {user['balance']:,.0f} so'm",
+        parse_mode="HTML"
+      )
+      await query.message.answer(
+        "🏠 Bosh menyu:", reply_markup=main_inline_keyboard()
+      )
+  else:
+    await query.answer(
+      "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
+      show_alert=True
+    )
+
+
+@router.callback_query(F.data.startswith("cancel_order_"))
+async def cb_cancel_order(query: CallbackQuery) -> None:
+  """Cancel order"""
+  if not query.from_user:
+    return
+  await query.answer()
+  order_id = query.data.split("_", 2)[2]
+  order = await db.get_order(order_id)
+  if order and order['status'] == "pending":
+    await db.update_order(order_id, status="cancelled")
+  await query.message.edit_text("❌ Buyurtma bekor qilindi.", parse_mode="HTML")
+  await query.message.answer("🏠 Bosh menyu:", reply_markup=main_inline_keyboard())
+
+
+@router.callback_query(F.data == "topup_back")
+async def cb_topup_back(query: CallbackQuery, state: FSMContext) -> None:
+  """Go back from topup — clear state and return to main menu"""
+  await state.clear()
+  await cb_refresh(query)
 
 
 @router.callback_query(F.data == "refresh_menu")
