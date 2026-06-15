@@ -7,6 +7,8 @@ import uuid
 
 import keyboards
 from services.database import db, get_pool
+from api_client import api_client
+from bot.config import settings
 
 router = Router()
 
@@ -71,21 +73,50 @@ async def process_topup_amount(message: Message, state: FSMContext):
         # Create order in database (external_id = order_id for webhook matching)
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
 
+        # Try to create payment via StarPayUz API
+        try:
+            callback_url = f"{settings.api_public_url}/webhook/payment"
+            redirect_url = f"{settings.api_public_url}/payment/success"
+            result = await api_client.create_payment(
+                amount=int(amount),
+                order_id=order_id,
+                user_id=user_id,
+                description=f"StarPayUz - Hisobni to'ldirish {int(amount):,} so'm",
+                callback_url=callback_url,
+                redirect_url=redirect_url,
+            )
+        except Exception as e:
+            result = {"ok": False, "error": str(e)}
+
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
         expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
 
-        text = (
-            f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
-            f"🆔 Buyurtma: <code>{order_id}</code>\n"
-            f"💰 Miqdori: {int(amount):,} so'm\n\n"
-            f"💳 <b>To'lov uchun karta:</b>\n"
-            f"<code>{CARD_NUMBER}</code>\n\n"
-            f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
-            f"yoki bot avtomatik aniqlaydi.\n\n"
-            f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-            f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
-        )
+        payment_url = result.get("payment_url") if result.get("ok") else None
+
+        if payment_url:
+            text = (
+                f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+                f"🆔 Buyurtma: <code>{order_id}</code>\n"
+                f"💰 Miqdori: {int(amount):,} so'm\n\n"
+                f"🔗 <b>To'lov uchun havola:</b>\n"
+                f"<a href='{payment_url}'>➡️ To'lovni amalga oshirish</a>\n\n"
+                f"💳 Yoki karta orqali: <code>{CARD_NUMBER}</code>\n\n"
+                f"⏰ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+                f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
+            )
+        else:
+            text = (
+                f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+                f"🆔 Buyurtma: <code>{order_id}</code>\n"
+                f"💰 Miqdori: {int(amount):,} so'm\n\n"
+                f"💳 <b>To'lov uchun karta:</b>\n"
+                f"<code>{CARD_NUMBER}</code>\n\n"
+                f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
+                f"yoki bot avtomatik aniqlaydi.\n\n"
+                f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+                f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
+            )
 
         await message.answer(
             text,

@@ -9,7 +9,8 @@ class FragmentAPIClient:
     """Client for fragment-api.uz API v1"""
 
     def __init__(self):
-        self.api_key = config.FRAGMENT_API_KEY
+        raw_key = config.FRAGMENT_API_KEY or ""
+        self.api_key = "".join(raw_key.split()) if raw_key else ""
         base = config.FRAGMENT_API_URL.rstrip("/")
         self.api_url = base if base.endswith("/v1") else f"{base}/v1"
         self.shop_id = config.SHOP_ID
@@ -20,7 +21,7 @@ class FragmentAPIClient:
     ) -> Dict[str, Any]:
         url = f"{self.api_url}/{endpoint.lstrip('/')}"
         headers = {
-            "X-API-Key": self.api_key,
+            "X-API-Key": self.api_key.strip(),
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
