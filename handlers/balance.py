@@ -8,6 +8,7 @@ import uuid
 import keyboards
 from services.database import db, get_pool
 from services.fragment_api import FragmentAPI
+from bot.config import settings
 
 import logging
 logger = logging.getLogger(__name__)
