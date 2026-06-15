@@ -137,9 +137,52 @@ def get_admin_main_keyboard() -> InlineKeyboardMarkup:
     builder.row(InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats"))
     builder.row(InlineKeyboardButton(text="👥 Foydalanuvchilar", callback_data="admin_users"))
     builder.row(InlineKeyboardButton(text="💰 Balans boshqaruvi", callback_data="admin_balance"))
+    builder.row(InlineKeyboardButton(text="💳 To'lovni tasdiqlash", callback_data="admin_confirm_payments"))
     builder.row(InlineKeyboardButton(text="📢 Xabar yuborish", callback_data="admin_broadcast"))
     builder.row(InlineKeyboardButton(text="📦 Buyurtmalar", callback_data="admin_orders"))
     builder.row(InlineKeyboardButton(text="⚙️ Sozlamalar", callback_data="admin_settings"))
+    return builder.as_markup()
+
+
+def get_admin_payments_keyboard(orders: list, page: int = 1, total: int = 0) -> InlineKeyboardMarkup:
+    """Pending payments list with confirm buttons"""
+    builder = InlineKeyboardBuilder()
+    for o in orders:
+        label = f"💰 #{o['id']} — {o.get('telegram_id', '?')} — {o.get('amount', 0):,} so'm"
+        builder.row(InlineKeyboardButton(
+            text=label,
+            callback_data=f"admin_pay_detail_{o['id']}"
+        ))
+    # Pagination
+    has_next = (page * 5) < total
+    nav = []
+    if page > 1:
+        nav.append(InlineKeyboardButton(text="⬅️", callback_data=f"admin_pay_page_{page-1}"))
+    nav.append(InlineKeyboardButton(text=f"{page}", callback_data="admin_pay_skip"))
+    if has_next:
+        nav.append(InlineKeyboardButton(text="➡️", callback_data=f"admin_pay_page_{page+1}"))
+    if nav:
+        builder.row(*nav)
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    return builder.as_markup()
+
+
+def get_admin_pay_confirm_keyboard(order_id: int) -> InlineKeyboardMarkup:
+    """Confirm or reject a payment"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="✅ To'lov keldi — Balansni to'ldirish",
+            callback_data=f"admin_pay_confirm_{order_id}"
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="❌ Bekor qilish",
+            callback_data=f"admin_pay_reject_{order_id}"
+        )
+    )
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_confirm_payments"))
     return builder.as_markup()
 
 

@@ -15,7 +15,7 @@ from services.database import (
     get_all_users_telegram_ids, get_dashboard_stats, get_order_by_id,
     get_orders_paginated, get_users_paginated, search_users_db,
     block_user_db, unblock_user_db, delete_user_db,
-    update_order_status,
+    update_order_status, record_payment,
 )
 
 logger = logging.getLogger(__name__)
@@ -400,6 +400,172 @@ async def admin_broadcast_cancel_cb(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("❌ Xabar yuborish bekor qilindi.")
     await callback.message.answer("🔐 Admin Panel", reply_markup=keyboards.get_admin_main_keyboard())
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 4.5. ПОДТВЕРЖДЕНИЕ ОПЛАТ ПО КАРТЕ
+# ═══════════════════════════════════════════════════════════════════
+
+
+async def _get_pending_topups(page: int = 1, page_size: int = 5):
+    """Get pending topup orders"""
+    return await get_orders_paginated(
+        page=page, page_size=page_size,
+        product_type="topup",
+        status="pending",
+    )
+
+
+@router.callback_query(F.data == "admin_confirm_payments")
+async def admin_confirm_payments(callback: CallbackQuery):
+    await callback.answer()
+    page = 1
+    try:
+        orders, total = await _get_pending_topups(page=page)
+        if not orders:
+            text = "💳 <b>Kutilayotgan to'lovlar</b>\n\n✅ Hozircha kutilayotgan to'lovlar yo'q."
+            await callback.message.edit_text(text, reply_markup=keyboards.get_admin_back_keyboard())
+            return
+        text = f"💳 <b>Kutilayotgan to'lovlar</b> (jami: {total:,})\n\n"
+    except Exception as e:
+        logger.error(f"Pending payments error: {e}")
+        text = "❌ Xatolik yuz berdi."
+        orders = []
+        total = 0
+
+    await callback.message.edit_text(
+        text,
+        reply_markup=keyboards.get_admin_payments_keyboard(orders, page, total),
+    )
+
+
+@router.callback_query(F.data.startswith("admin_pay_page_"))
+async def admin_pay_page(callback: CallbackQuery):
+    await callback.answer()
+    page = int(callback.data.split("_")[-1])
+    try:
+        orders, total = await _get_pending_topups(page=page)
+        text = f"💳 <b>Kutilayotgan to'lovlar</b> (jami: {total:,})\n\n"
+    except Exception as e:
+        logger.error(f"Pay page error: {e}")
+        orders = []
+        total = 0
+        text = "❌ Xatolik yuz berdi."
+    await callback.message.edit_text(
+        text,
+        reply_markup=keyboards.get_admin_payments_keyboard(orders, page, total),
+    )
+
+
+@router.callback_query(F.data == "admin_pay_skip")
+async def admin_pay_skip(callback: CallbackQuery):
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("admin_pay_detail_"))
+async def admin_pay_detail(callback: CallbackQuery):
+    await callback.answer()
+    oid = int(callback.data.split("_")[-1])
+    try:
+        o = await get_order_by_id(oid)
+        if not o:
+            await callback.message.edit_text("❌ Buyurtma topilmadi.")
+            return
+        
+        user = await db.get_user(o["telegram_id"])
+        username = (user or {}).get("username") or str(o["telegram_id"])
+        
+        text = (
+            f"💳 <b>To'lov ma'lumotlari</b>\n\n"
+            f"📦 Buyurtma: #{o['id']}\n"
+            f"👤 Foydalanuvchi: @{username} (<code>{o['telegram_id']}</code>)\n"
+            f"💰 Summa: {o.get('amount', 0):,} so'm\n"
+            f"📅 Yaratilgan: {o.get('created_at', '—')}\n"
+            f"📊 Holat: {o['status']}\n\n"
+            f"Agar to'lov kelgan bo'lsa, «To'lov keldi» tugmasini bosing."
+        )
+        await callback.message.edit_text(
+            text,
+            reply_markup=keyboards.get_admin_pay_confirm_keyboard(oid),
+        )
+    except Exception as e:
+        logger.error(f"Pay detail error: {e}")
+        await callback.message.edit_text(f"❌ Xatolik: {e}")
+
+
+@router.callback_query(F.data.startswith("admin_pay_confirm_"))
+async def admin_pay_confirm(callback: CallbackQuery):
+    await callback.answer("✅ Balans to'ldirilmoqda...")
+    oid = int(callback.data.split("_")[-1])
+    admin_id = callback.from_user.id
+    
+    try:
+        o = await get_order_by_id(oid)
+        if not o:
+            await callback.message.edit_text("❌ Buyurtma topilmadi.")
+            return
+        if o["status"] != "pending":
+            await callback.message.edit_text(f"❌ Buyurtma #{oid} holati «{o['status']}», kutilayotgan emas.")
+            return
+        
+        tid = o["telegram_id"]
+        amount = o["amount"]
+        external_id = o.get("external_id") or f"card_{oid}_{tid}"
+        
+        # Add balance first
+        new_balance = await add_balance(tid, amount)
+        
+        # Record payment (prevents duplicates)
+        await record_payment(external_id, tid, amount, "paid", f"admin_confirmed:{admin_id}")
+        
+        # Update order status
+        await update_order_status(oid, "completed")
+        
+        user = await db.get_user(tid)
+        username = (user or {}).get("username") or str(tid)
+        
+        await callback.message.edit_text(
+            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
+            f"👤 Foydalanuvchi: @{username} (<code>{tid}</code>)\n"
+            f"💰 Summa: {amount:,} so'm\n"
+            f"💳 Yangi balans: {new_balance:,} so'm\n"
+            f"📦 Buyurtma: #{oid}",
+        )
+        
+        # Notify user
+        from aiogram import Bot
+        from aiogram.client.default import DefaultBotProperties
+        from aiogram.enums import ParseMode
+        bot = Bot(
+            token=config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+        try:
+            await bot.send_message(
+                tid,
+                f"✅ <b>To'lov muvaffaqiyatli qabul qilindi!</b>\n\n"
+                f"💰 Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
+                f"💳 Yangi balans: <b>{new_balance:,}</b> so'm",
+            )
+        except Exception as e:
+            logger.warning(f"Could not notify user {tid}: {e}")
+        finally:
+            await bot.session.close()
+            
+    except Exception as e:
+        logger.error(f"Pay confirm error: {e}")
+        await callback.message.edit_text(f"❌ Xatolik: {e}")
+
+
+@router.callback_query(F.data.startswith("admin_pay_reject_"))
+async def admin_pay_reject(callback: CallbackQuery):
+    await callback.answer()
+    oid = int(callback.data.split("_")[-1])
+    try:
+        await update_order_status(oid, "cancelled")
+        await callback.message.edit_text(f"❌ Buyurtma #{oid} bekor qilindi.")
+    except Exception as e:
+        await callback.message.edit_text(f"❌ Xatolik: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════════
