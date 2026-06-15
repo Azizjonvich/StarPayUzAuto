@@ -8,6 +8,7 @@ import uuid
 import keyboards
 from services.database import db, get_pool
 from api_client import api_client
+from bot.config import settings
 
 import logging
 logger = logging.getLogger(__name__)
