@@ -10,7 +10,7 @@ from services.database import db, get_pool
 
 router = Router()
 
-CARD_NUMBER = "5614686700537437"
+CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
 
