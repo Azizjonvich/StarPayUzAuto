@@ -403,6 +403,11 @@ async def api_payment_create(request: web.Request) -> web.Response:
   })
 
 
+async def payment_webhook_check(request: web.Request) -> web.Response:
+  """GET handler — для проверки URL платёжными системами"""
+  return web.json_response({"ok": True, "service": "StarPayUz", "message": "Webhook endpoint active"})
+
+
 async def payment_webhook(request: web.Request) -> web.Response:
   """
   Единый обработчик вебхуков от платёжных систем.
@@ -778,7 +783,9 @@ def create_app() -> web.Application:
   app.router.add_post("/api/order/topup", api_order_topup)
   app.router.add_post("/api/payment/create", api_payment_create)
   app.router.add_post("/api/payment/check", api_payment_check)
+  app.router.add_get("/webhook/payment", payment_webhook_check)
   app.router.add_post("/webhook/payment", payment_webhook)
+  app.router.add_get("/api/webhook/payment", payment_webhook_check)
   app.router.add_post("/api/webhook/payment", payment_webhook)
   app.router.add_post("/webhook/click", click_webhook)
   app.router.add_get("/api/gifts/available", api_get_available_gifts)
