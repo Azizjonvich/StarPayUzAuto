@@ -10,9 +10,12 @@ from bot.config import settings
 from bot.keyboards import main_inline_keyboard, topup_back_keyboard, topup_payment_keyboard
 from bot.handlers.start import menu_text
 from services.database import ensure_user, get_user, get_user_orders, db, get_pool
+from services.fragment_api import FragmentAPI
 
 import logging
 logger = logging.getLogger(__name__)
+
+fragment = FragmentAPI()
 
 router = Router()
 
@@ -131,34 +134,64 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
   order_id = f"topup_{uuid.uuid4().hex[:10]}"
   await db.create_order(order_id, user_id, "topup", amount, amount)
 
+  # Create payment via Fragment API (Click/Payme — auto webhook)
+  payment_url = None
+  try:
+    callback_url = f"{settings.api_public_url}/webhook/payment"
+    result = await fragment.create_payment(
+      amount=int(amount),
+      order_id=order_id,
+      user_id=user_id,
+      description=f"StarPayUz - Hisobni to'ldirish {int(amount):,} so'm",
+      callback_url=callback_url,
+    )
+    logger.info("Fragment create_payment %s: %s", order_id, result)
+    if result.get("payment_url"):
+      payment_url = result["payment_url"]
+  except Exception as e:
+    logger.warning("Fragment create_payment failed %s: %s", order_id, e)
+
   # Calculate 5-minute window (Tashkent time)
   now = tashkent_now()
   expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
 
-  await message.answer(
-    f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
-    f"🆔 Buyurtma: <code>{order_id}</code>\n"
-    f"💰 Miqdori: {int(amount):,} so'm\n\n"
-    f"💳 <b>To'lov uchun karta:</b>\n"
-    f"<code>{CARD_NUMBER}</code>\n\n"
-    f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
-    f"yoki bot avtomatik aniqlaydi.\n\n"
-    f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-    f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!",
-    parse_mode="HTML",
-    reply_markup=topup_payment_keyboard(order_id),
-  )
+  if payment_url:
+    await message.answer(
+      f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+      f"🆔 Buyurtma: <code>{order_id}</code>\n"
+      f"💰 Miqdori: {int(amount):,} so'm\n\n"
+      f"🔗 <a href='{payment_url}'>➡️ To'lovni amalga oshirish</a>\n"
+      f"💳 Yoki karta: <code>{CARD_NUMBER}</code>\n\n"
+      f"⏰ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+      f"Aniq {TIMEOUT_MINUTES} daqiqa.",
+      parse_mode="HTML",
+      disable_web_page_preview=True,
+      reply_markup=topup_payment_keyboard(order_id),
+    )
+  else:
+    await message.answer(
+      f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+      f"🆔 Buyurtma: <code>{order_id}</code>\n"
+      f"💰 Miqdori: {int(amount):,} so'm\n\n"
+      f"💳 <b>To'lov uchun karta:</b>\n"
+      f"<code>{CARD_NUMBER}</code>\n\n"
+      f"⏰ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+      f"Aniq {TIMEOUT_MINUTES} daqiqa.",
+      parse_mode="HTML",
+      reply_markup=topup_payment_keyboard(order_id),
+    )
 
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def cb_check_payment(query: CallbackQuery) -> None:
-  """Check payment status in local payments table"""
+  """Check payment — local table + Fragment API"""
   if not query.from_user:
     return
   await query.answer("Tekshirilmoqda...")
 
   order_id = query.data.split("_", 2)[2]
 
+  # 1. Check local payments table (webhooks from Click/Payme)
   pool = await get_pool()
   async with pool.acquire() as conn:
     payment = await conn.fetchrow(
@@ -181,11 +214,37 @@ async def cb_check_payment(query: CallbackQuery) -> None:
       await query.message.answer(
         "🏠 Bosh menyu:", reply_markup=main_inline_keyboard()
       )
-  else:
-    await query.answer(
-      "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
-      show_alert=True
-    )
+    return
+
+  # 2. Check with Fragment API
+  try:
+    api_result = await fragment.check_payment(order_id)
+    logger.info("Fragment check_payment %s: %s", order_id, api_result)
+    if api_result.get("ok") and api_result.get("paid"):
+      order = await db.get_order(order_id)
+      if order and order['status'] == "pending":
+        from services.database import record_payment
+        amt = int(api_result.get("amount", order["amount"]))
+        await record_payment(order_id, order["telegram_id"], amt, "paid", f"fragment:{api_result}")
+        await db.update_order(order_id, status="completed")
+        await db.update_balance(order["telegram_id"], amt, "add")
+        user = await get_user(order["telegram_id"])
+        await query.message.edit_text(
+          f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
+          f"Hisobingizga {amt:,.0f} so'm qo'shildi.\n"
+          f"Yangi balans: {user['balance']:,.0f} so'm",
+          parse_mode="HTML"
+        )
+        await query.message.answer("🏠 Bosh menyu:", reply_markup=main_inline_keyboard())
+        return
+  except Exception as e:
+    logger.warning("Fragment check_payment error %s: %s", order_id, e)
+
+  # 3. Not found anywhere
+  await query.answer(
+    "⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.",
+    show_alert=True
+  )
 
 
 @router.callback_query(F.data.startswith("cancel_order_"))

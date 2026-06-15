@@ -128,5 +128,37 @@ class FragmentAPI:
                 raise
         raise FragmentAPIError("Phone endpoint not found — check API docs")
 
+    async def create_payment(
+        self,
+        amount: int,
+        order_id: str,
+        user_id: int,
+        description: str = "Hisobni to'ldirish",
+        callback_url: str = "",
+        redirect_url: str = "",
+    ) -> dict[str, Any]:
+        """Create payment invoice — returns payment_url if successful"""
+        payload = {
+            "shop_id": settings.shop_id,
+            "amount": amount,
+            "order_id": order_id,
+            "user_id": user_id,
+            "description": description,
+            "currency": "UZS",
+        }
+        if callback_url:
+            payload["callback_url"] = callback_url
+        if redirect_url:
+            payload["redirect_url"] = redirect_url
+        return await self._request("POST", "payment/create", payload)
+
+    async def check_payment(self, order_id: str) -> dict[str, Any]:
+        """Check payment status by order_id"""
+        return await self._request(
+            "POST",
+            "payment/status",
+            {"shop_id": settings.shop_id, "order_id": order_id},
+        )
+
 
 fragment_client = FragmentAPI()
