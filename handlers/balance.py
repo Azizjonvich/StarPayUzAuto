@@ -5,10 +5,12 @@ from aiogram.fsm.state import State, StatesGroup
 import keyboards
 from services.database import db
 import uuid
-from api_client import api_client
-from bot.config import settings
+from datetime import datetime, timedelta
 
 router = Router()
+
+# Karta raqami (USER TO'LOV UCHUN)
+CARD_NUMBER = "5614686700537437"
 
 
 class BalanceStates(StatesGroup):
@@ -27,75 +29,59 @@ async def topup_menu(message: Message, state: FSMContext):
         return
     
     text = (
-        f"💰 <b>Hisobni to'ldirish</b>\n\n"
-        f"Joriy balans: {user['balance']:,.0f} so'm\n\n"
-        f"To'ldirmoqchi bo'lgan summani kiriting (so'mda):\n\n"
-        f"Minimal summa: 10,000 so'm\n"
-        f"Maksimal summa: 10,000,000 so'm"
+        f"💰 <b>Balansni to'ldirish</b>\n\n"
+        f"Quyidagi miqdorni kiriting:\n\n"
+        f"🔻Minimal: 1 000 so'm\n"
+        f"🔺Maksimal: 2 500 000 so'm"
     )
     
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(text, parse_mode="HTML", reply_markup=keyboards.get_back_keyboard())
     await state.set_state(BalanceStates.waiting_amount)
 
 
 @router.message(BalanceStates.waiting_amount)
 async def process_topup_amount(message: Message, state: FSMContext):
-    """Process top-up amount"""
+    """Process top-up amount and show card info"""
     try:
         amount = float(message.text.replace(",", "").replace(" ", ""))
         
-        if amount < 10000:
-            await message.answer("❌ Minimal summa: 10,000 so'm")
+        if amount < 1000:
+            await message.answer("❌ Minimal summa: 1 000 so'm. Qayta urinib ko'ring.")
             return
         
-        if amount > 10000000:
-            await message.answer("❌ Maksimal summa: 10,000,000 so'm")
+        if amount > 2500000:
+            await message.answer("❌ Maksimal summa: 2 500 000 so'm. Qayta urinib ko'ring.")
             return
+        
+        await state.clear()
         
         user_id = message.from_user.id
-        
-        # Create payment order
-        order_id = f"topup_{uuid.uuid4().hex[:8]}"
+        order_id = uuid.uuid4().hex[:10]
         
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
         
-        # Create payment link with callback URL for webhook
-        callback_url = f"{settings.api_public_url}/webhook/payment"
-        redirect_url = f"{settings.api_public_url}/payment/success"
-        payment_result = await api_client.create_payment(
-            amount=amount,
-            order_id=order_id,
-            user_id=user_id,
-            description=f"Hisobni to'ldirish - {amount:,.0f} so'm",
-            callback_url=callback_url,
-            redirect_url=redirect_url,
+        # Calculate time window (Tashkent UTC+5)
+        now = datetime.utcnow() + timedelta(hours=5)
+        end_time = now + timedelta(minutes=5)
+        time_str = f"{now.strftime('%H:%M:%S')} — {end_time.strftime('%H:%M:%S')} (Toshkent)"
+        
+        text = (
+            f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+            f"🆔 Buyurtma: <code>{order_id}</code>\n"
+            f"💰 Miqdori: {int(amount):,} so'm\n\n"
+            f"💳 To'lov uchun karta:\n"
+            f"<code>{CARD_NUMBER}</code>\n\n"
+            f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
+            f"yoki bot avtomatik aniqlaydi.\n\n"
+            f"⚠️ Muddat: {time_str}\n"
+            f"Aniq 5 daqiqa. Undan keyin avtomatik bekor qilinadi!"
         )
         
-        if payment_result and (payment_result.get("ok") or payment_result.get("success") or payment_result.get("payment_url")):
-            payment_url = payment_result.get("payment_url")
-            
-            # Update order with payment URL
-            await db.update_order(order_id, payment_url=payment_url)
-            
-            text = (
-                f"💳 <b>To'lov sahifasi tayyor!</b>\n\n"
-                f"Summa: {amount:,.0f} so'm\n"
-                f"Buyurtma ID: {order_id}\n\n"
-                f"Quyidagi tugmani bosib to'lovni amalga oshiring:"
-            )
-            
-            await message.answer(
-                text,
-                parse_mode="HTML",
-                reply_markup=keyboards.get_payment_keyboard(payment_url, order_id)
-            )
-        else:
-            await message.answer(
-                "❌ To'lov yaratishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.",
-                reply_markup=keyboards.get_main_keyboard()
-            )
-        
-        await state.clear()
+        await message.answer(
+            text,
+            parse_mode="HTML",
+            reply_markup=keyboards.get_card_payment_keyboard(order_id)
+        )
         
     except ValueError:
         await message.answer("❌ Noto'g'ri format! Faqat raqam kiriting.")
@@ -138,7 +124,7 @@ async def check_payment_status(callback: CallbackQuery):
             )
             await callback.message.answer(
                 "🏠 Bosh menyu:",
-                reply_markup=keyboards.get_main_keyboard()
+                reply_markup=keyboards.get_webapp_main_keyboard()
             )
     else:
         await callback.answer(
@@ -165,5 +151,5 @@ async def cancel_order(callback: CallbackQuery):
     )
     await callback.message.answer(
         "🏠 Bosh menyu:",
-        reply_markup=keyboards.get_main_keyboard()
+        reply_markup=keyboards.get_webapp_main_keyboard()
     )

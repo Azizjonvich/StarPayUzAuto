@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 import keyboards
 from services.database import db
 import config
@@ -247,11 +248,12 @@ async def buy_gift_menu(message: Message):
 
 
 @router.callback_query(F.data == "back_to_main")
-async def back_to_main_callback(callback: CallbackQuery):
+async def back_to_main_callback(callback: CallbackQuery, state: FSMContext):
     """Return to main menu from inline keyboard"""
+    await state.clear()
     await callback.answer()
     await callback.message.delete()
     await callback.message.answer(
         "🏠 Bosh menyu:",
-        reply_markup=keyboards.get_main_keyboard()
+        reply_markup=keyboards.get_webapp_main_keyboard()
     )

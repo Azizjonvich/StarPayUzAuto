@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message, MessageEntity
 from aiogram.filters import CommandStart, Command
 from aiogram.types import CallbackQuery
+from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold, as_list, as_marked_section
 from aiogram.enums import ParseMode
 import logging
@@ -244,8 +245,8 @@ async def callback_gift_menu(callback: CallbackQuery):
 
 
 @router.callback_query(F.data == "topup_menu")
-async def callback_topup_menu(callback: CallbackQuery):
-    """Show topup menu"""
+async def callback_topup_menu(callback: CallbackQuery, state: FSMContext):
+    """Show topup amount request"""
     await callback.answer()
     
     user_id = callback.from_user.id
@@ -256,14 +257,17 @@ async def callback_topup_menu(callback: CallbackQuery):
         await callback.message.answer(text, parse_mode="HTML")
         return
     
+    from keyboards import get_back_keyboard
     text = (
-        f'<tg-emoji emoji-id="{EMOJI_MONEY}">💰</tg-emoji> <b>Hisobni to\'ldirish</b>\n\n'
-        f"Joriy balans: {user['balance']:,.0f} so'm\n\n"
-        f"To'ldirish funksiyasi tez orada qo'shiladi.\n"
-        f"Hozircha admin bilan bog'laning: @StarPayUz_Admin"
+        "💰 <b>Balansni to'ldirish</b>\n\n"
+        "Quyidagi miqdorni kiriting:\n\n"
+        "🔻Minimal: 1 000 so'm\n"
+        "🔺Maksimal: 2 500 000 so'm"
     )
     
-    await callback.message.answer(text, parse_mode="HTML")
+    await callback.message.answer(text, parse_mode="HTML", reply_markup=get_back_keyboard())
+    from handlers.balance import BalanceStates
+    await state.set_state(BalanceStates.waiting_amount)
 
 
 @router.callback_query(F.data == "support")

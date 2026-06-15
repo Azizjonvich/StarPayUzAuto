@@ -23,6 +23,12 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
     )
     builder.row(
         InlineKeyboardButton(
+            text="Balans To'ldirish",
+            callback_data="topup_menu"
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
             text="@StarPayUzAdmin",
             url=admin_url,
             style="danger",
@@ -262,5 +268,23 @@ def get_back_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_main")
+    )
+    return builder.as_markup()
+
+
+def get_card_payment_keyboard(order_id: str) -> InlineKeyboardMarkup:
+    """Card payment: check + cancel buttons"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="✅ To'lovni tekshirish",
+            callback_data=f"check_payment_{order_id}"
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="❌ Bekor qilish",
+            callback_data=f"cancel_order_{order_id}"
+        )
     )
     return builder.as_markup()
