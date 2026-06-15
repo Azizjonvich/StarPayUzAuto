@@ -9,6 +9,7 @@ import keyboards
 from services.database import db, get_pool
 from services.elderpay import ElderPayAPI, ElderPayError
 
+from services.elderpay_node_client import ElderPayNodeClient
 import logging
 logger = logging.getLogger(__name__)
 
@@ -18,12 +19,11 @@ CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
 
-# ElderPay client
-from config import SHOP_ID, SHOP_KEY
-elderpay = ElderPayAPI(
-    shop_id=SHOP_ID or "",
-    shop_key=SHOP_KEY or "",
-)
+# ElderPay Node.js API client
+from config import BOT_TOKEN
+import os
+ELDERPAY_NODE_API_URL = os.getenv("ELDERPAY_NODE_API_URL", "https://web-production-3d7ba.up.railway.app")
+elderpay_client = ElderPayNodeClient(ELDERPAY_NODE_API_URL)
 
 
 class BalanceStates(StatesGroup):
@@ -84,8 +84,24 @@ async def process_topup_amount(message: Message, state: FSMContext):
         # Create order in database (external_id = order_id for webhook matching)
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
 
-        # ElderPay temporary disabled - using webhook only
+        # Create order in ElderPay Node.js API (if configured)
         elderpay_error = None
+        elderpay_order_id = None
+        if elderpay_client.is_configured:
+            try:
+                result = await elderpay_client.create_order(
+                    amount=int(amount),
+                    user_id=user_id,
+                    local_order_id=order_id
+                )
+                elderpay_order_id = result.get("order_id")
+                logger.info(
+                    "ElderPay Node order created: local=%s elderpay=%s amount=%s",
+                    order_id, elderpay_order_id, int(amount),
+                )
+            except Exception as e:
+                elderpay_error = str(e)
+                logger.warning("ElderPay Node create failed: %s", elderpay_error)
 
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
@@ -103,7 +119,21 @@ async def process_topup_amount(message: Message, state: FSMContext):
             f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
         )
 
-        # ElderPay disabled - using manual check or webhook only
+        if elderpay_error:
+            text += (
+                f"\n\n⚠️ ElderPay xatosi: {elderpay_error}\n"
+                f"To'lovdan keyin 'To'lovni tekshirish' tugmasini bosing."
+            )
+        elif elderpay_client.is_configured and elderpay_order_id:
+            text += (
+                f"\n\n🤖 ElderPay order: <code>{elderpay_order_id}</code>\n"
+                f"Bot avtomatik tekshiradi."
+            )
+        elif elderpay_client.is_configured:
+            text += (
+                f"\n\n⚠️ ElderPay order yaratilmadi.\n"
+                f"To'lovdan keyin 'To'lovni tekshirish' tugmasini bosing."
+            )
 
         await message.answer(
             text,
@@ -117,13 +147,49 @@ async def process_topup_amount(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def check_payment_status(callback: CallbackQuery):
-    """Check payment status — local DB only (ElderPay disabled)"""
+    """Check payment status — ElderPay API first, then local DB"""
     await callback.answer("Tekshirilmoqda...")
 
     order_id = callback.data.split("_", 2)[2]
     order = await db.get_order(order_id)
 
-    # Check local DB for payment record
+    # ── 1. Check via ElderPay Node.js API (if configured) ──────────────
+    if elderpay_client.is_configured and order:
+        try:
+            result = await elderpay_client.check_order(order_id)
+            elderpay_status = result.get("status", "").lower().strip()
+
+            logger.info(
+                "ElderPay Node check: order=%s status=%s",
+                order_id, elderpay_status,
+            )
+
+            if elderpay_status == "paid":
+                await db.update_order(order_id, status="completed")
+                await db.update_balance(order['telegram_id'], order['amount'], 'add')
+                user = await db.get_user(order['telegram_id'])
+                await callback.message.edit_text(
+                    f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
+                    f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
+                    f"Yangi balans: {user['balance']:,.0f} so'm",
+                    parse_mode="HTML"
+                )
+                await callback.message.answer(
+                    "🏠 Bosh menyu:",
+                    reply_markup=keyboards.get_webapp_main_keyboard()
+                )
+                return
+            elif elderpay_status == "cancel":
+                await callback.answer(
+                    "❌ To'lov bekor qilingan. Qayta urinib ko'ring.",
+                    show_alert=True,
+                )
+                return
+        except Exception as e:
+            logger.warning("ElderPay Node check failed: %s", e)
+            # fallback to local DB
+
+    # ── 2. Fallback: check local DB ──────────────────────
     pool = await get_pool()
     async with pool.acquire() as conn:
         payment = await conn.fetchrow(
@@ -147,8 +213,11 @@ async def check_payment_status(callback: CallbackQuery):
                 reply_markup=keyboards.get_webapp_main_keyboard()
             )
     else:
+        elderpay_note = ""
+        if elderpay.is_configured:
+            elderpay_note = "\n\nElderPay orqali ham tekshirildi — to'lov topilmadi."
         await callback.answer(
-            f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.\n\n"
+            f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.{elderpay_note}\n\n"
             f"💡 To'lovdan keyin 1-2 daqiqa kutib, qayta tekshiring.",
             show_alert=True
         )

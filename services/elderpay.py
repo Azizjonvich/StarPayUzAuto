@@ -30,7 +30,7 @@ class ElderPayAPI:
         self,
         shop_id: str,
         shop_key: str,
-        api_url: str = "https://elder.uz/api",
+        api_url: str = "https://elder.uz/api/v1",
     ):
         self.shop_id = shop_id.strip()
         self.shop_key = shop_key.strip()
