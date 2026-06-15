@@ -85,24 +85,7 @@ async def process_topup_amount(message: Message, state: FSMContext):
         # Create order in database (external_id = order_id for webhook matching)
         await db.create_order(order_id, user_id, "topup", int(amount), amount)
 
-        # Create order in ElderPay Node.js API (if configured)
-        elderpay_error = None
-        elderpay_order_id = None
-        if elderpay_client.is_configured:
-            try:
-                result = await elderpay_client.create_order(
-                    amount=int(amount),
-                    user_id=user_id,
-                    local_order_id=order_id
-                )
-                elderpay_order_id = result.get("order_id")
-                logger.info(
-                    "ElderPay Node order created: local=%s elderpay=%s amount=%s",
-                    order_id, elderpay_order_id, int(amount),
-                )
-            except Exception as e:
-                elderpay_error = str(e)
-                logger.warning("ElderPay Node create failed: %s", elderpay_error)
+        # ElderPay Node.js API disabled - using webhook/manual check only
 
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
