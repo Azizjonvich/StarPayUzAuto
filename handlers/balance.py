@@ -198,11 +198,8 @@ async def check_payment_status(callback: CallbackQuery):
                 reply_markup=keyboards.get_webapp_main_keyboard()
             )
     else:
-        elderpay_note = ""
-        if elderpay.is_configured:
-            elderpay_note = "\n\nElderPay orqali ham tekshirildi — to'lov topilmadi."
         await callback.answer(
-            f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.{elderpay_note}\n\n"
+            f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.\n\n"
             f"💡 To'lovdan keyin 1-2 daqiqa kutib, qayta tekshiring.",
             show_alert=True
         )
