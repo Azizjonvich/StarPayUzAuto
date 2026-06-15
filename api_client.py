@@ -6,22 +6,21 @@ import config
 
 
 class FragmentAPIClient:
-    """Client for fragment-api.uz API v1"""
+    """Client for fragment-api.uz API"""
 
     def __init__(self):
         raw_key = config.FRAGMENT_API_KEY or ""
         self.api_key = "".join(raw_key.split()) if raw_key else ""
-        base = config.FRAGMENT_API_URL.rstrip("/")
-        self.api_url = base if base.endswith("/v1") else f"{base}/v1"
+        self.base_url = config.FRAGMENT_API_URL.rstrip("/")
         self.shop_id = config.SHOP_ID
         self.shop_key = config.SHOP_KEY
 
     async def _make_request(
         self, endpoint: str, data: Optional[Dict] = None
     ) -> Dict[str, Any]:
-        url = f"{self.api_url}/{endpoint.lstrip('/')}"
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
         headers = {
-            "X-API-Key": self.api_key.strip(),
+            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
