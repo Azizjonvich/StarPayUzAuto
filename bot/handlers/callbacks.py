@@ -7,9 +7,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from bot.config import settings
-from bot.keyboards import main_inline_keyboard, topup_back_keyboard
+from bot.keyboards import main_inline_keyboard, topup_back_keyboard, topup_payment_keyboard
 from bot.handlers.start import menu_text
-from api_client import api_client
 from services.database import ensure_user, get_user, get_user_orders, db, get_pool
 
 router = Router()
@@ -21,9 +20,22 @@ STATUS_UZ = {
   "paid": "✅ To'langan",
 }
 
+CARD_NUMBER = "5614686700537437"
+TASHKENT_OFFSET = timedelta(hours=5)
+TIMEOUT_MINUTES = 5
+
 
 class TopupStates(StatesGroup):
     waiting_amount = State()
+
+
+def tashkent_now() -> datetime:
+    """Return current time in Tashkent (UTC+5)"""
+    return datetime.utcnow() + TASHKENT_OFFSET
+
+
+def format_time(dt: datetime) -> str:
+    return dt.strftime("%H:%M:%S")
 
 
 @router.callback_query(F.data == "orders")
@@ -87,7 +99,7 @@ async def cb_topup(query: CallbackQuery, state: FSMContext) -> None:
 
 @router.message(TopupStates.waiting_amount)
 async def process_topup_amount(message: Message, state: FSMContext) -> None:
-  """Process entered amount and show payment info"""
+  """Process entered amount and show card payment info"""
   if not message.from_user or not message.text:
     return
 
@@ -112,53 +124,28 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
     await message.answer("❌ Foydalanuvchi topilmadi! /start bosing.")
     return
 
-  # Create order
-  order_id = f"topup_{uuid.uuid4().hex[:8]}"
+  # Create order with external_id for webhook matching
+  order_id = f"topup_{uuid.uuid4().hex[:10]}"
   await db.create_order(order_id, user_id, "topup", amount, amount)
 
-  # Create payment via Fragment API
-  callback_url = f"{settings.api_public_url}/webhook/payment"
-  redirect_url = f"{settings.api_public_url}/payment/success"
+  # Calculate 5-minute window (Tashkent time)
+  now = tashkent_now()
+  expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
 
-  try:
-    payment_result = await api_client.create_payment(
-      amount=int(amount),
-      order_id=order_id,
-      user_id=user_id,
-      description=f"Hisobni to'ldirish - {int(amount):,} so'm",
-      callback_url=callback_url,
-      redirect_url=redirect_url,
-    )
-  except Exception as e:
-    import logging
-    logging.getLogger(__name__).exception("create_payment error")
-    await message.answer("❌ To'lov yaratishda xatolik yuz berdi. Qayta urinib ko'ring.", reply_markup=main_inline_keyboard())
-    return
-
-  if payment_result and (payment_result.get("ok") or payment_result.get("success") or payment_result.get("payment_url")):
-    payment_url = payment_result.get("payment_url")
-    await db.update_order(order_id, payment_url=payment_url)
-
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    payment_kb = InlineKeyboardMarkup(inline_keyboard=[
-      [InlineKeyboardButton(text="💳 To'lash", url=payment_url)],
-      [InlineKeyboardButton(text="✅ To'lovni tekshirish", callback_data=f"check_payment_{order_id}")],
-      [InlineKeyboardButton(text="❌ Bekor qilish", callback_data=f"cancel_order_{order_id}")],
-    ])
-
-    await message.answer(
-      f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
-      f"🆔 Buyurtma: <code>{order_id}</code>\n"
-      f"💰 Miqdori: {int(amount):,} so'm\n\n"
-      f"💳 Quyidagi tugma orqali to'lovni amalga oshiring:",
-      parse_mode="HTML",
-      reply_markup=payment_kb,
-    )
-  else:
-    await message.answer(
-      "❌ To'lov yaratishda xatolik yuz berdi. Qayta urinib ko'ring.",
-      reply_markup=main_inline_keyboard(),
-    )
+  # Show card payment info
+  await message.answer(
+    f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
+    f"🆔 Buyurtma: <code>{order_id}</code>\n"
+    f"💰 Miqdori: {int(amount):,} so'm\n\n"
+    f"💳 <b>To'lov uchun karta:</b>\n"
+    f"<code>{CARD_NUMBER}</code>\n\n"
+    f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing "
+    f"yoki bot avtomatik aniqlaydi.\n\n"
+    f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+    f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!",
+    parse_mode="HTML",
+    reply_markup=topup_payment_keyboard(order_id),
+  )
 
 
 @router.callback_query(F.data.startswith("check_payment_"))
