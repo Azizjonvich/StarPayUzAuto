@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StarPayUz - Reyting</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #030712;
+            color: #fff;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 28px;
+            box-shadow: 0 0 30px rgba(59, 130, 246, .4);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #9CA3AF;
+            margin-top: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #9CA3AF;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: .3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #3B82F6;
+            border-bottom-color: #3B82F6;
+        }
+
+        .tab:hover {
+            color: #fff;
+        }
+
+        .rating-card {
+            background: #111827;
+            border: 2px solid #3B82F6;
+            border-radius: 22px;
+            padding: 16px;
+        }
+
+        .rating-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
+            gap: 12px;
+        }
+
+        .rating-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            font-size: 16px;
+            font-weight: 800;
+            width: 32px;
+            text-align: center;
+        }
+
+        .rank.gold {
+            color: #FFD700;
+        }
+
+        .rank.silver {
+            color: #C0C0C0;
+        }
+
+        .rank.bronze {
+            color: #CD7F32;
+        }
+
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .rating-username {
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .rating-amount {
+            font-size: 14px;
+            font-weight: 700;
+            color: #3B82F6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9CA3AF;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: #9CA3AF;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            z-index: 50;
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 28px;
+            padding: 12px 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 70px;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .nav-item:hover {
+            color: #fff;
+        }
+
+        .nav-item.active {
+            color: #3B82F6;
+        }
+
+        .nav-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+        }
+
+        .nav-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-icon">📊</div>
+        <h1>Savdo Statistikasi</h1>
+        <p>Eng yaxshi sotuvchilar reytingi</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-period="today" onclick="loadRating('today', this)">Bugun</div>
+        <div class="tab" data-period="week" onclick="loadRating('week', this)">Shu Hafta</div>
+        <div class="tab" data-period="month" onclick="loadRating('month', this)">Shu Oy</div>
+        <div class="tab" data-period="all" onclick="loadRating('all', this)">Barcha Vaqt</div>
+    </div>
+
+    <div class="rating-card" id="ratingContent">
+        <div class="loading-state" id="ratingLoading">Yuklanmoqda...</div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='stars.html'">
+            <div class="nav-icon"><img src="./images/home.webp" alt="home"></div>
+            <div class="nav-label">Menu</div>
+        </div>
+        <div class="nav-item" onclick="window.location.href='gift.html'">
+            <div class="nav-icon"><img src="./images/gift.webp" alt="Gifts"></div>
+            <div class="nav-label">Gifts</div>
+        </div>
+        <div class="nav-item active" onclick="window.location.href='rating.html'">
+            <div class="nav-icon"><img src="./images/rating.webp" alt="Rating"></div>
+            <div class="nav-label">Rating</div>
+        </div>
+        <div class="nav-item" onclick="window.location.href='index.html'">
+            <div class="nav-icon"><img src="./images/profile.webp" alt="profile"></div>
+            <div class="nav-label">Profil</div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script>
+    function loadRating(period, tabEl) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if (tabEl) tabEl.classList.add('active');
+
+        const container = document.getElementById('ratingContent');
+        container.innerHTML = '<div class="loading-state">Yuklanmoqda...</div>';
+
+        fetch(getApiBase() + '/api/rating', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': tg.initData || '',
+            },
+            body: JSON.stringify({ period: period, initData: tg.initData || '' }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok || !data.rating || !data.rating.length) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Hozircha ma\'lumot yo\'q</p></div>';
+                return;
+            }
+
+            let html = '';
+            data.rating.forEach((item, i) => {
+                const rank = i + 1;
+                let rankClass = '';
+                if (rank === 1) rankClass = 'gold';
+                else if (rank === 2) rankClass = 'silver';
+                else if (rank === 3) rankClass = 'bronze';
+
+                const firstLetter = (item.username || 'User')[0].toUpperCase();
+                const username = item.username ? '@' + item.username : 'User#' + item.telegram_id;
+                const total = (item.total || 0).toLocaleString('uz-UZ');
+
+                html += '<div class="rating-item">' +
+                    '<div class="rank ' + rankClass + '">#' + rank + '</div>' +
+                    '<div class="avatar-circle">' + firstLetter + '</div>' +
+                    '<div class="rating-username">' + username + '</div>' +
+                    '<div class="rating-amount">' + total + ' so\'m</div>' +
+                '</div>';
+            });
+
+            container.innerHTML = html;
+        })
+        .catch(() => {
+            container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Yuklashda xatolik yuz berdi</p></div>';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstTab = document.querySelector('.tab.active');
+        if (firstTab) loadRating('today', firstTab);
+    });
+    </script>
+</body>
+</html>

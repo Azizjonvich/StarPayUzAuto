@@ -337,30 +337,15 @@
 <body>
     <!-- Profile Header -->
     <div class="profile-header">
-        <div class="profile-avatar">👤</div>
+        <div class="profile-avatar" id="profileAvatar">
+            <img src="" id="avatarImg" style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:none;">
+            <span id="avatarPlaceholder" style="font-size:40px;">👤</span>
+        </div>
         <div class="profile-name" id="profileName">StarPayUz</div>
         <div class="profile-username" id="profileUsername">@StarPayUzAdmin</div>
     </div>
 
-    <!-- Stats Card -->
-    <div class="stats-card">
-        <div class="stats-title">📊 HAFTALIK SAVDO</div>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-emoji">⭐</div>
-                <div class="stat-value">0 so'm</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-emoji">💎</div>
-                <div class="stat-value">0 so'm</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-emoji">🎁</div>
-                <div class="stat-value">0 so'm</div>
-            </div>
-        </div>
-        <div class="stat-info">Haftalik: 2 400 000 so'm</div>
-    </div>
+
 
     <!-- ASOSIY Section -->
     <div class="section-title"><img src="./images/stats__settings.webp" alt=""> ASOSIY</div>
@@ -385,6 +370,14 @@
                 <span class="menu-text">Takliflarim</span>
             </div>
             <span class="menu-arrow">›</span>
+        </div>
+    </div>
+
+    <!-- TRANZAKSIYALAR -->
+    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> TRANZAKSIYALAR</div>
+    <div class="menu-section" id="transactionsSection">
+        <div style="padding:14px 16px;text-align:center;color:#9CA3AF;" id="transactionsLoading">
+            Yuklanmoqda...
         </div>
     </div>
 
@@ -465,17 +458,9 @@
     </div>
     <script src="js/common.js"></script>
     <script>
-        const initData = tg.initDataUnsafe;
-        if (initData.user) {
-            document.getElementById('profileName').textContent = initData.user.first_name;
-            if (initData.user.username) {
-                document.getElementById('profileUsername').textContent = '@' + initData.user.username;
-            }
-        }
-
         function shareReferral() {
             const botUsername = 'starpayuzauto_bot';
-            const userId = initData.user?.id || '123456';
+            const userId = tg.initDataUnsafe?.user?.id || '123456';
             const referralLink = `https://t.me/${botUsername}?start=${userId}`;
 
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('StarPayUz botiga qo\'shiling!')}`);
@@ -490,7 +475,7 @@
         }
 
         function openReyting() {
-            window.location.href = 'index.html';
+            window.location.href = 'rating.html';
         }
 
         function openProfile() {
@@ -520,6 +505,85 @@
         function openChannel() {
             tg.openTelegramLink('https://t.me/StarPayUzNews');
         }
+
+        function getApiBase() {
+            return 'https://starpayuzauto.uz';
+        }
+
+        function loadTransactions() {
+            const userId = tg.initDataUnsafe?.user?.id;
+            if (!userId) return;
+
+            fetch(getApiBase() + '/api/user/transactions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': tg.initData || '',
+                },
+                body: JSON.stringify({ telegram_id: userId, initData: tg.initData || '' }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('transactionsSection');
+                if (!data.ok || (!data.orders.length && !data.balance_history.length)) {
+                    container.innerHTML = '<div style="padding:14px 16px;text-align:center;color:#9CA3AF;">Hozircha tranzaksiyalar yo\'q.</div>';
+                    return;
+                }
+                let html = '';
+                if (data.orders.length) {
+                    html += '<div style="padding:10px 16px 4px;font-size:13px;font-weight:600;color:#3B82F6;">BUYURTMALAR</div>';
+                    data.orders.forEach(o => {
+                        const emoji = { 'stars': '⭐', 'premium': '💎', 'topup': '💰', 'phone': '📱', 'gift': '🎁' }[o.product_type] || '📦';
+                        const status = { 'pending': '⏳', 'completed': '✅', 'paid': '✅', 'failed': '❌', 'cancelled': '🚫' }[o.status] || '❓';
+                        const date = (o.created_at || '').slice(0, 10);
+                        html += '<div class="menu-item">' +
+                            '<div class="menu-item-left">' +
+                                '<span class="menu-icon">' + emoji + '</span>' +
+                                '<div><div class="menu-text" style="font-size:14px;">' + o.product_type.toUpperCase() + '</div>' +
+                                '<div style="font-size:12px;color:#9CA3AF;">' + date + ' — ' + (o.amount || 0).toLocaleString('uz-UZ') + ' so\'m</div></div>' +
+                            '</div>' +
+                            '<span>' + status + '</span>' +
+                        '</div>';
+                    });
+                }
+                if (data.balance_history.length) {
+                    html += '<div style="padding:10px 16px 4px;font-size:13px;font-weight:600;color:#3B82F6;">BALANS O\'ZGARISHLARI</div>';
+                    data.balance_history.forEach(b => {
+                        const sign = b.amount > 0 ? '+' : '';
+                        const color = b.amount > 0 ? '#22C55E' : '#EF4444';
+                        const date = (b.created_at || '').slice(0, 10);
+                        html += '<div class="menu-item">' +
+                            '<div class="menu-item-left">' +
+                                '<span class="menu-icon">' + (b.amount > 0 ? '📈' : '📉') + '</span>' +
+                                '<div><div class="menu-text" style="font-size:14px;">' + (b.reason || b.type || 'Balans') + '</div>' +
+                                '<div style="font-size:12px;color:#9CA3AF;">' + date + '</div></div>' +
+                            '</div>' +
+                            '<span style="color:' + color + ';font-weight:700;">' + sign + (b.amount || 0).toLocaleString('uz-UZ') + ' so\'m</span>' +
+                        '</div>';
+                    });
+                }
+                container.innerHTML = html;
+            })
+            .catch(() => {
+                document.getElementById('transactionsSection').innerHTML = '<div style="padding:14px 16px;text-align:center;color:#EF4444;">Yuklashda xatolik yuz berdi.</div>';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const initData = tg.initDataUnsafe;
+            if (initData.user) {
+                document.getElementById('profileName').textContent = initData.user.first_name;
+                if (initData.user.username) {
+                    document.getElementById('profileUsername').textContent = '@' + initData.user.username;
+                }
+                if (initData.user.photo_url) {
+                    document.getElementById('avatarImg').src = initData.user.photo_url;
+                    document.getElementById('avatarImg').style.display = 'block';
+                    document.getElementById('avatarPlaceholder').style.display = 'none';
+                }
+            }
+            loadTransactions();
+        });
     </script>
 </body>
 

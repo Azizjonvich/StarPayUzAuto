@@ -818,6 +818,82 @@ async def payment_success_page(request: web.Request) -> web.Response:
 </html>""")
 
 
+async def api_user_transactions(request: web.Request) -> web.Response:
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  from services.database import get_pool
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    orders_rows = await conn.fetch(
+      "SELECT * FROM orders WHERE telegram_id = $1 ORDER BY id DESC LIMIT 10",
+      user_id
+    )
+    balance_rows = await conn.fetch(
+      "SELECT * FROM balance_history WHERE telegram_id = $1 ORDER BY id DESC LIMIT 10",
+      user_id
+    )
+
+  orders = [dict(r) for r in orders_rows]
+  balance_history = [dict(r) for r in balance_rows]
+
+  return web.json_response({
+    "ok": True,
+    "orders": orders,
+    "balance_history": balance_history,
+  })
+
+
+async def api_rating(request: web.Request) -> web.Response:
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  period = body.get("period", "all")
+  if period not in ("today", "week", "month", "all"):
+    period = "all"
+
+  where = "WHERE o.status IN ('completed', 'paid')"
+  if period == "today":
+    where += " AND o.created_at >= CURRENT_DATE"
+  elif period == "week":
+    where += " AND o.created_at >= date_trunc('week', CURRENT_DATE)"
+  elif period == "month":
+    where += " AND o.created_at >= date_trunc('month', CURRENT_DATE)"
+
+  from services.database import get_pool
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    rows = await conn.fetch(f"""
+      SELECT o.telegram_id, u.username, SUM(o.amount) as total
+      FROM orders o
+      LEFT JOIN users u ON o.telegram_id = u.telegram_id
+      {where}
+      GROUP BY o.telegram_id, u.username
+      ORDER BY total DESC
+      LIMIT 50
+    """)
+
+  rating = []
+  for r in rows:
+    rating.append({
+      "telegram_id": r["telegram_id"],
+      "username": r["username"],
+      "total": r["total"],
+    })
+
+  return web.json_response({"ok": True, "rating": rating})
+
+
 def create_app() -> web.Application:
   app = web.Application(middlewares=[cors_middleware])
   app.on_startup.append(on_startup)
@@ -842,6 +918,8 @@ def create_app() -> web.Application:
   app.router.add_post("/webhook/click", click_webhook)
   app.router.add_get("/api/gifts/available", api_get_available_gifts)
   app.router.add_get("/payment/success", payment_success_page)
+  app.router.add_post("/api/user/transactions", api_user_transactions)
+  app.router.add_post("/api/rating", api_rating)
 
   app.router.add_static("/app", WEBAPP_DIR, name="webapp")
   app.router.add_static("/", WEBAPP_DIR, name="root")
