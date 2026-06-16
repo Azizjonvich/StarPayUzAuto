@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const paymentRoutes = require('./routes/payments');
+const webhookRoutes = require('./routes/webhooks');
 const db = require('./db');
 
 const app = express();
@@ -32,6 +33,10 @@ app.get('/health', (req, res) => {
 
 // Payment routes
 app.use('/api/payment', paymentRoutes);
+
+// Webhook routes — для приёма уведомлений от платёжных систем
+// Webhook routes
+app.use('/', webhookRoutes);
 
 // Admin routes (simple listing)
 app.get('/admin/orders', async (req, res) => {
@@ -96,6 +101,8 @@ async function start() {
     console.log(`[Server] StarPayUz Payment Server running on port ${PORT}`);
     console.log(`[Server] Pending orders: GET /admin/orders`);
     console.log(`[Server] Confirm payment: POST /api/payment/confirm`);
+        console.log(`[Server] Webhook: POST /webhook/payment (for Payme/Click/etc)`);
+    console.log(`[Server] Webhook: POST /webhook/click (for Click UZ)`);
   });
 }
 
