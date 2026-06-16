@@ -1,7 +1,49 @@
+const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendTelegramNotification } = require('../telegram');
+
+/**
+ * Verify HMAC-SHA256 signature using SHOP_KEY.
+ * Matches Python implementation in services/payment_verify.py
+ * 
+ * Payment system sends payload with 'sign' field containing HMAC-SHA256 hex digest.
+ * Algorithm:
+ *   1. Sort payload keys alphabetically (exclude sign/signature/hash)
+ *   2. Build string: key1=value1&key2=value2
+ *   3. HMAC-SHA256 with SHOP_KEY
+ *   4. Compare (case-insensitive)
+ */
+function verifySignature(payload, shopKey) {
+  const sign = payload.sign || payload.signature || payload.hash;
+  if (!sign || !shopKey) {
+    return false;
+  }
+
+  // Build sorted key=value string, excluding signature fields
+  const data = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (!['sign', 'signature', 'hash'].includes(k)) {
+      data[k] = v;
+    }
+  }
+  
+  const checkString = Object.keys(data)
+    .sort()
+    .map(k => `${k}=${data[k]}`)
+    .join('&');
+
+  const expected = crypto
+    .createHmac('sha256', shopKey)
+    .update(checkString)
+    .digest('hex');
+
+  const expectedBuf = Buffer.from(expected.toLowerCase());
+  const signBuf = Buffer.from(String(sign).toLowerCase());
+  if (expectedBuf.length !== signBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, signBuf);
+}
 
 /**
  * Verify shop_id in webhook payload matches expected SHOP_ID.
@@ -98,11 +140,113 @@ router.post('/webhook/payment', async (req, res) => {
 });
 
 /**
+ * POST /payment/webhook
+ * 
+ * ОСНОВНОЙ эндпоинт. Ваша платёжная система вызывает его после оплаты.
+ * 
+ * Формат запроса:
+ * {
+ *   order_id: "topup_abc123",
+ *   amount: 50000,
+ *   user_id: 123456789,
+ *   shop_id: "665210",
+ *   sign: "<HMAC-SHA256 hex digest>"
+ * }
+ * 
+ * sign = HMAC-SHA256(sorted(key=value...), SHOP_KEY)
+ * Поля sign/signature/hash исключаются из подписи.
+ */
+router.post('/payment/webhook', async (req, res) => {
+  try {
+    const payload = req.body;
+    console.log('[Payment/Webhook] Received:', JSON.stringify(payload).substring(0, 300));
+
+    // === 1. Проверка подписи (обязательно) ===
+    const shopKey = process.env.SHOP_KEY;
+    if (!shopKey) {
+      console.error('[Payment/Webhook] SHOP_KEY not configured');
+      return res.status(500).json({ ok: false, error: 'Server not configured' });
+    }
+
+    if (!verifySignature(payload, shopKey)) {
+      console.warn('[Payment/Webhook] Invalid signature!');
+      return res.status(403).json({ ok: false, error: 'Invalid signature' });
+    }
+
+    console.log('[Payment/Webhook] Signature verified OK');
+
+    // === 2. Проверка shop_id ===
+    checkShopId(payload);
+
+    // === 3. Извлечение полей ===
+    let order_id = payload.order_id || payload.merchant_trans_id || null;
+    let amount = payload.amount || payload.sum || null;
+    let user_id = payload.user_id || payload.telegram_id || payload.customer_id || null;
+
+    if (amount !== null) {
+      amount = Math.round(parseFloat(String(amount)));
+    }
+
+    if (!order_id || amount === null || isNaN(amount) || amount <= 0) {
+      console.log('[Payment/Webhook] Missing/invalid fields:', { order_id, amount });
+      return res.status(400).json({ ok: false, error: 'Invalid order_id or amount' });
+    }
+
+    // === 4. Определяем пользователя ===
+    let resolvedUserId = user_id ? parseInt(user_id) : null;
+    if (!resolvedUserId) {
+      const order = await db.getOrderByExternalId(order_id);
+      if (order) {
+        resolvedUserId = order.telegram_id;
+      }
+    }
+
+    if (!resolvedUserId) {
+      console.log(`[Payment/Webhook] No user for order ${order_id}`);
+      await db.recordPayment(order_id, null, amount, 'paid',
+        JSON.stringify({ source: 'payment_webhook', no_user: true, payload }));
+      return res.json({ ok: true, message: 'recorded without user' });
+    }
+
+    // === 5. Записываем платеж (защита от дубликатов) ===
+    const inserted = await db.recordPayment(order_id, resolvedUserId, amount, 'paid',
+      JSON.stringify({ source: 'payment_webhook', payload }));
+
+    if (!inserted) {
+      console.log(`[Payment/Webhook] Payment ${order_id} already processed`);
+      return res.json({ ok: true, message: 'already processed' });
+    }
+
+    // === 6. Начисляем баланс ===
+    const newBalance = await db.addBalance(resolvedUserId, amount);
+    await db.updateOrderStatus(order_id, 'completed');
+
+    // === 7. Отправляем уведомление в Telegram ===
+    await sendTelegramNotification(resolvedUserId, amount, newBalance);
+
+    console.log(`[Payment/Webhook] Success: order=${order_id} user=${resolvedUserId} amount=${amount}`);
+    res.json({ ok: true, message: 'Payment processed' });
+
+  } catch (err) {
+    console.error('[Payment/Webhook] Error:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /webhook/payment
  * Health check endpoint (payment systems verify URL with GET)
  */
 router.get('/webhook/payment', (req, res) => {
   res.json({ ok: true, service: 'StarPayUz', message: 'Webhook active' });
+});
+
+/**
+ * GET /payment/webhook
+ * Health check for the main webhook endpoint
+ */
+router.get('/payment/webhook', (req, res) => {
+  res.json({ ok: true, service: 'StarPayUz', message: 'Payment webhook active' });
 });
 
 /**

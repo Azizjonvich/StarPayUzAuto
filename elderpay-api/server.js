@@ -101,8 +101,8 @@ async function start() {
     console.log(`[Server] StarPayUz Payment Server running on port ${PORT}`);
     console.log(`[Server] Pending orders: GET /admin/orders`);
     console.log(`[Server] Confirm payment: POST /api/payment/confirm`);
-        console.log(`[Server] Webhook: POST /webhook/payment (for Payme/Click/etc)`);
-    console.log(`[Server] Webhook: POST /webhook/click (for Click UZ)`);
+        console.log(`[Server] Payment Webhook: POST /payment/webhook (ваша платёжная система)`);
+    console.log(`[Server] Webhook: POST /webhook/payment (совместимость)`);
   });
 }
 
