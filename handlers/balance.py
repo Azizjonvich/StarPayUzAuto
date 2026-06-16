@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime, timedelta
 
+import config
 import keyboards
 from services.database import db
 from services import payment_client
@@ -43,10 +44,13 @@ async def topup_menu(message: Message, state: FSMContext):
         return
 
     text = (
-        f"💰 <b>Balansni to'ldirish</b>\n\n"
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji> '
+        f"<b>Balansni to'ldirish</b>\n\n"
         f"Quyidagi miqdorni kiriting:\n\n"
-        f"🔻Minimal: 1 000 so'm\n"
-        f"🔺Maksimal: 2 500 000 so'm"
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_DOWN}">⬇️</tg-emoji> '
+        f"Minimal: 1 000 so'm\n"
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_UP}">⬆️</tg-emoji> '
+        f"Maksimal: 2 500 000 so'm"
     )
 
     await message.answer(text, parse_mode="HTML", reply_markup=keyboards.get_back_keyboard())
@@ -95,14 +99,20 @@ async def process_topup_amount(message: Message, state: FSMContext):
 
         card_text = (
             f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
-            f"🆔 Buyurtma: <code>{order_id}</code>\n"
-            f"💰 Miqdori: {int(amount):,} so'm\n\n"
-            f"💳 <b>To'lov uchun karta:</b>\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_ID}">🆔</tg-emoji> '
+            f"Buyurtma: <code>{order_id}</code>\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji> '
+            f"Miqdori: {int(amount):,} so'm\n\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CARD}">💳</tg-emoji> '
+            f"<b>To'lov uchun karta:</b>\n"
             f"<code>{card_number}</code>\n"
-            f"👤 {card_owner}\n\n"
-            f"⏰ Pul o'tkazing. To'lov avtomatik tarzda tekshiriladi!\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_USER}">👤</tg-emoji> '
+            f"{card_owner}\n\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CLOCK}">⏰</tg-emoji> '
+            f"Pul o'tkazing. To'lov avtomatik tarzda tekshiriladi!\n"
             f"Pul tushgach, sizga xabar keladi va balansingizga qo'shiladi.\n\n"
-            f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+            f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WARN}">⚠️</tg-emoji> '
+            f"Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
             f"Aniq {TIMEOUT_MINUTES} daqiqa."
         )
 

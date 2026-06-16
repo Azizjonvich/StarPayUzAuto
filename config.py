@@ -38,6 +38,17 @@ ADMINS = [8784918764]
 # Admin Panel URL
 ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8000")
 
+# Premium Emoji IDs (for <tg-emoji> in messages and icon_custom_emoji_id on buttons)
+CUSTOM_EMOJI_WALLET = os.getenv("CUSTOM_EMOJI_WALLET", "5987880246865565644")  # 💰 для кнопки
+CUSTOM_EMOJI_MONEY = os.getenv("CUSTOM_EMOJI_MONEY", "5811989245761426317")    # 💰 в тексте
+CUSTOM_EMOJI_DOWN = os.getenv("CUSTOM_EMOJI_DOWN", "5229212516415978792")      # ⬇️
+CUSTOM_EMOJI_UP = os.getenv("CUSTOM_EMOJI_UP", "5229113938326599381")          # ⬆️
+CUSTOM_EMOJI_ID = os.getenv("CUSTOM_EMOJI_ID", "5818885490065017876")          # 🆔
+CUSTOM_EMOJI_CARD = os.getenv("CUSTOM_EMOJI_CARD", "5927169041595634481")      # 💳
+CUSTOM_EMOJI_USER = os.getenv("CUSTOM_EMOJI_USER", "5260399854500191689")      # 👤
+CUSTOM_EMOJI_CLOCK = os.getenv("CUSTOM_EMOJI_CLOCK", "5316591603123502631")    # ⏰
+CUSTOM_EMOJI_WARN = os.getenv("CUSTOM_EMOJI_WARN", "5881702736843511327")      # ⚠️
+
 # Allowed usernames (for access control) - comma separated
 ALLOWED_USERNAMES = os.getenv("ALLOWED_USERNAMES", "StarPayUzAdmin").split(",")
 # Пример: ALLOWED_USERNAMES=StarPayUzAdmin,user2,user3

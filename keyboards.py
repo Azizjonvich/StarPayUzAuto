@@ -10,7 +10,7 @@ import config
 
 
 def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
-    """Main inline menu: Webapp + admin contact buttons"""
+    """Main inline menu: Webapp (green), Balans To'ldirish (blue) + Support (orange)"""
     builder = InlineKeyboardBuilder()
     admin_url = "https://t.me/StarPayUzAdmin"
 
@@ -24,19 +24,14 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="Balans To'ldirish",
-            callback_data="topup_menu"
-        )
-    )
-    builder.row(
-        InlineKeyboardButton(
-            text="@StarPayUzAdmin",
-            url=admin_url,
-            style="danger",
+            callback_data="topup_menu",
+            style="primary",
+            icon_custom_emoji_id=config.CUSTOM_EMOJI_WALLET,
         ),
         InlineKeyboardButton(
-            text="@StarPayUzAdmin",
+            text="Support",
             url=admin_url,
-            style="success",
+            style="danger",
         ),
     )
 

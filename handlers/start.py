@@ -24,6 +24,9 @@ EMOJI_STAR = "5807791714093502248"  # ⭐️
 EMOJI_GIFT = "5348068314629315530"  # 🎁
 EMOJI_CHECKMARK = "5980930633298350051"  # ✅
 EMOJI_CROSS = "5273914604752216432"  # ❌
+EMOJI_MONEY_TEXT = "5811989245761426317"  # 💰 в тексте
+EMOJI_DOWN = "5229212516415978792"  # ⬇️
+EMOJI_UP = "5229113938326599381"  # ⬆️
 
 
 def get_welcome_text(user: dict, username: str | None, first_name: str | None) -> str:
@@ -259,10 +262,13 @@ async def callback_topup_menu(callback: CallbackQuery, state: FSMContext):
     
     from keyboards import get_back_keyboard
     text = (
-        "💰 <b>Balansni to'ldirish</b>\n\n"
-        "Quyidagi miqdorni kiriting:\n\n"
-        "🔻Minimal: 1 000 so'm\n"
-        "🔺Maksimal: 2 500 000 so'm"
+        f'<tg-emoji emoji-id="{EMOJI_MONEY_TEXT}">💰</tg-emoji> '
+        f"<b>Balansni to'ldirish</b>\n\n"
+        f"Quyidagi miqdorni kiriting:\n\n"
+        f'<tg-emoji emoji-id="{EMOJI_DOWN}">⬇️</tg-emoji> '
+        f"Minimal: 1 000 so'm\n"
+        f'<tg-emoji emoji-id="{EMOJI_UP}">⬆️</tg-emoji> '
+        f"Maksimal: 2 500 000 so'm"
     )
     
     await callback.message.answer(text, parse_mode="HTML", reply_markup=get_back_keyboard())
