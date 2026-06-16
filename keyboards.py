@@ -18,6 +18,7 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(
             text="Webapp",
             web_app=WebAppInfo(url=f"{config.WEBAPP_URL}/stars.html"),
+            style="success",
         )
     )
     builder.row(
