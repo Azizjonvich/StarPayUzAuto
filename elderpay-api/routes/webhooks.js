@@ -1,61 +1,8 @@
-const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendTelegramNotification } = require('../telegram');
-
-/**
- * Verify HMAC-SHA256 signature using SHOP_KEY.
- * Matches Python implementation in services/payment_verify.py
- * 
- * Payment system sends payload with 'sign' field containing HMAC-SHA256 hex digest.
- * Algorithm:
- *   1. Sort payload keys alphabetically (exclude sign/signature/hash)
- *   2. Build string: key1=value1&key2=value2
- *   3. HMAC-SHA256 with SHOP_KEY
- *   4. Compare (case-insensitive)
- */
-function verifySignature(payload, shopKey) {
-  const sign = payload.sign || payload.signature || payload.hash;
-  if (!sign || !shopKey) {
-    return false;
-  }
-
-  // Build sorted key=value string, excluding signature fields
-  const data = {};
-  for (const [k, v] of Object.entries(payload)) {
-    if (!['sign', 'signature', 'hash'].includes(k)) {
-      data[k] = v;
-    }
-  }
-  
-  const checkString = Object.keys(data)
-    .sort()
-    .map(k => `${k}=${data[k]}`)
-    .join('&');
-
-  const expected = crypto
-    .createHmac('sha256', shopKey)
-    .update(checkString)
-    .digest('hex');
-
-  const expectedBuf = Buffer.from(expected.toLowerCase());
-  const signBuf = Buffer.from(String(sign).toLowerCase());
-  if (expectedBuf.length !== signBuf.length) return false;
-  return crypto.timingSafeEqual(expectedBuf, signBuf);
-}
-
-/**
- * Verify shop_id in webhook payload matches expected SHOP_ID.
- * Не блокируем — только логируем несоответствие.
- */
-function checkShopId(payload) {
-  const shopId = String(payload.shop_id || '').trim();
-  const expected = String(process.env.SHOP_ID || '').trim();
-  if (expected && shopId && shopId !== expected) {
-    console.warn(`[Webhook] shop_id mismatch: got='${shopId}' expected='${expected}'`);
-  }
-}
+const { verifySignature, checkShopId } = require('../utils/signature');
 
 /**
  * POST /webhook/payment
@@ -72,7 +19,7 @@ router.post('/webhook/payment', async (req, res) => {
     console.log('[Webhook] Received:', JSON.stringify(payload).substring(0, 300));
 
     // Проверка shop_id (не блокируем)
-    checkShopId(payload);
+    checkShopId(payload, process.env.SHOP_ID);
 
     // Check if this is a successful payment
     const rawStatus = String(payload.status || '').toLowerCase();
@@ -176,7 +123,7 @@ router.post('/payment/webhook', async (req, res) => {
     console.log('[Payment/Webhook] Signature verified OK');
 
     // === 2. Проверка shop_id ===
-    checkShopId(payload);
+    checkShopId(payload, process.env.SHOP_ID);
 
     // === 3. Извлечение полей ===
     let order_id = payload.order_id || payload.merchant_trans_id || null;
