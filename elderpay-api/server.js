@@ -21,6 +21,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root — status page
+app.get('/', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'StarPayUz Payment Server',
+    version: '2.1.0',
+    endpoints: {
+      health: 'GET /health',
+      elderpay_create: 'POST /api/elderpay/create',
+      elderpay_check: 'GET /api/elderpay/check/:order_id',
+      elderpay_pending: 'GET /api/elderpay/pending',
+      payment_check: 'POST /api/payment/check',
+      payment_confirm: 'POST /api/payment/confirm',
+      payment_pending: 'GET /api/payment/pending',
+      payment_webhook: 'POST /payment/webhook',
+      click_webhook: 'POST /webhook/click',
+      admin_orders: 'GET /admin/orders',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
