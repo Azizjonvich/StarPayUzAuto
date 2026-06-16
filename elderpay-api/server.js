@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const paymentRoutes = require('./routes/payments');
 const webhookRoutes = require('./routes/webhooks');
+const elderpayRoutes = require('./routes/elderpay');
 const db = require('./db');
 
 const app = express();
@@ -34,8 +35,10 @@ app.get('/health', (req, res) => {
 // Payment routes
 app.use('/api/payment', paymentRoutes);
 
+// ElderPay routes — автоматическое создание и проверка платежей
+app.use('/api/elderpay', elderpayRoutes);
+
 // Webhook routes — для приёма уведомлений от платёжных систем
-// Webhook routes
 app.use('/', webhookRoutes);
 
 // Admin routes (simple listing)
@@ -101,6 +104,8 @@ async function start() {
     console.log(`[Server] StarPayUz Payment Server running on port ${PORT}`);
     console.log(`[Server] Pending orders: GET /admin/orders`);
     console.log(`[Server] Confirm payment: POST /api/payment/confirm`);
+    console.log(`[Server] ElderPay create: POST /api/elderpay/create`);
+    console.log(`[Server] ElderPay check: GET /api/elderpay/check/:order_id`);
         console.log(`[Server] Payment Webhook: POST /payment/webhook (ваша платёжная система)`);
     console.log(`[Server] Webhook: POST /webhook/payment (совместимость)`);
   });

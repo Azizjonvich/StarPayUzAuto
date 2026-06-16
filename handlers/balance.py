@@ -3,21 +3,18 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime, timedelta
-import uuid
 
 import keyboards
-from services.database import db, get_pool
+from services.database import db
+from services import payment_client
 
 import logging
 logger = logging.getLogger(__name__)
 
 router = Router()
 
-CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
-
-import config as bot_config
 
 
 class BalanceStates(StatesGroup):
@@ -58,7 +55,7 @@ async def topup_menu(message: Message, state: FSMContext):
 
 @router.message(BalanceStates.waiting_amount)
 async def process_topup_amount(message: Message, state: FSMContext):
-    """Process top-up amount and show card payment info"""
+    """Process top-up amount — create order via ElderPay (auto-detects payments)"""
     try:
         amount = float(message.text.replace(",", "").replace(" ", ""))
 
@@ -73,33 +70,39 @@ async def process_topup_amount(message: Message, state: FSMContext):
         await state.clear()
 
         user_id = message.from_user.id
-        order_id = f"topup_{uuid.uuid4().hex[:10]}"
 
-        # Create order in database
-        await db.create_order(order_id, user_id, "topup", int(amount), amount)
+        # Create order via ElderPay (Node.js server)
+        result = await payment_client.create_elderpay_order(user_id, int(amount))
 
-        # Уведомление админам о новом заказе
-        await _notify_admins_about_topup(
-            user_id=user_id,
-            username=message.from_user.username or str(user_id),
-            order_id=order_id,
-            amount=int(amount),
-        )
+        if not result.get("success"):
+            error = result.get("error", "Noma'lum xatolik")
+            logger.error("ElderPay create failed: %s", error)
+            await message.answer(
+                f"❌ To'lov so'rovini yaratishda xatolik: {error}\n\n"
+                f"Iltimos, keyinroq urinib ko'ring yoki @StarPayUzAdmin ga murojaat qiling."
+            )
+            return
 
-        # Calculate 5-minute window (Tashkent time)
+        data = result["data"]
+        order_id = data["order_id"]
+        card_number = data.get("card_number", "9860 1801 0171 2578")
+        card_owner = data.get("card_owner", "Isxakova A.")
+        expires_in = data.get("expires_in", 300)
+
+        # Calculate expiration time
         now = tashkent_now()
-        expires_at = now + timedelta(minutes=TIMEOUT_MINUTES)
+        expires_at = now + timedelta(seconds=expires_in)
 
         card_text = (
             f"✅ <b>To'lov so'rovi yaratildi!</b>\n\n"
             f"🆔 Buyurtma: <code>{order_id}</code>\n"
             f"💰 Miqdori: {int(amount):,} so'm\n\n"
             f"💳 <b>To'lov uchun karta:</b>\n"
-            f"<code>{CARD_NUMBER}</code>\n\n"
+            f"<code>{card_number}</code>\n"
+            f"👤 {card_owner}\n\n"
             f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing.\n\n"
             f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-            f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!\n\n"
-            f"👤 Admin pulni tekshirib, tasdiqlaydi — sizga xabar keladi."
+            f"Aniq {TIMEOUT_MINUTES} daqiqa. To'lov avtomatik tekshiriladi!"
         )
 
         await message.answer(
@@ -114,84 +117,36 @@ async def process_topup_amount(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def check_payment_status(callback: CallbackQuery):
-    """Check payment status — local DB only"""
+    """Check payment status via ElderPay (Node.js server)"""
     await callback.answer("Tekshirilmoqda...")
 
     order_id = callback.data.split("_", 2)[2]
-    order = await db.get_order(order_id)
 
-    # Проверка payments таблицы (для webhook/Click/Payme)
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        payment = await conn.fetchrow(
-            "SELECT * FROM payments WHERE shop_order_id = $1 AND status = 'paid'",
-            order_id
+    # Check via ElderPay through Node.js server
+    result = await payment_client.check_elderpay_order(order_id)
+
+    if result.get("success") and result.get("data", {}).get("paid"):
+        data = result["data"]
+        amount = data.get("amount", 0)
+        new_balance = data.get("new_balance", 0)
+
+        await callback.message.edit_text(
+            f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
+            f"Hisobingizga {amount:,} so'm qo'shildi.\n"
+            f"Yangi balans: {new_balance:,} so'm",
+            parse_mode="HTML"
         )
-
-    if payment:
-        if order and order['status'] == "pending":
-            await _credit_user(callback, order, order_id)
-        else:
-            await callback.answer("✅ To'lov allaqachon tasdiqlangan.", show_alert=True)
-    elif order and order['status'] == "completed":
-        await callback.answer("✅ To'lov allaqachon tasdiqlangan.", show_alert=True)
+        await callback.message.answer(
+            "🏠 Bosh menyu:",
+            reply_markup=keyboards.get_webapp_main_keyboard()
+        )
     else:
         await callback.answer(
             "⏳ To'lov hali amalga oshmagan.\n\n"
-            "💡 Agar pul o'tkazgan bo'lsangiz, administrator bilan bog'lanishingiz mumkin:\n"
-            "👤 @StarPayUzAdmin\n\n"
-            "Pul tushgach, admin to'lovni tasdiqlaydi va sizga xabar keladi.",
+            "💡 Pul o'tkazgan bo'lsangiz, bir necha daqiqadan so'ng qayta tekshiring.\n\n"
+            "Pul tushgach, avtomatik tarzda hisobingizga qo'shiladi.",
             show_alert=True
         )
-
-
-async def _notify_admins_about_topup(
-    user_id: int,
-    username: str,
-    order_id: str,
-    amount: int,
-):
-    """Send notification to admins about new topup order."""
-    from aiogram import Bot
-    from aiogram.client.default import DefaultBotProperties
-    from aiogram.enums import ParseMode
-    import config as bot_config
-
-    for admin_id in bot_config.ADMINS:
-        try:
-            bot = Bot(
-                token=bot_config.BOT_TOKEN,
-                default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-            )
-            await bot.send_message(
-                admin_id,
-                f"💳 <b>Yangi to'lov so'rovi</b>\n\n"
-                f"👤 Foydalanuvchi: @{username} (<code>{user_id}</code>)\n"
-                f"💰 Summa: {amount:,} so'm\n"
-                f"🆔 Buyurtma: <code>{order_id}</code>\n"
-                f"📅 Yaratilgan: {tashkent_now().strftime('%H:%M:%S')}\n\n"
-                f"<b>To'lovni tasdiqlash uchun /admin → 💳 To'lovni tasdiqlash</b>",
-            )
-            await bot.session.close()
-        except Exception as e:
-            logger.warning("Could not notify admin %s: %s", admin_id, e)
-
-
-async def _credit_user(callback: CallbackQuery, order: dict, order_id: str) -> None:
-    """Credit balance to user and update order status."""
-    await db.update_order(order_id, status="completed")
-    await db.update_balance(order['telegram_id'], order['amount'], 'add')
-    user = await db.get_user(order['telegram_id'])
-    await callback.message.edit_text(
-        f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-        f"Hisobingizga {order['amount']:,.0f} so'm qo'shildi.\n"
-        f"Yangi balans: {user['balance']:,.0f} so'm",
-        parse_mode="HTML"
-    )
-    await callback.message.answer(
-        "🏠 Bosh menyu:",
-        reply_markup=keyboards.get_webapp_main_keyboard()
-    )
 
 
 @router.callback_query(F.data.startswith("cancel_order_"))

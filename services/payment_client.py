@@ -85,3 +85,35 @@ async def get_pending_orders() -> list[dict]:
     """
     result = await _request("GET", "/api/payment/pending")
     return result.get("orders", []) if result.get("ok") else []
+
+
+async def create_elderpay_order(telegram_id: int, amount: int) -> dict:
+    """
+    Create a payment order via ElderPay through the Node.js server.
+    
+    Args:
+        telegram_id: User's Telegram ID
+        amount: Amount in UZS
+    
+    Returns:
+        On success: {"success": true, "data": {"order_id": "...", "card_number": "...", "card_owner": "...", "amount": 50000, "expires_in": 300}}
+        On failure: {"success": false, "error": "..."}
+    """
+    return await _request("POST", "/api/elderpay/create", {
+        "telegram_id": telegram_id,
+        "amount": amount,
+    })
+
+
+async def check_elderpay_order(order_id: str) -> dict:
+    """
+    Check ElderPay payment status via Node.js server.
+    If paid — Node.js server automatically credits the balance.
+    
+    Args:
+        order_id: ElderPay order ID
+    
+    Returns:
+        {"success": true, "data": {"order_id": "...", "status": "paid"|"pending", "paid": true/false, "amount": 50000, "new_balance": 150000}}
+    """
+    return await _request("GET", f"/api/elderpay/check/{order_id}")
