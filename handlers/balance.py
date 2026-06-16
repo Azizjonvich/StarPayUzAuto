@@ -7,7 +7,6 @@ import uuid
 
 import keyboards
 from services.database import db, get_pool
-from services.elderpay import ElderPayAPI, ElderPayError
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,13 +17,7 @@ CARD_NUMBER = "9860180101712578"
 TASHKENT_OFFSET = timedelta(hours=5)
 TIMEOUT_MINUTES = 5
 
-# ElderPay client — для автоматической проверки платежей
 import config as bot_config
-elderpay = ElderPayAPI(
-    shop_id=bot_config.SHOP_ID or "",
-    shop_key=bot_config.SHOP_KEY or "",
-    api_url="https://elder.uz/api",
-)
 
 
 class BalanceStates(StatesGroup):
@@ -82,37 +75,16 @@ async def process_topup_amount(message: Message, state: FSMContext):
         user_id = message.from_user.id
         order_id = f"topup_{uuid.uuid4().hex[:10]}"
 
-        # Create order in database (external_id = order_id for webhook matching)
-        elderpay_order_id = None
-        elderpay_error = None
-
-        # Создаём заказ в ElderPay (если настроен)
-        if elderpay.is_configured:
-            try:
-                result = await elderpay.create_order(int(amount))
-                elderpay_order_id = result.get("order")
-                logger.info(
-                    "ElderPay order created: local=%s elderpay=%s amount=%s",
-                    order_id, elderpay_order_id, int(amount),
-                )
-            except ElderPayError as e:
-                elderpay_error = str(e)
-                logger.warning("ElderPay create failed for %s: %s", user_id, elderpay_error)
-        else:
-            logger.info("ElderPay not configured — skipping create_order")
-
-        # Сохраняем elderpay_order_id в БД
-        order_db_id = await db.create_order(order_id, user_id, "topup", int(amount), amount, elderpay_order_id=elderpay_order_id)
+        # Create order in database
+        await db.create_order(order_id, user_id, "topup", int(amount), amount)
 
         # Уведомление админам о новом заказе
-        if elderpay_error or not elderpay.is_configured or not elderpay_order_id:
-            await _notify_admins_about_topup(
-                user_id=user_id,
-                username=message.from_user.username or str(user_id),
-                order_id=order_id,
-                order_db_id=order_db_id,
-                amount=int(amount),
-            )
+        await _notify_admins_about_topup(
+            user_id=user_id,
+            username=message.from_user.username or str(user_id),
+            order_id=order_id,
+            amount=int(amount),
+        )
 
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
@@ -126,19 +98,9 @@ async def process_topup_amount(message: Message, state: FSMContext):
             f"<code>{CARD_NUMBER}</code>\n\n"
             f"⏰ To'lov amalga oshirilgach, quyidagi tugmani bosing.\n\n"
             f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-            f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!"
+            f"Aniq {TIMEOUT_MINUTES} daqiqa. Undan keyin avtomatik bekor qilinadi!\n\n"
+            f"👤 Admin pulni tekshirib, tasdiqlaydi — sizga xabar keladi."
         )
-
-        if elderpay_error:
-            card_text += (
-                f"\n\n⚠️ ElderPay xatosi: {elderpay_error}\n"
-                f"To'lovni amalga oshirib, «To'lovni tekshirish» tugmasini bosing."
-            )
-        elif elderpay.is_configured:
-            card_text += (
-                f"\n\n🤖 ElderPay orqali avtomatik tekshiriladi.\n"
-                f"Pul tushgach, balans avtomatik to'ldiriladi!"
-            )
 
         await message.answer(
             card_text,
@@ -152,42 +114,13 @@ async def process_topup_amount(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("check_payment_"))
 async def check_payment_status(callback: CallbackQuery):
-    """Check payment status — ElderPay API first, then local DB"""
+    """Check payment status — local DB only"""
     await callback.answer("Tekshirilmoqda...")
 
     order_id = callback.data.split("_", 2)[2]
     order = await db.get_order(order_id)
 
-    # ── 1. Проверка через ElderPay (если настроен и есть elderpay_order_id) ──
-    if elderpay.is_configured and order and order.get("elderpay_order_id"):
-        try:
-            result = await elderpay.check_order(order["elderpay_order_id"])
-            elderpay_data = result.get("data", result)
-            elderpay_status = (
-                elderpay_data.get("status", "").lower().strip()
-                if isinstance(elderpay_data, dict)
-                else str(elderpay_data).lower().strip()
-            )
-
-            logger.info(
-                "ElderPay check: order=%s elderpay_id=%s status=%s",
-                order_id, order["elderpay_order_id"], elderpay_status,
-            )
-
-            if elderpay_status == "paid":
-                await _credit_user(callback, order, order_id)
-                return
-            elif elderpay_status == "cancel":
-                await callback.answer(
-                    "❌ To'lov bekor qilingan. Qayta urinib ko'ring.",
-                    show_alert=True,
-                )
-                return
-        except ElderPayError as e:
-            logger.warning("ElderPay check failed for %s: %s", order_id, e)
-            # Продолжаем — проверяем локальную БД как fallback
-
-    # ── 2. Fallback: проверка локальной БД (для webhook/Click/Payme) ──
+    # Проверка payments таблицы (для webhook/Click/Payme)
     pool = await get_pool()
     async with pool.acquire() as conn:
         payment = await conn.fetchrow(
@@ -200,14 +133,14 @@ async def check_payment_status(callback: CallbackQuery):
             await _credit_user(callback, order, order_id)
         else:
             await callback.answer("✅ To'lov allaqachon tasdiqlangan.", show_alert=True)
+    elif order and order['status'] == "completed":
+        await callback.answer("✅ To'lov allaqachon tasdiqlangan.", show_alert=True)
     else:
-        elderpay_note = ""
-        if elderpay.is_configured:
-            elderpay_note = "\n\nElderPay orqali ham tekshirildi — to'lov topilmadi."
         await callback.answer(
-            f"⏳ To'lov hali amalga oshmagan.{elderpay_note}\n\n"
-            f"💡 Agar pul o'tkazgan bo'lsangiz, administrator bilan bog'lanishingiz mumkin:\n"
-            f"👤 @StarPayUzAdmin",
+            "⏳ To'lov hali amalga oshmagan.\n\n"
+            "💡 Agar pul o'tkazgan bo'lsangiz, administrator bilan bog'lanishingiz mumkin:\n"
+            "👤 @StarPayUzAdmin\n\n"
+            "Pul tushgach, admin to'lovni tasdiqlaydi va sizga xabar keladi.",
             show_alert=True
         )
 
@@ -216,7 +149,6 @@ async def _notify_admins_about_topup(
     user_id: int,
     username: str,
     order_id: str,
-    order_db_id: int,
     amount: int,
 ):
     """Send notification to admins about new topup order."""

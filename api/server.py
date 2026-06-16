@@ -19,17 +19,7 @@ from services.database import (
 from services.fragment_api import FragmentAPI, FragmentAPIError
 from services.payment_verify import extract_payment_fields, verify_shop_signature
 from services.telegram_auth import validate_init_data
-from services.elderpay import ElderPayAPI, ElderPayError
-
 logger = logging.getLogger(__name__)
-
-# ElderPay background checker
-elderpay = ElderPayAPI(
-    shop_id=settings.elderpay_shop_id,
-    shop_key=settings.elderpay_shop_key,
-    api_url=settings.elderpay_api_url,
-)
-_elderpay_background_task = None
 
 WEBAPP_DIR = Path(__file__).resolve().parent.parent / "webapp"
 fragment = FragmentAPI()
@@ -661,105 +651,7 @@ async def api_get_available_gifts(request: web.Request) -> web.Response:
     }, status=500)
 
 
-async def _elderpay_background_checker(app: web.Application) -> None:
-    """
-    Фоновый checker: каждые 10 секунд проверяет pending платежи через ElderPay.
-    Если ElderPay вернул 'paid' — начисляем баланс пользователю.
-    """
-    if not elderpay.is_configured:
-        logger.info("ElderPay not configured — background checker disabled")
-        return
 
-    from services.database import get_pool, add_balance
-
-    while True:
-        try:
-            await asyncio.sleep(10)
-
-            pool = await get_pool()
-            async with pool.acquire() as conn:
-                # Ищем все pending topup заказы, у которых есть elderpay_order_id
-                pending_orders = await conn.fetch(
-                    """
-                    SELECT external_id, elderpay_order_id, telegram_id, amount
-                    FROM orders
-                    WHERE product_type = 'topup'
-                      AND status = 'pending'
-                      AND elderpay_order_id IS NOT NULL
-                    ORDER BY id ASC
-                    LIMIT 20
-                    """
-                )
-
-            for row in pending_orders:
-                order_id = row["external_id"]
-                elderpay_order_id = row["elderpay_order_id"]
-                user_id = row["telegram_id"]
-                amount = row["amount"]
-
-                try:
-                    result = await elderpay.check_order(elderpay_order_id)
-                    elderpay_data = result.get("data", result)
-                    elderpay_status = (
-                        elderpay_data.get("status", "").lower().strip()
-                        if isinstance(elderpay_data, dict)
-                        else str(elderpay_data).lower().strip()
-                    )
-
-                    if elderpay_status == "paid":
-                        logger.info(
-                            "ElderPay BG: order=%s user=%s amount=%s — PAID",
-                            order_id, user_id, amount,
-                        )
-
-                        # Начисляем баланс
-                        new_balance = await add_balance(user_id, amount)
-
-                        # Обновляем статус заказа
-                        async with pool.acquire() as conn:
-                            await conn.execute(
-                                "UPDATE orders SET status = 'completed' WHERE external_id = $1",
-                                order_id,
-                            )
-                            # Записываем в payments
-                            try:
-                                await conn.execute(
-                                    """
-                                    INSERT INTO payments (shop_order_id, telegram_id, amount, status, raw_payload)
-                                    VALUES ($1, $2, $3, 'paid', $4)
-                                    """,
-                                    order_id, user_id, amount,
-                                    f'{{"source": "elderpay_bg", "status": "paid"}}',
-                                )
-                            except asyncpg.UniqueViolationError:
-                                pass  # Уже записан
-
-                        # Уведомление пользователю
-                        await _notify_user_paid(user_id, amount, new_balance)
-
-                    elif elderpay_status == "cancel":
-                        logger.info(
-                            "ElderPay BG: order=%s — CANCELLED", order_id,
-                        )
-                        async with pool.acquire() as conn:
-                            await conn.execute(
-                                "UPDATE orders SET status = 'cancelled' WHERE external_id = $1",
-                                order_id,
-                            )
-
-                except ElderPayError as e:
-                    logger.warning(
-                        "ElderPay BG check failed for %s: %s", order_id, e,
-                    )
-                except Exception as e:
-                    logger.exception(
-                        "ElderPay BG error for order %s: %s", order_id, e,
-                    )
-
-        except asyncio.CancelledError:
-            break
-        except Exception as e:
-            logger.exception("ElderPay BG loop error: %s", e)
 
 
 async def _notify_user_paid(user_id: int, amount: int, new_balance: int) -> None:
@@ -795,17 +687,7 @@ async def on_startup(app: web.Application) -> None:
   from services.database import init_db
   await init_db()
   logger.info("Database initialized")
-  
-  # ElderPay background checker — автоматически проверяет статус платежей
-  if elderpay.is_configured:
-    global _elderpay_background_task
-    _elderpay_background_task = asyncio.ensure_future(
-      _elderpay_background_checker(app)
-    )
-    logger.info("ElderPay background checker: ENABLED (checking every 10s)")
-  else:
-    logger.info("ElderPay not configured — background checker disabled")
-  
+
   # Initialize Telethon gift sender
   try:
     from services.telethon_client import init_gift_sender
@@ -960,15 +842,7 @@ def create_app() -> web.Application:
 
 
 async def _on_shutdown(app: web.Application) -> None:
-    global _elderpay_background_task
-    if _elderpay_background_task:
-        _elderpay_background_task.cancel()
-        try:
-            await _elderpay_background_task
-        except asyncio.CancelledError:
-            pass
-        _elderpay_background_task = None
-        logger.info("ElderPay background checker stopped")
+    pass
 
 
 def main() -> None:

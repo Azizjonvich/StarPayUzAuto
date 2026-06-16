@@ -470,18 +470,17 @@ class _LegacyDB:
         # Not needed in new schema - can be a no-op
         pass
     
-    async def create_order(self, order_id: str, user_id: int, product_type: str, amount: int, price: int, elderpay_order_id: str = None):
+    async def create_order(self, order_id: str, user_id: int, product_type: str, amount: int, price: int):
         telegram_id = user_id
-        # Need direct insert to include elderpay_order_id
         pool = await get_pool()
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                INSERT INTO orders (telegram_id, product_type, target_username, quantity, amount, status, external_id, elderpay_order_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO orders (telegram_id, product_type, target_username, quantity, amount, status, external_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id
                 """,
-                telegram_id, product_type, "", None, amount, "pending", order_id, elderpay_order_id,
+                telegram_id, product_type, "", None, amount, "pending", order_id,
             )
             return row["id"] if row else 0
     
@@ -494,15 +493,6 @@ class _LegacyDB:
             )
             return dict(row) if row else None
 
-    async def set_elderpay_order_id(self, external_id: str, elderpay_order_id: str):
-        """Store ElderPay order ID for a local order."""
-        pool = await get_pool()
-        async with pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE orders SET elderpay_order_id = $1 WHERE external_id = $2",
-                elderpay_order_id, external_id,
-            )
-    
     async def update_order(self, order_id: str, **kwargs):
         # Update order by external_id
         pool = await get_pool()

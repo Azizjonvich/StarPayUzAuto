@@ -32,9 +32,6 @@ class Settings:
     custom_emoji_check: str | None
     custom_emoji_money: str | None
     custom_emoji_cross: str | None
-    elderpay_shop_id: str
-    elderpay_shop_key: str
-    elderpay_api_url: str
     admin_panel_url: str
 
     @classmethod
@@ -72,9 +69,6 @@ class Settings:
             custom_emoji_check=os.getenv("CUSTOM_EMOJI_CHECK") or "5980930633298350051",
             custom_emoji_money=os.getenv("CUSTOM_EMOJI_MONEY") or "5287231198098117669",
             custom_emoji_cross=os.getenv("CUSTOM_EMOJI_CROSS") or "5273914604752216432",
-            elderpay_shop_id=os.getenv("ELDERPAY_SHOP_ID") or os.getenv("SHOP_ID", "").strip(),
-            elderpay_shop_key=os.getenv("ELDERPAY_SHOP_KEY") or os.getenv("SHOP_KEY", "").strip(),
-            elderpay_api_url=os.getenv("ELDERPAY_API_URL", "https://elder.uz/api").rstrip("/"),
             admin_panel_url=os.getenv("ADMIN_PANEL_URL", "http://localhost:8000"),
         )
 

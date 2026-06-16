@@ -63,6 +63,134 @@ async def cmd_admin(message: Message, state: FSMContext = None):
     )
 
 
+# ─── /confirm — быстрое подтверждение оплаты ──────────────────────
+
+@router.message(Command("confirm"))
+async def cmd_confirm(message: Message):
+    """Quick confirm payment by order_id. Calls Node.js payment server."""
+    if not message.from_user:
+        return
+    if not _is_admin(message.from_user.id):
+        await _deny(message)
+        return
+
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.answer(
+            "❌ Buyurtma ID sini kiriting:\n\n"
+            "<code>/confirm topup_abc123</code>",
+            parse_mode="HTML",
+        )
+        return
+
+    order_id = args[1].strip()
+    
+    await message.answer(f"⏳ Tekshirilmoqda: <code>{order_id}</code>...", parse_mode="HTML")
+    
+    # Try Node.js payment server first
+    from services.payment_client import confirm_payment
+    result = await confirm_payment(order_id)
+    
+    if result.get("ok"):
+        await message.answer(
+            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
+            f"📦 Buyurtma: <code>{order_id}</code>\n"
+            f"💰 Summa: {result.get('amount', 0):,} so'm\n"
+            f"💳 Yangi balans: {result.get('new_balance', 0):,} so'm",
+            parse_mode="HTML",
+        )
+    elif "PAYMENT_SERVER_URL not configured" in result.get("error", ""):
+        # Fallback: confirm locally via admin panel logic
+        await _confirm_locally(message, order_id)
+    else:
+        unknown_error = "Noma'lum xatolik"
+        await message.answer(
+            f"❌ Xatolik: {result.get('error', unknown_error)}",
+            parse_mode="HTML",
+        )
+
+
+async def _confirm_locally(message: Message, order_id: str):
+    """Fallback: confirm payment directly via database (no Node.js server)."""
+    from services.database import get_pool, add_balance, record_payment
+    
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        order = await conn.fetchrow(
+            "SELECT * FROM orders WHERE external_id = $1",
+            order_id
+        )
+        
+        if not order:
+            await message.answer(
+                f"❌ Buyurtma topilmadi: <code>{order_id}</code>",
+                parse_mode="HTML",
+            )
+            return
+        
+        if order["status"] != "pending":
+            await message.answer(
+                f"⚠️ Buyurtma <code>{order_id}</code> allaqachon «{order['status']}»",
+                parse_mode="HTML",
+            )
+            return
+        
+        tid = order["telegram_id"]
+        amount = order["amount"]
+        
+        # Credit balance
+        new_balance = await add_balance(tid, amount)
+        
+        # Update order status
+        await conn.execute(
+            "UPDATE orders SET status = 'completed' WHERE external_id = $1",
+            order_id
+        )
+        
+        # Record payment
+        await record_payment(
+            order_id, tid, amount, "paid",
+            f'{{"source": "admin_confirm_local", "admin_id": {message.from_user.id}}}'
+        )
+        
+        # Notify user
+        from aiogram import Bot
+        from aiogram.client.default import DefaultBotProperties
+        from aiogram.enums import ParseMode
+        import config as bot_config
+        
+        bot = Bot(
+            token=bot_config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+        try:
+            await bot.send_message(
+                tid,
+                f"✅ <b>To'lov muvaffaqiyatli qabul qilindi!</b>\n\n"
+                f"💰 Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
+                f"💳 Yangi balans: <b>{new_balance:,}</b> so'm",
+            )
+        except Exception as e:
+            logger.warning(f"Could not notify user {tid}: {e}")
+        finally:
+            await bot.session.close()
+        
+        user = await conn.fetchrow(
+            "SELECT * FROM users WHERE telegram_id = $1", tid
+        )
+        username = user["username"] if user else str(tid)
+        
+        await message.answer(
+            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
+            f"👤 Foydalanuvchi: @{username}\n"
+            f"📦 Buyurtma: <code>{order_id}</code>\n"
+            f"💰 Summa: {amount:,} so'm\n"
+            f"💳 Yangi balans: {new_balance:,} so'm\n\n"
+            f"📨 Foydalanuvchiga xabar yuborildi.",
+            parse_mode="HTML",
+        )
+
+
 # ─── Главное меню админки ────────────────────────────────────────
 
 @router.callback_query(F.data == "admin_main_menu")
