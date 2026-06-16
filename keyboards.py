@@ -32,6 +32,7 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
             text="Support",
             url=admin_url,
             style="danger",
+            icon_custom_emoji_id=config.CUSTOM_EMOJI_USER,
         ),
     )
 

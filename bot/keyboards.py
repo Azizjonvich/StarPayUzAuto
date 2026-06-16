@@ -57,6 +57,7 @@ def main_inline_keyboard() -> InlineKeyboardMarkup:
                     "Support",
                     url=admin_url,
                     style="danger",
+                    icon_custom_emoji_id=settings.custom_emoji_user,
                 ),
             ],
         ]
