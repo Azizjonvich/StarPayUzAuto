@@ -120,6 +120,17 @@ def premium_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def bosh_menu_keyboard() -> InlineKeyboardMarkup:
+    """Blue Bosh Menu button"""
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(
+        text="🏠 Bosh Menu",
+        callback_data="refresh_menu",
+        style="primary",
+    ))
+    return builder.as_markup()
+
+
 def bottom_reply_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[

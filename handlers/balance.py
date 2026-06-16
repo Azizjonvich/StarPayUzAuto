@@ -162,7 +162,7 @@ async def check_payment_status(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("cancel_order_"))
 async def cancel_order_handler(callback: CallbackQuery):
-    """Cancel order"""
+    """Cancel order — shows timeout message with premium emoji"""
     await callback.answer()
 
     order_id = callback.data.split("_", 2)[2]
@@ -171,11 +171,19 @@ async def cancel_order_handler(callback: CallbackQuery):
     if order and order['status'] == "pending":
         await db.update_order(order_id, status="cancelled")
 
-    await callback.message.edit_text(
-        "❌ Buyurtma bekor qilindi.",
-        parse_mode="HTML"
+    text = (
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WARN2}">⚠️</tg-emoji> '
+        f"<b>To'lov muddati tugadi!</b>\n\n"
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CLOCK}">⏰</tg-emoji> '
+        f"5 daqiqa ichida to'lov amalga oshirilmaganligi sababli\n"
+        f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_ID}">🆔</tg-emoji> '
+        f"<code>{order_id}</code> buyurtmangiz\n"
+        f"avtomatik bekor qilindi.\n\n"
+        f"Qaytadan urinib ko'ring."
     )
+
+    await callback.message.edit_text(text, parse_mode="HTML")
     await callback.message.answer(
         "🏠 Bosh menyu:",
-        reply_markup=keyboards.get_webapp_main_keyboard()
+        reply_markup=keyboards.get_bosh_menu_keyboard(),
     )

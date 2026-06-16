@@ -326,3 +326,16 @@ def get_card_payment_keyboard(order_id: str) -> InlineKeyboardMarkup:
         )
     )
     return builder.as_markup()
+
+
+def get_bosh_menu_keyboard() -> InlineKeyboardMarkup:
+    """Blue Bosh Menu button for timeout message"""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="🏠 Bosh Menu",
+            callback_data="back_to_main",
+            style="primary",
+        )
+    )
+    return builder.as_markup()

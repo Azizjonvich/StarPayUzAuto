@@ -40,6 +40,7 @@ class Settings:
     custom_emoji_user: str | None
     custom_emoji_clock: str | None
     custom_emoji_warn: str | None
+    custom_emoji_warn2: str | None
     admin_panel_url: str
 
     @classmethod
@@ -85,6 +86,7 @@ class Settings:
             custom_emoji_user=os.getenv("CUSTOM_EMOJI_USER") or "5260399854500191689",
             custom_emoji_clock=os.getenv("CUSTOM_EMOJI_CLOCK") or "5316591603123502631",
             custom_emoji_warn=os.getenv("CUSTOM_EMOJI_WARN") or "5881702736843511327",
+            custom_emoji_warn2=os.getenv("CUSTOM_EMOJI_WARN2") or "5316554554735607106",
             admin_panel_url=os.getenv("ADMIN_PANEL_URL", "http://localhost:8000"),
         )
 

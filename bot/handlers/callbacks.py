@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 
 from bot.config import settings
-from bot.keyboards import main_inline_keyboard, stars_keyboard, premium_keyboard, topup_back_keyboard, topup_payment_keyboard
+from bot.keyboards import bosh_menu_keyboard, main_inline_keyboard, stars_keyboard, premium_keyboard, topup_back_keyboard, topup_payment_keyboard
 from bot.handlers.start import menu_text
 from services.database import ensure_user, get_user, get_user_orders, db
 
@@ -224,7 +224,7 @@ async def cb_check_payment(query: CallbackQuery) -> None:
 
 @router.callback_query(F.data.startswith("cancel_order_"))
 async def cb_cancel_order(query: CallbackQuery) -> None:
-  """Cancel order"""
+  """Cancel order — shows timeout message with premium emoji"""
   if not query.from_user:
     return
   await query.answer()
@@ -232,8 +232,22 @@ async def cb_cancel_order(query: CallbackQuery) -> None:
   order = await db.get_order(order_id)
   if order and order['status'] == "pending":
     await db.update_order(order_id, status="cancelled")
-  await query.message.edit_text("❌ Buyurtma bekor qilindi.", parse_mode="HTML")
-  await query.message.answer("🏠 Bosh menyu:", reply_markup=main_inline_keyboard())
+
+  text = (
+    f'<tg-emoji emoji-id="{settings.custom_emoji_warn2}">⚠️</tg-emoji> '
+    f"<b>To'lov muddati tugadi!</b>\n\n"
+    f'<tg-emoji emoji-id="{settings.custom_emoji_clock}">⏰</tg-emoji> '
+    f"5 daqiqa ichida to'lov amalga oshirilmaganligi sababli\n"
+    f'<tg-emoji emoji-id="{settings.custom_emoji_id_icon}">🆔</tg-emoji> '
+    f"<code>{order_id}</code> buyurtmangiz\n"
+    f"avtomatik bekor qilindi.\n\n"
+    f"Qaytadan urinib ko'ring."
+  )
+
+  await query.message.edit_text(text, parse_mode="HTML")
+  await query.message.answer(
+    "🏠 Bosh menyu:", reply_markup=bosh_menu_keyboard()
+  )
 
 
 @router.callback_query(F.data == "topup_back")
