@@ -137,9 +137,8 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
 
   # Создаём order_id для локальной БД
   order_id = f"topup_{uuid.uuid4().hex[:10]}"
-  await db.create_order(order_id, user_id, "topup", amount, amount)
 
-  # Создаём заказ в ElderPay (если настроен)
+  # Создаём заказ в ElderPay (если настроен) — ДО сохранения в БД, чтобы сразу сохранить elderpay_order_id
   elderpay_order_id = None
   elderpay_error = None
   if elderpay.is_configured:
@@ -156,6 +155,9 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
       logger.warning("ElderPay create failed for %s: %s", user_id, elderpay_error)
   else:
     logger.info("ElderPay not configured — skipping create_order")
+
+  # Сохраняем заказ в БД вместе с elderpay_order_id
+  await db.create_order(order_id, user_id, "topup", amount, amount, elderpay_order_id=elderpay_order_id)
 
   # Calculate 5-minute window (Tashkent time)
   now = tashkent_now()
@@ -199,10 +201,11 @@ async def cb_check_payment(query: CallbackQuery) -> None:
   order_id = query.data.split("_", 2)[2]
   order = await db.get_order(order_id)
 
-  # ── 1. Проверка через ElderPay (если настроен) ──────────────
-  if elderpay.is_configured and order:
+  # ── 1. Проверка через ElderPay (если настроен и есть elderpay_order_id) ──
+  check_id = order.get("elderpay_order_id") if order else None
+  if elderpay.is_configured and check_id:
     try:
-      result = await elderpay.check_order(order_id)
+      result = await elderpay.check_order(check_id)
       elderpay_data = result.get("data", result)
       elderpay_status = (
         elderpay_data.get("status", "").lower().strip()
@@ -211,8 +214,8 @@ async def cb_check_payment(query: CallbackQuery) -> None:
       )
 
       logger.info(
-        "ElderPay check: order=%s status=%s raw=%s",
-        order_id, elderpay_status, str(result)[:200],
+        "ElderPay check: order=%s elderpay_id=%s status=%s",
+        order_id, check_id, elderpay_status,
       )
 
       if elderpay_status == "paid":

@@ -678,14 +678,14 @@ async def _elderpay_background_checker(app: web.Application) -> None:
 
             pool = await get_pool()
             async with pool.acquire() as conn:
-                # Ищем все pending topup заказы, у которых есть external_id
+                # Ищем все pending topup заказы, у которых есть elderpay_order_id
                 pending_orders = await conn.fetch(
                     """
-                    SELECT external_id, telegram_id, amount
+                    SELECT external_id, elderpay_order_id, telegram_id, amount
                     FROM orders
                     WHERE product_type = 'topup'
                       AND status = 'pending'
-                      AND external_id IS NOT NULL
+                      AND elderpay_order_id IS NOT NULL
                     ORDER BY id ASC
                     LIMIT 20
                     """
@@ -693,11 +693,12 @@ async def _elderpay_background_checker(app: web.Application) -> None:
 
             for row in pending_orders:
                 order_id = row["external_id"]
+                elderpay_order_id = row["elderpay_order_id"]
                 user_id = row["telegram_id"]
                 amount = row["amount"]
 
                 try:
-                    result = await elderpay.check_order(order_id)
+                    result = await elderpay.check_order(elderpay_order_id)
                     elderpay_data = result.get("data", result)
                     elderpay_status = (
                         elderpay_data.get("status", "").lower().strip()
@@ -795,8 +796,15 @@ async def on_startup(app: web.Application) -> None:
   await init_db()
   logger.info("Database initialized")
   
-  # ElderPay background checker disabled — using webhook only
-  logger.info("ElderPay background checker: DISABLED (webhook mode)")
+  # ElderPay background checker — автоматически проверяет статус платежей
+  if elderpay.is_configured:
+    global _elderpay_background_task
+    _elderpay_background_task = asyncio.ensure_future(
+      _elderpay_background_checker(app)
+    )
+    logger.info("ElderPay background checker: ENABLED (checking every 10s)")
+  else:
+    logger.info("ElderPay not configured — background checker disabled")
   
   # Initialize Telethon gift sender
   try:

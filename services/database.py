@@ -50,8 +50,14 @@ async def init_db() -> None:
                 amount INTEGER,
                 status TEXT NOT NULL DEFAULT 'pending',
                 external_id TEXT,
+                elderpay_order_id TEXT,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE orders ADD COLUMN IF NOT EXISTS elderpay_order_id TEXT
             """
         )
         await conn.execute(
@@ -464,9 +470,20 @@ class _LegacyDB:
         # Not needed in new schema - can be a no-op
         pass
     
-    async def create_order(self, order_id: str, user_id: int, product_type: str, amount: int, price: int):
+    async def create_order(self, order_id: str, user_id: int, product_type: str, amount: int, price: int, elderpay_order_id: str = None):
         telegram_id = user_id
-        return await create_order(telegram_id, product_type, "", amount, price, order_id, "pending")
+        # Need direct insert to include elderpay_order_id
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO orders (telegram_id, product_type, target_username, quantity, amount, status, external_id, elderpay_order_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING id
+                """,
+                telegram_id, product_type, "", None, amount, "pending", order_id, elderpay_order_id,
+            )
+            return row["id"] if row else 0
     
     async def get_order(self, order_id: str):
         # Get order by external_id
@@ -476,6 +493,15 @@ class _LegacyDB:
                 "SELECT * FROM orders WHERE external_id = $1", order_id
             )
             return dict(row) if row else None
+
+    async def set_elderpay_order_id(self, external_id: str, elderpay_order_id: str):
+        """Store ElderPay order ID for a local order."""
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE orders SET elderpay_order_id = $1 WHERE external_id = $2",
+                elderpay_order_id, external_id,
+            )
     
     async def update_order(self, order_id: str, **kwargs):
         # Update order by external_id
