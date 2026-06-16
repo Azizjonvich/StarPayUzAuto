@@ -90,7 +90,7 @@ async def process_topup_amount(message: Message, state: FSMContext):
         if elderpay.is_configured:
             try:
                 result = await elderpay.create_order(int(amount))
-                elderpay_order_id = result.get("order") or str(result)
+                elderpay_order_id = result.get("order")
                 logger.info(
                     "ElderPay order created: local=%s elderpay=%s amount=%s",
                     order_id, elderpay_order_id, int(amount),

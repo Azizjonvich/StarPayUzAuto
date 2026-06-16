@@ -76,10 +76,10 @@ class ElderPayAPI:
             amount: Amount in UZS (e.g. 50000 for 50,000 so'm)
 
         Returns:
-            {"order": "<order_id>", ...} or {"data": {"order": "<order_id>", ...}}
+            {"order": "<order_id>", ...}
 
         Raises:
-            ElderPayError on API failure.
+            ElderPayError on API failure or API error response.
         """
         params: dict[str, str | int] = {
             "method": "create",
@@ -90,13 +90,22 @@ class ElderPayAPI:
         }
         data = await self._request(params)
 
+        # ElderPay возвращает HTTP 200 даже при ошибках: {"status": "error", "message": "..."}
+        if isinstance(data, dict) and data.get("status") == "error":
+            msg = data.get("message", "Unknown ElderPay error")
+            raise ElderPayError(msg, 200, data)
+
         # ElderPay может вернуть как {"order": "..."} так и {"data": {"order": "..."}}
         if "order" in data:
             return data
         if isinstance(data.get("data"), dict) and "order" in data["data"]:
             return data["data"]
-        # Fallback — возвращаем как есть
-        return data
+
+        # Не удалось получить order ID
+        raise ElderPayError(
+            f"ElderPay create_order: no order ID in response: {str(data)[:200]}",
+            200, data,
+        )
 
     async def check_order(self, order_id: str) -> dict[str, Any]:
         """Check payment order status.
@@ -105,10 +114,12 @@ class ElderPayAPI:
             order_id: Order ID returned by create_order()
 
         Returns:
-            {"data": {"status": "paid"|"pending"|"cancel"}, ...}
+            {"data": {"status": "paid"|"pending"|"cancel"|...}, ...}
+            ElderPay returns {"status": "error"] if order not found (not paid yet),
+            which is normalized to {"data": {"status": "error", ...}}.
 
         Raises:
-            ElderPayError on API failure.
+            ElderPayError only on network/HTTP errors, NOT on API error status.
         """
         params: dict[str, str | int] = {
             "method": "check",
@@ -121,7 +132,7 @@ class ElderPayAPI:
         # Нормализуем — извлекаем data.status
         if isinstance(data.get("data"), dict):
             return data
-        # Если API вернул status на верхнем уровне
+        # Если API вернул status на верхнем уровне (включая {"status": "error"} — не оплачен)
         if "status" in data:
             return {"data": data}
         return data
