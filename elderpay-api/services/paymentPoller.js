@@ -107,7 +107,8 @@ async function processOrder(order) {
   console.log(`[Poller] ║  Amount:    ${result.amount || order.amount} so'm`);
   console.log(`[Poller] ╚═══════════════════════════════════════`);
 
-  const amount = result.amount || Number(order.amount) || 0;
+  const rawAmount = result.amount || Number(order.amount) || 0;
+  const amount = Math.round(parseFloat(String(rawAmount)));
   const telegramId = order.telegram_id;
 
   // Credit balance

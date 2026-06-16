@@ -110,9 +110,13 @@ async function checkOrder(orderId) {
   const orderData = result.data || result;
   const status = orderData.status || 'pending'; // paid | pending | cancel
 
+  // ElderPay returns amount as string like "1001.00" — convert to integer (tiyn -> so'm)
+  const rawAmount = orderData.amount || result.amount || 0;
+  const parsedAmount = Math.round(parseFloat(String(rawAmount)));
+
   return {
     status: status,
-    amount: orderData.amount || result.amount || null,
+    amount: parsedAmount || null,
     paid: status === 'paid',
   };
 }

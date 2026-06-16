@@ -116,7 +116,8 @@ router.get('/check/:order_id', async (req, res) => {
 
     // Credit balance
     const user_id = order.telegram_id;
-    const amount = elderResult.amount || order.amount;
+    const rawAmount = elderResult.amount || Number(order.amount) || 0;
+    const amount = Math.round(parseFloat(String(rawAmount)));
 
     const newBalance = await db.addBalance(user_id, amount);
     await db.updateOrderStatus(order_id, 'completed');
