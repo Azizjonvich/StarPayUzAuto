@@ -43,7 +43,6 @@ def main_inline_keyboard() -> InlineKeyboardMarkup:
                 _btn(
                     "Webapp",
                     web_app_url=f"{base}/stars.html",
-                    style="primary",
                 ),
             ],
             [
