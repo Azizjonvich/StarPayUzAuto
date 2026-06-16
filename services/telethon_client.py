@@ -30,7 +30,11 @@ class TelethonGiftSender:
 
         # Если передана строка сессии, используем StringSession
         if isinstance(self.session, str) and len(self.session) > 50:
-            session = StringSession(self.session)
+            try:
+                session = StringSession(self.session)
+            except Exception as e:
+                logger.warning("Invalid session string: %s, falling back to file session", e)
+                session = self.session
         else:
             session = self.session
 
