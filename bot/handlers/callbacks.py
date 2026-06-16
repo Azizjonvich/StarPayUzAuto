@@ -155,8 +155,10 @@ async def process_topup_amount(message: Message, state: FSMContext) -> None:
     f"💳 <b>To'lov uchun karta:</b>\n"
     f"<code>{card_number}</code>\n"
     f"👤 {card_owner}\n\n"
-    f"⏰ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
-    f"Aniq {TIMEOUT_MINUTES} daqiqa. To'lov avtomatik tekshiriladi!"
+    f"⏰ Pul o'tkazing. To'lov avtomatik tarzda tekshiriladi!\n"
+    f"Pul tushgach, sizga xabar keladi va balansingizga qo'shiladi.\n\n"
+    f"⚠️ Muddat: {format_time(now)} — {format_time(expires_at)} (Toshkent)\n"
+    f"Aniq {TIMEOUT_MINUTES} daqiqa."
   )
 
   await message.answer(
