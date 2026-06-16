@@ -102,7 +102,17 @@ async def process_topup_amount(message: Message, state: FSMContext):
             logger.info("ElderPay not configured — skipping create_order")
 
         # Сохраняем elderpay_order_id в БД
-        await db.create_order(order_id, user_id, "topup", int(amount), amount, elderpay_order_id=elderpay_order_id)
+        order_db_id = await db.create_order(order_id, user_id, "topup", int(amount), amount, elderpay_order_id=elderpay_order_id)
+
+        # Уведомление админам о новом заказе
+        if elderpay_error or not elderpay.is_configured or not elderpay_order_id:
+            await _notify_admins_about_topup(
+                user_id=user_id,
+                username=message.from_user.username or str(user_id),
+                order_id=order_id,
+                order_db_id=order_db_id,
+                amount=int(amount),
+            )
 
         # Calculate 5-minute window (Tashkent time)
         now = tashkent_now()
@@ -195,9 +205,44 @@ async def check_payment_status(callback: CallbackQuery):
         if elderpay.is_configured:
             elderpay_note = "\n\nElderPay orqali ham tekshirildi — to'lov topilmadi."
         await callback.answer(
-            f"⏳ To'lov hali amalga oshmagan. Iltimos, avval to'lovni bajaring.{elderpay_note}",
+            f"⏳ To'lov hali amalga oshmagan.{elderpay_note}\n\n"
+            f"💡 Agar pul o'tkazgan bo'lsangiz, administrator bilan bog'lanishingiz mumkin:\n"
+            f"👤 @StarPayUzAdmin",
             show_alert=True
         )
+
+
+async def _notify_admins_about_topup(
+    user_id: int,
+    username: str,
+    order_id: str,
+    order_db_id: int,
+    amount: int,
+):
+    """Send notification to admins about new topup order."""
+    from aiogram import Bot
+    from aiogram.client.default import DefaultBotProperties
+    from aiogram.enums import ParseMode
+    import config as bot_config
+
+    for admin_id in bot_config.ADMINS:
+        try:
+            bot = Bot(
+                token=bot_config.BOT_TOKEN,
+                default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            )
+            await bot.send_message(
+                admin_id,
+                f"💳 <b>Yangi to'lov so'rovi</b>\n\n"
+                f"👤 Foydalanuvchi: @{username} (<code>{user_id}</code>)\n"
+                f"💰 Summa: {amount:,} so'm\n"
+                f"🆔 Buyurtma: <code>{order_id}</code>\n"
+                f"📅 Yaratilgan: {tashkent_now().strftime('%H:%M:%S')}\n\n"
+                f"<b>To'lovni tasdiqlash uchun /admin → 💳 To'lovni tasdiqlash</b>",
+            )
+            await bot.session.close()
+        except Exception as e:
+            logger.warning("Could not notify admin %s: %s", admin_id, e)
 
 
 async def _credit_user(callback: CallbackQuery, order: dict, order_id: str) -> None:
