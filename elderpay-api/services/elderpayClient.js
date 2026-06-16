@@ -11,7 +11,7 @@
  */
 const axios = require('axios');
 
-const API_URL = process.env.ELDERPAY_API_URL || 'https://elder.uz/api';
+const API_URL = process.env.ELDERPAY_API_URL || 'https://69fa3b8bc0078.myxvest2.ru/api';
 const SHOP_ID = process.env.ELDERPAY_SHOP_ID || process.env.SHOP_ID || '';
 const SHOP_KEY = process.env.ELDERPAY_SHOP_KEY || process.env.SHOP_KEY || '';
 const CARD_NUMBER = process.env.CARD_NUMBER || '9860 1801 0171 2578';
