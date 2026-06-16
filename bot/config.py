@@ -31,7 +31,15 @@ class Settings:
     custom_emoji_phone: str | None
     custom_emoji_check: str | None
     custom_emoji_money: str | None
+    custom_emoji_wallet: str | None
     custom_emoji_cross: str | None
+    custom_emoji_down: str | None
+    custom_emoji_up: str | None
+    custom_emoji_id_icon: str | None
+    custom_emoji_card: str | None
+    custom_emoji_user: str | None
+    custom_emoji_clock: str | None
+    custom_emoji_warn: str | None
     admin_panel_url: str
 
     @classmethod
@@ -67,8 +75,16 @@ class Settings:
             custom_emoji_gift=os.getenv("CUSTOM_EMOJI_GIFT") or None,
             custom_emoji_phone=os.getenv("CUSTOM_EMOJI_PHONE") or None,
             custom_emoji_check=os.getenv("CUSTOM_EMOJI_CHECK") or "5980930633298350051",
-            custom_emoji_money=os.getenv("CUSTOM_EMOJI_MONEY") or "5287231198098117669",
+            custom_emoji_money=os.getenv("CUSTOM_EMOJI_MONEY") or "5811989245761426317",
+            custom_emoji_wallet=os.getenv("CUSTOM_EMOJI_WALLET") or "5987880246865565644",
             custom_emoji_cross=os.getenv("CUSTOM_EMOJI_CROSS") or "5273914604752216432",
+            custom_emoji_down=os.getenv("CUSTOM_EMOJI_DOWN") or "5229212516415978792",
+            custom_emoji_up=os.getenv("CUSTOM_EMOJI_UP") or "5229113938326599381",
+            custom_emoji_id_icon=os.getenv("CUSTOM_EMOJI_ID") or "5818885490065017876",
+            custom_emoji_card=os.getenv("CUSTOM_EMOJI_CARD") or "5927169041595634481",
+            custom_emoji_user=os.getenv("CUSTOM_EMOJI_USER") or "5260399854500191689",
+            custom_emoji_clock=os.getenv("CUSTOM_EMOJI_CLOCK") or "5316591603123502631",
+            custom_emoji_warn=os.getenv("CUSTOM_EMOJI_WARN") or "5881702736843511327",
             admin_panel_url=os.getenv("ADMIN_PANEL_URL", "http://localhost:8000"),
         )
 

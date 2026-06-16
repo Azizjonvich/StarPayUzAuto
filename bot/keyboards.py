@@ -36,6 +36,7 @@ def _btn(
 def main_inline_keyboard() -> InlineKeyboardMarkup:
     base = settings.webapp_base_url
     admin_url = "https://t.me/StarPayUzAdmin"
+    wallet_emoji = settings.custom_emoji_wallet
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -46,11 +47,17 @@ def main_inline_keyboard() -> InlineKeyboardMarkup:
                 ),
             ],
             [
-                _btn("Balans To'ldirish", callback_data="topup"),
-            ],
-            [
-                _btn("@StarPayUzAdmin", url=admin_url, style="danger"),
-                _btn("@StarPayUzAdmin", url=admin_url, style="success"),
+                _btn(
+                    "Balans To'ldirish",
+                    callback_data="topup",
+                    style="primary",
+                    icon_custom_emoji_id=wallet_emoji,
+                ),
+                _btn(
+                    "Support",
+                    url=admin_url,
+                    style="danger",
+                ),
             ],
         ]
     )
@@ -81,6 +88,35 @@ def topup_payment_keyboard(order_id: str) -> InlineKeyboardMarkup:
             callback_data=f"cancel_order_{order_id}"
         )
     )
+    return builder.as_markup()
+
+
+def stars_keyboard() -> InlineKeyboardMarkup:
+    """Stars purchase packages"""
+    builder = InlineKeyboardBuilder()
+    for amount, price in [
+        (50, 10000), (75, 15000), (100, 20000),
+        (250, 50000), (500, 100000),
+    ]:
+        builder.row(InlineKeyboardButton(
+            text=f"⭐ {amount} Stars — {price:,} so'm",
+            callback_data=f"buy_stars_{amount}"
+        ))
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="refresh_menu"))
+    return builder.as_markup()
+
+
+def premium_keyboard() -> InlineKeyboardMarkup:
+    """Premium subscription packages"""
+    builder = InlineKeyboardBuilder()
+    for duration, price, name in [
+        (3, 160000, "3 oy"), (6, 225000, "6 oy"), (12, 380000, "12 oy"),
+    ]:
+        builder.row(InlineKeyboardButton(
+            text=f"💎 Premium {name} — {price:,} so'm",
+            callback_data=f"buy_premium_{duration}"
+        ))
+    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="refresh_menu"))
     return builder.as_markup()
 
 
