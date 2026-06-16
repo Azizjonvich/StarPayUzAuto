@@ -5,7 +5,7 @@ import keyboards
 from services.database import db
 import config
 import uuid
-from api_client import api_client
+from services.fragment_api import fragment_client
 from datetime import datetime
 
 router = Router()
@@ -91,7 +91,7 @@ async def process_buy_stars(callback: CallbackQuery):
         await db.update_order(order_id, status="processing")
         
         username = callback.from_user.username or str(user_id)
-        result = await api_client.buy_stars(username, amount)
+        result = await fragment_client.buy_stars(username, amount)
         
         if result and result.get("ok"):
             await db.update_order(
@@ -170,7 +170,7 @@ async def process_buy_premium(callback: CallbackQuery):
         await db.update_order(order_id, status="processing")
         
         username = callback.from_user.username or str(user_id)
-        result = await api_client.buy_premium(username, duration)
+        result = await fragment_client.buy_premium(username, duration)
         
         if result and result.get("ok"):
             await db.update_order(

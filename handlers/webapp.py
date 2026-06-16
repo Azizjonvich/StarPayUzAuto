@@ -8,8 +8,8 @@ from aiogram.types import Message
 
 import config
 import keyboards
-from api_client import api_client
 from services.database import db
+from services.fragment_api import fragment_client
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -88,7 +88,7 @@ async def _buy_stars(message: Message, data: dict):
     await db.create_order(order_id, user_id, "stars", amount, price)
     await db.update_order(order_id, status="processing")
 
-    result = await api_client.buy_stars(username, amount)
+    result = await fragment_client.buy_stars(username, amount)
     if result and result.get("ok"):
         await db.update_order(
             order_id, status="completed", completed_at=datetime.utcnow().isoformat()
@@ -148,7 +148,7 @@ async def _buy_premium(message: Message, data: dict):
     await db.create_order(order_id, user_id, "premium", duration, price)
     await db.update_order(order_id, status="processing")
 
-    result = await api_client.buy_premium(username, duration)
+    result = await fragment_client.buy_premium(username, duration)
     if result and result.get("ok"):
         await db.update_order(
             order_id, status="completed", completed_at=datetime.utcnow().isoformat()

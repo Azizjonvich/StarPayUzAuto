@@ -691,7 +691,14 @@ async def on_startup(app: web.Application) -> None:
   # Initialize Telethon gift sender
   try:
     from services.telethon_client import init_gift_sender
-    await init_gift_sender()
+    import config as cfg
+    session = cfg.TELETHON_SESSION_STRING or cfg.SESSION_NAME
+    await init_gift_sender(
+      cfg.API_ID,
+      cfg.API_HASH,
+      session,
+      cfg.PHONE_NUMBER if cfg.PHONE_NUMBER else None,
+    )
     logger.info("Telethon gift sender initialized")
   except Exception as e:
     logger.warning("Failed to initialize Telethon: %s", e)
