@@ -204,12 +204,17 @@ async def cb_check_payment(query: CallbackQuery) -> None:
     amount = data.get("amount", 0)
     new_balance = data.get("new_balance", 0)
 
-    await query.message.edit_text(
-      f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-      f"Hisobingizga {amount:,} so'm qo'shildi.\n"
-      f"Yangi balans: {new_balance:,} so'm",
-      parse_mode="HTML"
+    check_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_check}">✅</tg-emoji>'
+    wallet_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_wallet}">👛</tg-emoji>'
+    money_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_money}">💰</tg-emoji>'
+
+    text = (
+      f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+      f"{wallet_emoji} +{amount:,} so'm\n"
+      f"{money_emoji} Balans: {new_balance:,} so'm"
     )
+
+    await query.message.edit_text(text, parse_mode="HTML")
     await query.message.answer(
       "🏠 Bosh menyu:", reply_markup=main_inline_keyboard()
     )

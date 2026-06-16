@@ -151,7 +151,7 @@ async def handle_click_complete(payload: dict, service_id: str, secret_key: str)
     
     if settings.bot_token:
         check_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_check}">✅</tg-emoji>' if settings.custom_emoji_check else "✅"
-        premium_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_premium}">💎</tg-emoji>' if settings.custom_emoji_premium else "💎"
+        wallet_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_wallet}">👛</tg-emoji>' if settings.custom_emoji_wallet else "👛"
         money_emoji = f'<tg-emoji emoji-id="{settings.custom_emoji_money}">💰</tg-emoji>' if settings.custom_emoji_money else "💰"
         bot = Bot(
             token=settings.bot_token,
@@ -160,8 +160,8 @@ async def handle_click_complete(payload: dict, service_id: str, secret_key: str)
         try:
             await bot.send_message(
                 user_id,
-                f"{check_emoji} To'lov muvaffaqiyatli qabul qilindi\n\n"
-                f"{premium_emoji} +{amount_int:,} so'm\n"
+                f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+                f"{wallet_emoji} +{amount_int:,} so'm\n"
                 f"{money_emoji} Balans: {new_balance:,} so'm",
             )
         except Exception as e:

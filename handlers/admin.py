@@ -164,12 +164,15 @@ async def _confirm_locally(message: Message, order_id: str):
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
         try:
-            await bot.send_message(
-                tid,
-                f"✅ <b>To'lov muvaffaqiyatli qabul qilindi!</b>\n\n"
-                f"💰 Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
-                f"💳 Yangi balans: <b>{new_balance:,}</b> so'm",
+            check_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CHECK}">✅</tg-emoji>'
+            wallet_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WALLET}">👛</tg-emoji>'
+            money_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji>'
+            user_text = (
+                f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+                f"{wallet_emoji} Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
+                f"{money_emoji} Yangi balans: <b>{new_balance:,}</b> so'm"
             )
+            await bot.send_message(tid, user_text, parse_mode="HTML")
         except Exception as e:
             logger.warning(f"Could not notify user {tid}: {e}")
         finally:
@@ -669,12 +672,15 @@ async def admin_pay_confirm(callback: CallbackQuery):
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
         try:
-            await bot.send_message(
-                tid,
-                f"✅ <b>To'lov muvaffaqiyatli qabul qilindi!</b>\n\n"
-                f"💰 Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
-                f"💳 Yangi balans: <b>{new_balance:,}</b> so'm",
+            check_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CHECK}">✅</tg-emoji>'
+            wallet_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WALLET}">👛</tg-emoji>'
+            money_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji>'
+            user_text = (
+                f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+                f"{wallet_emoji} Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
+                f"{money_emoji} Yangi balans: <b>{new_balance:,}</b> so'm"
             )
+            await bot.send_message(tid, user_text, parse_mode="HTML")
         except Exception as e:
             logger.warning(f"Could not notify user {tid}: {e}")
         finally:

@@ -141,12 +141,17 @@ async def check_payment_status(callback: CallbackQuery):
         amount = data.get("amount", 0)
         new_balance = data.get("new_balance", 0)
 
-        await callback.message.edit_text(
-            f"✅ <b>To'lov muvaffaqiyatli!</b>\n\n"
-            f"Hisobingizga {amount:,} so'm qo'shildi.\n"
-            f"Yangi balans: {new_balance:,} so'm",
-            parse_mode="HTML"
+        check_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CHECK}">✅</tg-emoji>'
+        wallet_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WALLET}">👛</tg-emoji>'
+        money_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji>'
+
+        text = (
+            f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+            f"{wallet_emoji} +{amount:,} so'm\n"
+            f"{money_emoji} Balans: {new_balance:,} so'm"
         )
+
+        await callback.message.edit_text(text, parse_mode="HTML")
         await callback.message.answer(
             "🏠 Bosh menyu:",
             reply_markup=keyboards.get_webapp_main_keyboard()
