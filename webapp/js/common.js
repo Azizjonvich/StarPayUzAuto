@@ -180,6 +180,21 @@ function setupPurchaseButton(onClick, text) {
     }
 }
 
+// ===== LOADER =====
+function showLoader(text) {
+  const overlay = document.getElementById('loaderOverlay');
+  if (!overlay) return;
+  const sub = overlay.querySelector('.loader-sub');
+  if (sub && text) sub.textContent = text;
+  overlay.classList.remove('hidden');
+}
+
+function hideLoader() {
+  const overlay = document.getElementById('loaderOverlay');
+  if (!overlay) return;
+  overlay.classList.add('hidden');
+}
+
 function validateStarsAmount(amount) {
     const n = parseInt(amount, 10);
     if (isNaN(n) || n < STARS_MIN) {

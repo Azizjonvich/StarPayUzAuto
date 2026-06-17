@@ -1,5 +1,4 @@
 /* StarPayUz - Custom Styles */
-/* Напишите свой CSS здесь */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * {
@@ -9,6 +8,7 @@
 body {
   background-color: #030712;
   padding: 7px 20px;
+  font-family: 'Inter', sans-serif;
 }
 
 button {
@@ -17,6 +17,109 @@ button {
   color: #fff;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
+/* ===== LOADER ===== */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #030712;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loader-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-star {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-star img {
+  width: 56px;
+  height: 56px;
+  animation: loaderPulse 1.5s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
+}
+
+.loader-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: loaderSpin 1.5s linear infinite;
+}
+
+.loader-ring:nth-child(1) {
+  width: 80px;
+  height: 80px;
+  border-top-color: #3B82F6;
+  border-right-color: #3B82F6;
+  animation-duration: 1.2s;
+}
+
+.loader-ring:nth-child(2) {
+  width: 64px;
+  height: 64px;
+  border-bottom-color: #60A5FA;
+  border-left-color: #60A5FA;
+  animation-duration: 1.8s;
+  animation-direction: reverse;
+}
+
+.loader-ring:nth-child(3) {
+  width: 48px;
+  height: 48px;
+  border-top-color: #93C5FD;
+  border-right-color: transparent;
+  animation-duration: 2.4s;
+}
+
+.loader-text {
+  margin-top: 32px;
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #3B82F6, #93C5FD, #3B82F6);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s linear infinite;
+  letter-spacing: 1px;
+}
+
+.loader-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+  animation: loaderFade 1.5s ease-in-out infinite;
+}
+
+@keyframes loaderSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+@keyframes loaderFade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
