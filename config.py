@@ -74,8 +74,8 @@ CUSTOM_EMOJI_WARN = os.getenv("CUSTOM_EMOJI_WARN", "5881702736843511327")      #
 CUSTOM_EMOJI_WARN2 = os.getenv("CUSTOM_EMOJI_WARN2", "5316554554735607106")    # ⚠️ timeout
 
 # Allowed usernames (for access control) - comma separated
-ALLOWED_USERNAMES = os.getenv("ALLOWED_USERNAMES", "StarPayUzAdmin").split(",")
-# Пример: ALLOWED_USERNAMES=StarPayUzAdmin,user2,user3
+ALLOWED_USERNAMES = os.getenv("ALLOWED_USERNAMES", "*").split(",")
+# Пример: ALLOWED_USERNAMES=StarPayUzAdmin,user2,user3  — или ALLOWED_USERNAMES=* для всех
 
 # Stars limits (Fragment API minimum is 50)
 STARS_MIN_AMOUNT = 50
