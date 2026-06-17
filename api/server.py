@@ -184,6 +184,8 @@ async def api_order_stars(request: web.Request) -> web.Response:
       int(user_id), "stars", username, quantity, None, str(result.get("id", "")), "completed"
     )
     await deduct_balance(int(user_id), price)
+    from services.channel_notify import notify_stars
+    asyncio.ensure_future(notify_stars(username, quantity, price))
     return web.json_response({"ok": True, "order_id": order_id, "result": result})
   except FragmentAPIError as e:
     await create_order(int(user_id), "stars", username, quantity, None, status="failed")
@@ -203,15 +205,18 @@ async def api_order_premium(request: web.Request) -> web.Response:
   months = int(body.get("months", 3))
   if months not in (3, 6, 12):
     months = 3
+  price = int(body.get("price", 0))
 
   try:
     result = await fragment.buy_premium(username, months)
     order_id = await create_order(
-      int(user_id), "premium", username, months, None, str(result.get("id", "")), "completed"
+      int(user_id), "premium", username, months, price, str(result.get("id", "")), "completed"
     )
+    from services.channel_notify import notify_premium
+    asyncio.ensure_future(notify_premium(username, months, price))
     return web.json_response({"ok": True, "order_id": order_id, "result": result})
   except FragmentAPIError as e:
-    await create_order(int(user_id), "premium", username, months, None, status="failed")
+    await create_order(int(user_id), "premium", username, months, price, status="failed")
     return web.json_response({"ok": False, "error": str(e)}, status=400)
 
 
@@ -327,6 +332,9 @@ async def api_order_gift(request: web.Request) -> web.Response:
     order_id = await create_order(
       int(user_id), "gift", username, None, price, gift_id, "completed"
     )
+    
+    from services.channel_notify import notify_gift
+    asyncio.ensure_future(notify_gift(username, gift, gift, price))
     
     return web.json_response({
       "ok": True,

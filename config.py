@@ -42,6 +42,28 @@ ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8000")
 CUSTOM_EMOJI_WALLET = os.getenv("CUSTOM_EMOJI_WALLET", "5769403330761593044")  # 👛 для кнопки/суммы
 CUSTOM_EMOJI_MONEY = os.getenv("CUSTOM_EMOJI_MONEY", "5987880246865565644")    # 💰 баланс в тексте
 CUSTOM_EMOJI_CHECK = os.getenv("CUSTOM_EMOJI_CHECK", "5843908536467198016")    # ✅ успех
+
+# Channel notifications emoji IDs
+EMOJI_STAR = os.getenv("EMOJI_STAR", "5312253613140121792")              # ⭐️
+EMOJI_TARGET = os.getenv("EMOJI_TARGET", "5350460637182993292")          # 🎯
+EMOJI_STARS_AMOUNT = os.getenv("EMOJI_STARS_AMOUNT", "5469741319330996757")  # 💫
+EMOJI_CALENDAR = os.getenv("EMOJI_CALENDAR", "5967412305338568701")     # 📅
+EMOJI_MONEY_CH = os.getenv("EMOJI_MONEY_CH", "4965219701572503640")     # 💰
+EMOJI_ROCKET = os.getenv("EMOJI_ROCKET", "6147654280112248427")         # 🚀
+EMOJI_GIFT = os.getenv("EMOJI_GIFT", "5417935058734458022")             # 🎁 (gift header)
+EMOJI_HEART = os.getenv("EMOJI_HEART", "5244859778060031233")           # 💝
+EMOJI_BEAR = os.getenv("EMOJI_BEAR", "5418143824209810742")             # 🧸
+EMOJI_ROSE = os.getenv("EMOJI_ROSE", "5341393243961596728")             # 🌹
+EMOJI_BOX = os.getenv("EMOJI_BOX", "5417905294611092330")               # 🎁 (box)
+EMOJI_BOUQUET = os.getenv("EMOJI_BOUQUET", "5341696099285512104")       # 💐
+EMOJI_CAKE = os.getenv("EMOJI_CAKE", "5417873163960751611")             # 🎂
+EMOJI_ROCKET_GIFT = os.getenv("EMOJI_ROCKET_GIFT", "5343573506799995914")  # 🚀 (gift)
+EMOJI_DIAMOND = os.getenv("EMOJI_DIAMOND", "5343915364721923982")       # 💎
+EMOJI_TROPHY = os.getenv("EMOJI_TROPHY", "5341354194118942558")         # 🏆
+EMOJI_RING = os.getenv("EMOJI_RING", "5345797174577897195")             # 💍
+
+# Orders notification channel
+CHANNEL_ORDERS = os.getenv("CHANNEL_ORDERS", "@StarPayUzOrders")
 CUSTOM_EMOJI_DOWN = os.getenv("CUSTOM_EMOJI_DOWN", "5229212516415978792")      # ⬇️
 CUSTOM_EMOJI_UP = os.getenv("CUSTOM_EMOJI_UP", "5229113938326599381")          # ⬆️
 CUSTOM_EMOJI_ID = os.getenv("CUSTOM_EMOJI_ID", "5818885490065017876")          # 🆔

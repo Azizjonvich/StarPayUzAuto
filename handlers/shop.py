@@ -100,6 +100,9 @@ async def process_buy_stars(callback: CallbackQuery):
                 completed_at=datetime.utcnow().isoformat()
             )
             
+            from services.channel_notify import notify_stars
+            await notify_stars(username, amount, price)
+            
             user = await db.get_user(user_id)
             await callback.message.answer(
                 f"✅ <b>Muvaffaqiyatli!</b>\n\n"
@@ -178,6 +181,9 @@ async def process_buy_premium(callback: CallbackQuery):
                 status="completed",
                 completed_at=datetime.utcnow().isoformat()
             )
+            
+            from services.channel_notify import notify_premium
+            await notify_premium(username, duration, price)
             
             user = await db.get_user(user_id)
             await callback.message.answer(
