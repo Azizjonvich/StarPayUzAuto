@@ -76,7 +76,7 @@ async def main():
 
     # Add access control middleware
     dp.update.middleware(AccessControlMiddleware())
-    logger.info("Access control middleware enabled - only @StarPayUzAdmin can use the bot")
+    logger.info("Access control middleware enabled")
 
     dp.include_router(admin.router)   # Admin first — to prevent /admin being caught by start.router
     dp.include_router(start.router)

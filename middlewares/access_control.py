@@ -26,12 +26,15 @@ class AccessControlMiddleware(BaseMiddleware):
             elif event.inline_query:
                 username = event.inline_query.from_user.username
         
+        # Если ALLOWED_USERNAMES пуст или содержит "*" — доступ открыт всем
+        allowed = config.ALLOWED_USERNAMES
+        if not allowed or "*" in allowed:
+            return await handler(event, data)
+
         # Проверяем доступ
-        if username and username in config.ALLOWED_USERNAMES:
-            # Доступ разрешен - продолжаем обработку
+        if username and username in allowed:
             return await handler(event, data)
         else:
-            # Доступ запрещен - отправляем сообщение
             if isinstance(event, Update) and event.message:
                 await event.message.answer(
                     "🚫 <b>Kirish taqiqlangan</b>\n\n"
@@ -39,4 +42,4 @@ class AccessControlMiddleware(BaseMiddleware):
                     "Kirish uchun murojaat qiling: @StarPayUzAdmin",
                     parse_mode="HTML"
                 )
-            return  # Прерываем обработку
+            return
