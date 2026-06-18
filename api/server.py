@@ -865,6 +865,14 @@ async def api_user_transactions(request: web.Request) -> web.Response:
   })
 
 
+def _serialize_row(row):
+  d = dict(row)
+  for k, v in d.items():
+    if isinstance(v, (datetime, date)):
+      d[k] = v.isoformat()
+  return d
+
+
 async def api_user_gifts(request: web.Request) -> web.Response:
   auth = await _auth_user(request)
   user_id = _user_id_from_auth(auth)
@@ -882,7 +890,7 @@ async def api_user_gifts(request: web.Request) -> web.Response:
       user_id
     )
 
-  gifts = [serialize(r) for r in rows]
+  gifts = [_serialize_row(r) for r in rows]
   return web.json_response({"ok": True, "gifts": gifts})
 
 
