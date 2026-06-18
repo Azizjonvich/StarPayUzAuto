@@ -654,15 +654,15 @@
 <body>
 
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <!-- Header -->
@@ -678,30 +678,30 @@
     <!-- Page title -->
     <div class="page-title">
         <span><img src="./images/gift.webp" alt="" style="width: 30px;"></span>
-        <h2>Gift olish</h2>
+        <h2 data-i18n="gift.title">Gift olish</h2>
     </div>
-    <p class="page-subtitle">O'zingizga yoki do'stingizga gift yuboring</p>
+    <p class="page-subtitle" data-i18n="gift.subtitle">O'zingizga yoki do'stingizga gift yuboring</p>
 
     <!-- Username Input -->
-    <h3 class="section-label">Qabul qiluvchi</h3>
+    <h3 class="section-label" data-i18n="common.recipient">Qabul qiluvchi</h3>
     <div class="input-wrapper">
         <img src="./images/user.webp" class="inside-icon" alt="">
-        <input type="text" id="username" placeholder="Username kiriting" class="input">
+        <input type="text" id="username" data-i18n-placeholder="common.enter_username" placeholder="Username kiriting" class="input">
     </div>
 
     <!-- Tabs -->
     <div class="gift-tabs">
-        <button class="gift-tab active" onclick="switchTab('regular')"><img src="./images/giftoption.webp" alt=""> Giftlar</button>
-        <button class="gift-tab" onclick="tg.showPopup({ title: 'Tez orada', message: 'NFT Giftlar tez orada!', buttons: [{type: 'ok'}] })" style="opacity:.5;cursor:default;"><img src="./images/nft__option.webp" alt=""> NFT Giftlar <span style="font-size:9px;color:#FCD34D;margin-left:2px;">Tez orada</span></button>
+        <button class="gift-tab active" onclick="switchTab('regular')"><img src="./images/giftoption.webp" alt=""> <span data-i18n="gift.tab.regular">Giftlar</span></button>
+        <button class="gift-tab" onclick="tg.showPopup({ title: t('gift.coming_soon'), message: 'NFT Giftlar ' + t('gift.coming_soon') + '!', buttons: [{type: 'ok'}] })" style="opacity:.5;cursor:default;"><img src="./images/nft__option.webp" alt=""> <span data-i18n="gift.tab.nft">NFT Giftlar</span> <span style="font-size:9px;color:#FCD34D;margin-left:2px;" data-i18n="gift.coming_soon">Tez orada</span></button>
     </div>
 
     <!-- Selected info -->
-    <div id="selectedGiftInfo" class="selected-gift-info">Gift tanlanmagan</div>
+    <div id="selectedGiftInfo" class="selected-gift-info" data-i18n="gift.not_selected">Gift tanlanmagan</div>
 
     <!-- Regular Gifts Section -->
     <div id="sectionRegular" class="gift-section active">
         <div class="section-header">
-            <h3>🎁 Oddiy giftlar</h3>
+            <h3 data-i18n="gift.regular_title">🎁 Oddiy giftlar</h3>
             <span class="section-count">18 ta</span>
         </div>
         <div class="gift-grid">
@@ -802,7 +802,7 @@
     <!-- NFT Gifts Section -->
     <div id="sectionNft" class="gift-section">
         <div class="section-header">
-            <h3>✨ NFT kolleksiya</h3>
+            <h3 data-i18n="gift.nft_title">✨ NFT kolleksiya</h3>
             <span class="section-count">11 ta</span>
         </div>
         <div class="gift-grid">
@@ -923,36 +923,36 @@
                 <div class="modal-gift-name" id="modalName"></div>
             </div>
 
-            <div class="modal-section-label">Qabul qiluvchi</div>
+            <div class="modal-section-label" data-i18n="common.recipient">Qabul qiluvchi</div>
             <div class="modal-input-wrapper">
                 <img src="./images/user.webp" class="modal-input-icon" alt="">
-                <input type="text" id="modalUsername" placeholder="Username kiriting" class="modal-input">
+                <input type="text" id="modalUsername" data-i18n-placeholder="common.enter_username" placeholder="Username kiriting" class="modal-input">
             </div>
 
             <div class="modal-options">
-                <button class="modal-option" onclick="setForMyself()" id="forMyselfBtn">👤 O'zim uchun</button>
-                <button class="modal-option" onclick="setAnonymous()" id="anonymousBtn">🎭 Anonim jo'natish</button>
+                <button class="modal-option" onclick="setForMyself()" id="forMyselfBtn" data-i18n="gift.for_myself">👤 O'zim uchun</button>
+                <button class="modal-option" onclick="setAnonymous()" id="anonymousBtn" data-i18n="gift.anonymous">🎭 Anonim jo'natish</button>
             </div>
 
-            <div class="modal-section-label">Izoh qo'shish</div>
+            <div class="modal-section-label" data-i18n="gift.add_comment">Izoh qo'shish</div>
             <div class="modal-input-wrapper">
-                <input type="text" id="modalComment" placeholder="Izoh..." class="modal-input" style="padding-left: 14px;">
+                <input type="text" id="modalComment" data-i18n-placeholder="gift.comment_placeholder" placeholder="Izoh..." class="modal-input" style="padding-left: 14px;">
             </div>
 
             <div class="modal-divider"></div>
 
             <div class="modal-summary">
                 <div class="modal-summary-row">
-                    <span>Gift narxi</span>
+                    <span data-i18n="gift.price">Gift narxi</span>
                     <span id="modalGiftPrice">0 so'm</span>
                 </div>
                 <div class="modal-summary-row modal-total">
-                    <span>Jami:</span>
+                    <span data-i18n="gift.total">Jami:</span>
                     <span id="modalTotalPrice">0 so'm</span>
                 </div>
             </div>
 
-            <button class="modal-btn" id="modalBuyBtn" onclick="buyGift()">🎁 Sotib olish</button>
+            <button class="modal-btn" id="modalBuyBtn" onclick="buyGift()" data-i18n="gift.buy">🎁 Sotib olish</button>
         </div>
     </div>
 
@@ -960,19 +960,19 @@
     <div class="bottom-nav">
         <div class="nav-item" onclick="openStars()">
             <div class="nav-icon"><img src="./images/home.webp" alt="home"></div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
         <div class="nav-item active" onclick="openGifts()">
             <div class="nav-icon"><img src="./images/gift.webp" alt="Gifts"></div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Gifts</div>
         </div>
         <div class="nav-item" onclick="openReyting()">
             <div class="nav-icon"><img src="./images/rating.webp" alt="Rating"></div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Rating</div>
         </div>
         <div class="nav-item" onclick="openProfile()">
             <div class="nav-icon"><img src="./images/profile.webp" alt="profile"></div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
     </div>
 

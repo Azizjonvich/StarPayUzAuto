@@ -373,15 +373,15 @@
 <body>
 
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <!-- Header -->
@@ -399,8 +399,8 @@
     <!-- Tabs -->
     <div class="tabs-container">
         <div class="tabs">
-            <button class="tab active" onclick="openStars()">Stars olish</button>
-            <button class="tab" onclick="openPremium()">Premium olish</button>
+            <button class="tab active" onclick="openStars()" data-i18n="stars.tab">Stars olish</button>
+            <button class="tab" onclick="openPremium()" data-i18n="premium.tab">Premium olish</button>
         </div>
     </div>
 
@@ -408,25 +408,25 @@
     <div class="content">
         <div class="page-title">
             <img src="./images/star.webp" alt="" style="width: 7%; height: 7%;">
-            <h2>Telegram Stars sotib olish</h2>
+            <h2 data-i18n="stars.title">Telegram Stars sotib olish</h2>
         </div>
 
         <!-- Username Input -->
-        <h3 class="section-label">Qabul qiluvchi</h3>
+        <h3 class="section-label" data-i18n="common.recipient">Qabul qiluvchi</h3>
         <div class="input-wrapper">
             <img src="./images/user.webp" class="inside-icon">
-            <input type="text" id="username" placeholder="Username kiriting" class="input">
+            <input type="text" id="username" data-i18n-placeholder="common.enter_username" placeholder="Username kiriting" class="input">
         </div>
 
         <!-- Amount Selection -->
-        <h3 class="section-label">Stars miqdori</h3>
+        <h3 class="section-label" data-i18n="stars.amount">Stars miqdori</h3>
         <div class="input-wrapper custom-stars">
             <img src="./images/star-input.webp" class="inside-icon" alt="star">
             <input type="number" id="customStars" class="input" placeholder="50 — 1 000 000" min="50" max="1000000"
                 step="1">
             <span class="price-hint" id="priceHint">0 so'm</span>
         </div>
-        <p class="amount-hint">Minimal: 50 · Maksimal: 1 000 000 stars</p>
+        <p class="amount-hint" data-i18n="stars.hint" data-i18n-args='{"min":50,"max":1000000}'>Minimal: 50 · Maksimal: 1 000 000 stars</p>
 
         <div class="buttons-row">
             <button type="button" class="amount-btn" onclick="selectAmount(50, 10000, this)">50</button>
@@ -449,28 +449,28 @@
             <div class="nav-icon">
                 <img src="./images/home.webp" alt="home">
             </div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
 
         <div class="nav-item" onclick="openGifts()">
             <div class="nav-icon">
                 <img src="./images/gift.webp" alt="Gifts">
             </div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Gifts</div>
         </div>
 
         <div class="nav-item" onclick="openReyting()">
             <div class="nav-icon">
                 <img src="./images/rating.webp" alt="Rating">
             </div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Rating</div>
         </div>
 
         <div class="nav-item" onclick="openProfile()">
             <div class="nav-icon">
                 <img src="./images/profile.webp" alt="profile">
             </div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
 
 

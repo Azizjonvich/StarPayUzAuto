@@ -232,15 +232,15 @@
 </head>
 <body>
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <!-- Header -->
@@ -258,14 +258,14 @@
     <!-- Content -->
     <div class="page-title">
         <img src="./images/money.webp" alt="" style="width: 30px; height: 30px; vertical-align: middle;">
-        <h2>Hisobni to'ldirish</h2>
+        <h2 data-i18n="topup.title">Hisobni to'ldirish</h2>
     </div>
 
 
 
     <!-- Amount Input -->
     <div class="amount-input-wrapper">
-        <div class="section-title">💵 Summani kiriting</div>
+        <div class="section-title" data-i18n="topup.enter_amount">💵 Summani kiriting</div>
         <input type="number" id="amountInput" class="amount-input" placeholder="1 000 — 100 000 000 so'm" min="1000" max="100000000">
     </div>
 
@@ -273,13 +273,13 @@
 
     <!-- Pay Button -->
     <button class="btn-pay" id="payBtn" onclick="handlePay()">
-        <span class="btn-text">💳 To'lovni amalga oshirish</span>
+        <span class="btn-text" data-i18n="topup.pay">💳 To'lovni amalga oshirish</span>
         <span class="spinner"></span>
     </button>
 
     <div class="info-text">
-        Minimal: 1 000 so'm · Maksimal: 100 000 000 so'm<br>
-        To'lov xavfsiz amalga oshiriladi
+        <span data-i18n="topup.limit_hint">Minimal: 1 000 so'm · Maksimal: 100 000 000 so'm</span><br>
+        <span data-i18n="topup.secure_payment">To'lov xavfsiz amalga oshiriladi</span>
     </div>
 
     <!-- Bottom Navigation -->
@@ -288,25 +288,25 @@
             <div class="nav-icon">
                 <img src="./images/home.webp" alt="home">
             </div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
         <div class="nav-item" onclick="openGifts()">
             <div class="nav-icon">
                 <img src="./images/gift.webp" alt="Gifts">
             </div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Gifts</div>
         </div>
         <div class="nav-item" onclick="openReyting()">
             <div class="nav-icon">
                 <img src="./images/rating.webp" alt="Rating">
             </div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Rating</div>
         </div>
         <div class="nav-item active" onclick="openProfile()">
             <div class="nav-icon">
                 <img src="./images/profile.webp" alt="profile">
             </div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
     </div>
 

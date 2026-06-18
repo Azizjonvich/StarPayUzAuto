@@ -46,11 +46,12 @@ button {
 }
 
 .loader-star img {
-  width: 56px;
-  height: 56px;
-  animation: loaderPulse 1.5s ease-in-out infinite;
+  width: 72px;
+  height: 72px;
+  animation: none;
   position: relative;
   z-index: 2;
+  filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.35));
 }
 
 .loader-ring {

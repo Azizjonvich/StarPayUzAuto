@@ -211,15 +211,15 @@
 
 <body>
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <div class="header">
@@ -236,20 +236,20 @@
     <div class="content">
         <div class="page-title">
             <span style="font-size: 28px;">📞</span>
-            <h2>Virtual nomer olish</h2>
+            <h2 data-i18n="phone.title">Virtual nomer olish</h2>
         </div>
 
-        <div class="info-card">
+        <div class="info-card" data-i18n="phone.info">
             Telegram uchun virtual raqam. Mamlakatni tanlang va username kiriting.
         </div>
 
-        <h3 class="section-label">Qabul qiluvchi</h3>
+        <h3 class="section-label" data-i18n="common.recipient">Qabul qiluvchi</h3>
         <div class="input-wrapper">
             <img src="./images/user.webp" class="inside-icon" alt="">
-            <input type="text" id="username" placeholder="Username kiriting" class="input">
+            <input type="text" id="username" data-i18n-placeholder="common.enter_username" placeholder="Username kiriting" class="input">
         </div>
 
-        <h3 class="section-label">Mamlakat</h3>
+        <h3 class="section-label" data-i18n="phone.country">Mamlakat</h3>
         <div class="input-wrapper">
             <select id="country" class="input" style="padding-left: 18px;" onchange="updatePhonePrice()">
                 <option value="UZ" data-price="50000">🇺🇿 O'zbekiston — 50 000 so'm</option>
@@ -309,28 +309,28 @@
             <div class="nav-icon">
                 <img src="./images/home.webp" alt="home">
             </div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
 
         <div class="nav-item" onclick="openGifts()">
             <div class="nav-icon">
                 <img src="./images/gift.webp" alt="Gifts">
             </div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Gifts</div>
         </div>
 
         <div class="nav-item" onclick="openReyting()">
             <div class="nav-icon">
                 <img src="./images/rating.webp" alt="Rating">
             </div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Rating</div>
         </div>
 
         <div class="nav-item" onclick="openProfile()">
             <div class="nav-icon">
                 <img src="./images/profile.webp" alt="profile">
             </div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
     </div>
 </body>

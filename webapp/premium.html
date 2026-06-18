@@ -309,15 +309,15 @@
 <body>
 
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <!-- Header -->
@@ -335,8 +335,8 @@
     <!-- Tabs -->
     <div class="tabs-container">
         <div class="tabs">
-            <button class="tab" onclick="openStars()">Stars olish</button>
-            <button class="tab active">Premium olish</button>
+            <button class="tab" onclick="openStars()" data-i18n="stars.tab">Stars olish</button>
+            <button class="tab active" data-i18n="premium.tab">Premium olish</button>
         </div>
     </div>
 
@@ -346,22 +346,22 @@
             <span style="font-size: 22px;">
                 <img src="./images/premium.webp" style="width: 24px; height: 24px;" alt="">
             </span>
-            <h2>Premium sotib olish</h2>
+            <h2 data-i18n="premium.title">Premium sotib olish</h2>
         </div>
 
         <!-- Username Input -->
-        <h3 class="section-label">Qabul qiluvchi</h3>
+        <h3 class="section-label" data-i18n="common.recipient">Qabul qiluvchi</h3>
         <div class="input-wrapper">
             <img src="./images/user.webp" class="inside-icon">
-            <input type="text" id="username" placeholder="Username kiriting" class="input">
+            <input type="text" id="username" data-i18n-placeholder="common.enter_username" placeholder="Username kiriting" class="input">
         </div>
 
         <!-- Premium Duration Select -->
-        <h3 class="section-label">Davomiylik</h3>
+        <h3 class="section-label" data-i18n="premium.duration">Davomiylik</h3>
         <div class="input-wrapper">
           
             <select id="premiumSelect" class="input" onchange="selectPremium()">
-                <option value="">Davomiylikni tanlang</option>
+                <option value="" data-i18n="premium.select_duration">Davomiylikni tanlang</option>
                 <option value="3-160000">3 oy - 160 000 so'm</option>
                 <option value="6-225000">6 oy - 225 000 so'm</option>
                 <option value="12-380000">12 oy - 380 000 so'm</option>
@@ -452,28 +452,28 @@
             <div class="nav-icon">
                 <img src="./images/home.webp" alt="home">
             </div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
 
         <div class="nav-item" onclick="openGifts()">
             <div class="nav-icon">
                 <img src="./images/gift.webp" alt="Gifts">
             </div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Gifts</div>
         </div>
 
         <div class="nav-item" onclick="openReyting()">
             <div class="nav-icon">
                 <img src="./images/rating.webp" alt="Rating">
             </div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Rating</div>
         </div>
 
         <div class="nav-item" onclick="openProfile()">
             <div class="nav-icon">
                 <img src="./images/profile.webp" alt="profile">
             </div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
     </div>
 </body>

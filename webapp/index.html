@@ -337,15 +337,15 @@
 <body>
 
     <!-- Loader -->
-    <div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-star">
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
             <div class="loader-ring"></div>
-            <img src="./images/star.webp" alt="">
+            <img src="./images/loader.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <!-- Profile Header -->
@@ -361,46 +361,53 @@
 
 
     <!-- ASOSIY Section -->
-    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> ASOSIY</div>
+    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> <span data-i18n="profile.section.main">ASOSIY</span></div>
     <div class="menu-section">
         <div class="menu-item" onclick="openGiftlarim()">
             <div class="menu-item-left">
                 <span class="menu-icon"><img src="./images/gift__settings.webp" alt=""></span>
-                <span class="menu-text">Giftlarim</span>
+                <span class="menu-text" data-i18n="profile.gifts">Giftlarim</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="openTakliflarim()">
             <div class="menu-item-left">
                 <span class="menu-icon"><img src="./images/referall__settings.webp" alt=""></span>
-                <span class="menu-text">Takliflarim</span>
+                <span class="menu-text" data-i18n="profile.referrals">Takliflarim</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
     </div>
 
     <!-- TRANZAKSIYALAR -->
-    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> TRANZAKSIYALAR</div>
+    <div class="section-title"><img src="./images/stats__settings.webp" alt=""> <span data-i18n="profile.section.transactions">TRANZAKSIYALAR</span></div>
     <div class="menu-section" id="transactionsSection">
-        <div style="padding:14px 16px;text-align:center;color:#9CA3AF;" id="transactionsLoading">
+        <div style="padding:14px 16px;text-align:center;color:#9CA3AF;" id="transactionsLoading" data-i18n="common.loading">
             Yuklanmoqda...
         </div>
     </div>
 
     <!-- SOZLAMALAR Section -->
-    <div class="section-title"><img src="./images/settings__settings.webp" alt=""> SOZLAMALAR</div>
+    <div class="section-title"><img src="./images/settings__settings.webp" alt=""> <span data-i18n="profile.section.settings">SOZLAMALAR</span></div>
     <div class="menu-section">
         <div class="menu-item" onclick="openSupport()">
             <div class="menu-item-left">
                 <span class="menu-icon"><img src="./images/bildirishnoma__settings.webp" alt=""></span>
-                <span class="menu-text">Qo'llab-quvvatlash</span>
+                <span class="menu-text" data-i18n="profile.support">Qo'llab-quvvatlash</span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="openChannel()">
             <div class="menu-item-left">
                 <span class="menu-icon"><img src="./images/chanel__settings.webp" alt=""></span>
-                <span class="menu-text">Yangiliklar kanali</span>
+                <span class="menu-text" data-i18n="profile.news_channel">Yangiliklar kanali</span>
+            </div>
+            <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="toggleLanguage()">
+            <div class="menu-item-left">
+                <span class="menu-icon">🌐</span>
+                <span class="menu-text"><span data-i18n="profile.language">Til</span>: <span data-i18n-lang="profile.lang_">O'zbekcha</span></span>
             </div>
             <span class="menu-arrow">›</span>
         </div>
@@ -408,16 +415,16 @@
 
     <!-- REFERRAL Section -->
     <div class="referral-card">
-        <div class="referral-title"><img src="./images/referall-stars__settings.webp" alt=""> REFERRAL</div>
-        <div class="referral-text">
-            Do'stlaringizni taklif qiling va ullarning xaridlaridan bonus oling!
+        <div class="referral-title"><img src="./images/referall-stars__settings.webp" alt=""> <span data-i18n="profile.referral_title">REFERRAL</span></div>
+        <div class="referral-text" data-i18n="profile.referral_desc">
+            Do'stlaringizni taklif qiling va ularning xaridlaridan bonus oling!
         </div>
 
         <div class="referral-items">
             <div class="referral-item">
                 <div class="referral-item-left">
                     <span class="referral-item-icon"><img src="./images/star-input.webp" alt=""></span>
-                    <span class="referral-item-text">Telegram Stars</span>
+                    <span class="referral-item-text" data-i18n="profile.referral_stars">Telegram Stars</span>
                 </div>
                 <div class="referral-item-value">+300 so'm</div>
             </div>
@@ -425,7 +432,7 @@
 
         <button class="btn-primary" onclick="shareReferral()">
             <span>🔗</span>
-            <span>Do'stlarni taklif qilish</span>
+            <span data-i18n="profile.invite_friends">Do'stlarni taklif qilish</span>
         </button>
     </div>
 

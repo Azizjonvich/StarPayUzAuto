@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fillUsernameFromTelegram();
     loadUserBalance();
     applyTranslations();
+    hideLoader();
 });
 
 function fillUsernameFromTelegram() {
@@ -246,6 +247,72 @@ const TRANSLATIONS = {
         'validate.max_stars': "Maksimal miqdor: {max} stars",
         'loader.text': 'Yuklanmoqda...',
         'loader.sub': 'Yuklanmoqda...',
+
+        'common.recipient': 'Qabul qiluvchi',
+        'common.enter_username': 'Username kiriting',
+
+        'profile.section.main': 'ASOSIY',
+        'profile.gifts': "Giftlarim",
+        'profile.referrals': 'Takliflarim',
+        'profile.section.transactions': 'TRANZAKSIYALAR',
+        'profile.section.settings': 'SOZLAMALAR',
+        'profile.support': "Qo'llab-quvvatlash",
+        'profile.news_channel': 'Yangiliklar kanali',
+        'profile.referral_title': 'REFERRAL',
+        'profile.referral_desc': "Do'stlaringizni taklif qiling va ularning xaridlaridan bonus oling!",
+        'profile.referral_stars': 'Telegram Stars',
+        'profile.invite_friends': "Do'stlarni taklif qilish",
+        'profile.language': 'Til',
+        'profile.lang_uz': "O'zbekcha",
+        'profile.lang_ru': 'Русский',
+
+        'stars.tab': 'Stars olish',
+        'stars.title': 'Telegram Stars sotib olish',
+        'stars.amount': 'Stars miqdori',
+        'stars.hint': 'Minimal: {min} · Maksimal: {max} stars',
+
+        'premium.tab': 'Premium olish',
+        'premium.title': 'Premium sotib olish',
+        'premium.duration': 'Davomiylik',
+        'premium.select_duration': 'Davomiylikni tanlang',
+
+        'gift.title': 'Gift olish',
+        'gift.subtitle': "O'zingizga yoki do'stingizga gift yuboring",
+        'gift.tab.regular': 'Giftlar',
+        'gift.tab.nft': 'NFT Giftlar',
+        'gift.coming_soon': 'Tez orada',
+        'gift.not_selected': 'Gift tanlanmagan',
+        'gift.regular_title': 'Oddiy giftlar',
+        'gift.nft_title': 'NFT kolleksiya',
+        'gift.for_myself': "O'zim uchun",
+        'gift.anonymous': "Anonim jo'natish",
+        'gift.add_comment': "Izoh qo'shish",
+        'gift.comment_placeholder': 'Izoh...',
+        'gift.price': 'Gift narxi',
+        'gift.total': 'Jami:',
+        'gift.buy': "Sovg'a olish",
+
+        'topup.title': "Hisobni to'ldirish",
+        'topup.enter_amount': 'Summani kiriting',
+        'topup.pay': "To'lovni amalga oshirish",
+        'topup.limit_hint': "Minimal: 1 000 so'm · Maksimal: 100 000 000 so'm",
+        'topup.secure_payment': "To'lov xavfsiz amalga oshiriladi",
+
+        'balance.current': 'Joriy balans:',
+        'balance.quick_topup': "Tez to'ldirish:",
+        'balance.custom_amount': "Yoki o'zingiz kiriting:",
+        'balance.limit_hint': "Minimal: 1 000 so'm | Maksimal: 100 000 000 so'm",
+        'balance.payment_method': "To'lov usuli:",
+        'balance.pay': "To'lash",
+        'balance.info': "Ma'lumot:",
+        'balance.info_auto': "To'lov avtomatik ravishda qayd qilinadi",
+        'balance.info_instant': 'Balans darhol yangilanadi',
+        'balance.info_secure': 'Xavfsiz to\'lov tizimlari orqali',
+        'balance.info_support': 'Muammo bo\'lsa: @StarPayUzAdmin',
+
+        'phone.title': 'Virtual nomer olish',
+        'phone.info': 'Telegram uchun virtual raqam. Mamlakatni tanlang va username kiriting.',
+        'phone.country': 'Mamlakat',
     },
     ru: {
         'rating.title': 'Статистика продаж',
@@ -279,6 +346,72 @@ const TRANSLATIONS = {
         'validate.max_stars': 'Максимальное количество: {max} stars',
         'loader.text': 'Загрузка...',
         'loader.sub': 'Загрузка...',
+
+        'common.recipient': 'Получатель',
+        'common.enter_username': 'Введите username',
+
+        'profile.section.main': 'ОСНОВНОЕ',
+        'profile.gifts': 'Мои подарки',
+        'profile.referrals': 'Мои приглашения',
+        'profile.section.transactions': 'ТРАНЗАКЦИИ',
+        'profile.section.settings': 'НАСТРОЙКИ',
+        'profile.support': 'Поддержка',
+        'profile.news_channel': 'Новостной канал',
+        'profile.referral_title': 'РЕФЕРРАЛЬНАЯ СИСТЕМА',
+        'profile.referral_desc': 'Приглашайте друзей и получайте бонусы с их покупок!',
+        'profile.referral_stars': 'Telegram Stars',
+        'profile.invite_friends': 'Пригласить друзей',
+        'profile.language': 'Язык',
+        'profile.lang_uz': "O'zbekcha",
+        'profile.lang_ru': 'Русский',
+
+        'stars.tab': 'Купить Stars',
+        'stars.title': 'Купить Telegram Stars',
+        'stars.amount': 'Количество Stars',
+        'stars.hint': 'Минимум: {min} · Максимум: {max} stars',
+
+        'premium.tab': 'Купить Premium',
+        'premium.title': 'Купить Premium',
+        'premium.duration': 'Длительность',
+        'premium.select_duration': 'Выберите длительность',
+
+        'gift.title': 'Получить подарок',
+        'gift.subtitle': 'Отправьте подарок себе или другу',
+        'gift.tab.regular': 'Подарки',
+        'gift.tab.nft': 'NFT Подарки',
+        'gift.coming_soon': 'Скоро',
+        'gift.not_selected': 'Подарок не выбран',
+        'gift.regular_title': 'Обычные подарки',
+        'gift.nft_title': 'NFT коллекция',
+        'gift.for_myself': 'Себе',
+        'gift.anonymous': 'Анонимно',
+        'gift.add_comment': 'Добавить комментарий',
+        'gift.comment_placeholder': 'Комментарий...',
+        'gift.price': 'Цена подарка',
+        'gift.total': 'Итого:',
+        'gift.buy': 'Купить подарок',
+
+        'topup.title': 'Пополнить счёт',
+        'topup.enter_amount': 'Введите сумму',
+        'topup.pay': 'Оплатить',
+        'topup.limit_hint': 'Минимум: 1 000 сум · Максимум: 100 000 000 сум',
+        'topup.secure_payment': 'Платёж выполняется безопасно',
+
+        'balance.current': 'Текущий баланс:',
+        'balance.quick_topup': 'Быстрое пополнение:',
+        'balance.custom_amount': 'Или введите свою сумму:',
+        'balance.limit_hint': 'Минимум: 1 000 сум | Максимум: 100 000 000 сум',
+        'balance.payment_method': 'Способ оплаты:',
+        'balance.pay': 'Оплатить',
+        'balance.info': 'Информация:',
+        'balance.info_auto': 'Платёж автоматически регистрируется',
+        'balance.info_instant': 'Баланс обновляется мгновенно',
+        'balance.info_secure': 'Через безопасные платёжные системы',
+        'balance.info_support': 'Проблемы: @StarPayUzAdmin',
+
+        'phone.title': 'Получить виртуальный номер',
+        'phone.info': 'Виртуальный номер для Telegram. Выберите страну и введите username.',
+        'phone.country': 'Страна',
     },
 };
 
@@ -307,7 +440,17 @@ function setLanguage(lang) {
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        el.textContent = t(key);
+        let text = t(key);
+        const args = el.getAttribute('data-i18n-args');
+        if (args) {
+            try {
+                const parsed = JSON.parse(args);
+                for (const [k, v] of Object.entries(parsed)) {
+                    text = text.replace('{' + k + '}', String(v));
+                }
+            } catch (e) {}
+        }
+        el.textContent = text;
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
@@ -316,6 +459,10 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         const key = el.getAttribute('data-i18n-title');
         el.title = t(key);
+    });
+    document.querySelectorAll('[data-i18n-lang]').forEach(el => {
+        const key = el.getAttribute('data-i18n-lang');
+        el.textContent = t(key + currentLang);
     });
 }
 
