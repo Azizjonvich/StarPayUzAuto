@@ -16,21 +16,40 @@
             font-family: 'Inter', sans-serif;
         }
 
-        html, body {
-            height: 100%;
-        }
         body {
             background: #030712;
             color: #fff;
             padding: 20px;
-            padding-bottom: 80px;
-            display: flex;
-            flex-direction: column;
+            padding-bottom: 100px;
         }
 
         .header {
             text-align: center;
             margin-bottom: 24px;
+            position: relative;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 22px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #111827;
+            border: 1px solid rgba(255,255,255,.08);
+            transition: .3s;
+            user-select: none;
+        }
+
+        .lang-switch:hover {
+            background: #1f2937;
+            border-color: #3B82F6;
         }
 
         .header-icon {
@@ -91,8 +110,6 @@
             border: 2px solid #3B82F6;
             border-radius: 22px;
             padding: 16px;
-            flex: 1;
-            min-height: 200px;
         }
 
         .rating-item {
@@ -243,20 +260,21 @@
             <img src="./images/star.webp" alt="">
         </div>
         <div class="loader-text">StarPayUz</div>
-        <div class="loader-sub">Yuklanmoqda...</div>
+        <div class="loader-sub" data-i18n="loader.sub">Yuklanmoqda...</div>
     </div>
 
     <div class="header">
         <div class="header-icon">📊</div>
-        <h1>Savdo Statistikasi</h1>
-        <p>Eng yaxshi sotuvchilar reytingi</p>
+        <h1 data-i18n="rating.title">Savdo Statistikasi</h1>
+        <p data-i18n="rating.subtitle">Eng yaxshi sotuvchilar reytingi</p>
+        <div class="lang-switch" onclick="toggleLanguage()">🌐</div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" data-period="today" onclick="loadRating('today', this)">Bugun</div>
-        <div class="tab" data-period="week" onclick="loadRating('week', this)">Shu Hafta</div>
-        <div class="tab" data-period="month" onclick="loadRating('month', this)">Shu Oy</div>
-        <div class="tab" data-period="all" onclick="loadRating('all', this)">Barcha Vaqt</div>
+        <div class="tab active" data-period="today" onclick="loadRating('today', this)" data-i18n="rating.tab.today">Bugun</div>
+        <div class="tab" data-period="week" onclick="loadRating('week', this)" data-i18n="rating.tab.week">Shu Hafta</div>
+        <div class="tab" data-period="month" onclick="loadRating('month', this)" data-i18n="rating.tab.month">Shu Oy</div>
+        <div class="tab" data-period="all" onclick="loadRating('all', this)" data-i18n="rating.tab.all">Barcha Vaqt</div>
     </div>
 
     <div class="rating-card" id="ratingContent">
@@ -266,19 +284,19 @@
     <div class="bottom-nav">
         <div class="nav-item" onclick="window.location.href='stars.html'">
             <div class="nav-icon"><img src="./images/home.webp" alt="home"></div>
-            <div class="nav-label">Menu</div>
+            <div class="nav-label" data-i18n="nav.menu">Menu</div>
         </div>
         <div class="nav-item" onclick="window.location.href='gift.html'">
             <div class="nav-icon"><img src="./images/gift.webp" alt="Gifts"></div>
-            <div class="nav-label">Gifts</div>
+            <div class="nav-label" data-i18n="nav.gifts">Sovg'alar</div>
         </div>
         <div class="nav-item active" onclick="window.location.href='rating.html'">
             <div class="nav-icon"><img src="./images/rating.webp" alt="Rating"></div>
-            <div class="nav-label">Rating</div>
+            <div class="nav-label" data-i18n="nav.rating">Reyting</div>
         </div>
         <div class="nav-item" onclick="window.location.href='index.html'">
             <div class="nav-icon"><img src="./images/profile.webp" alt="profile"></div>
-            <div class="nav-label">Profil</div>
+            <div class="nav-label" data-i18n="nav.profile">Profil</div>
         </div>
     </div>
 
@@ -289,7 +307,7 @@
         if (tabEl) tabEl.classList.add('active');
 
         const container = document.getElementById('ratingContent');
-        container.innerHTML = '<div class="loading-state">Yuklanmoqda...</div>';
+        container.innerHTML = '<div class="loading-state">' + t('rating.loading') + '</div>';
 
         fetch(getApiBase() + '/api/rating', {
             method: 'POST',
@@ -302,7 +320,7 @@
         .then(r => r.json())
         .then(data => {
             if (!data.ok || !data.rating || !data.rating.length) {
-                container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Hozircha ma\'lumot yo\'q</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>' + t('rating.empty') + '</p></div>';
                 return;
             }
 
@@ -329,7 +347,7 @@
             container.innerHTML = html;
         })
         .catch(() => {
-            container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Yuklashda xatolik yuz berdi</p></div>';
+            container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + t('rating.error') + '</p></div>';
         });
     }
 

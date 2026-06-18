@@ -22,6 +22,7 @@ function getApiBase() {
 document.addEventListener('DOMContentLoaded', function () {
     fillUsernameFromTelegram();
     loadUserBalance();
+    applyTranslations();
 });
 
 function fillUsernameFromTelegram() {
@@ -78,10 +79,10 @@ function setBuyButtonLoading(btnId, loading) {
     if (loading) {
         btn.dataset.originalText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = 'Yuborilmoqda...';
+        btn.textContent = t('common.sending');
     } else {
         btn.disabled = false;
-        btn.textContent = btn.dataset.originalText || 'Sotib olish';
+        btn.textContent = btn.dataset.originalText || t('common.buy');
     }
 }
 
@@ -107,7 +108,7 @@ async function submitOrder(payload, btnId) {
     const endpoint = endpoints[payload.action];
     if (!endpoint) {
         setBuyButtonLoading(btnId, false);
-        tg.showAlert('Noma\'lum buyurtma turi.');
+        tg.showAlert(t('common.unknown_order'));
         return;
     }
 
@@ -138,36 +139,36 @@ async function submitOrder(payload, btnId) {
 
         if (result.ok) {
             const successMessages = {
-                buy_stars:   '⭐ Stars muvaffaqiyatli sotib olindi!',
-                buy_premium: '💎 Premium obuna muvaffaqiyatli faollashtirildi!',
-                buy_gift:    '🎁 Sovg\'a muvaffaqiyatli yuborildi!',
-                buy_phone:   '📱 Virtual raqam muvaffaqiyatli olindi!',
+                buy_stars:   t('success.stars'),
+                buy_premium: t('success.premium'),
+                buy_gift:    t('success.gift'),
+                buy_phone:   t('success.phone'),
             };
             tg.showPopup({
-                title: '✅ Muvaffaqiyatli',
-                message: successMessages[payload.action] || 'Buyurtma bajarildi!',
+                title: t('success.title'),
+                message: successMessages[payload.action] || t('success.order_done'),
                 buttons: [{ type: 'ok' }]
             }, () => tg.close());
         } else {
             setBuyButtonLoading(btnId, false);
             tg.showPopup({
-                title: '❌ Xatolik',
-                message: result.error || 'Qayta urinib ko\'ring',
+                title: t('error.title'),
+                message: result.error || t('error.retry'),
                 buttons: [{ type: 'close' }]
             });
         }
     } catch (e) {
         setBuyButtonLoading(btnId, false);
         tg.showPopup({
-            title: '❌ Tarmoq xatoligi',
-            message: e.message || 'Serverga ulanib bo\'lmadi. Qayta urinib ko\'ring.',
+            title: t('error.network_title'),
+            message: e.message || t('error.network'),
             buttons: [{ type: 'close' }]
         });
     }
 }
 
 function setupPurchaseButton(onClick, text) {
-    const label = text || 'Sotib olish';
+    const label = text || t('common.buy');
     const btn = document.getElementById('buyBtn');
     if (!btn) return;
 
@@ -198,10 +199,132 @@ function hideLoader() {
 function validateStarsAmount(amount) {
     const n = parseInt(amount, 10);
     if (isNaN(n) || n < STARS_MIN) {
-        return { ok: false, message: `Minimal miqdor: ${STARS_MIN} stars` };
+        return { ok: false, message: `${t('validate.min_stars')}`.replace('{min}', STARS_MIN) };
     }
     if (n > STARS_MAX) {
-        return { ok: false, message: `Maksimal miqdor: ${STARS_MAX.toLocaleString('uz-UZ')} stars` };
+        return { ok: false, message: `${t('validate.max_stars')}`.replace('{max}', STARS_MAX.toLocaleString('uz-UZ')) };
     }
     return { ok: true, value: n };
 }
+
+// ===== i18n =====
+const LANGUAGES = {
+    uz: { name: "O'zbek", nativeName: "O'zbekcha" },
+    ru: { name: "Русский", nativeName: "Русский" },
+};
+
+const TRANSLATIONS = {
+    uz: {
+        'rating.title': 'Savdo Statistikasi',
+        'rating.subtitle': 'Eng yaxshi sotuvchilar reytingi',
+        'rating.tab.today': 'Bugun',
+        'rating.tab.week': 'Shu Hafta',
+        'rating.tab.month': 'Shu Oy',
+        'rating.tab.all': 'Barcha Vaqt',
+        'rating.loading': 'Yuklanmoqda...',
+        'rating.empty': "Hozircha ma'lumot yo'q",
+        'rating.error': 'Yuklashda xatolik yuz berdi',
+        'nav.menu': 'Menu',
+        'nav.gifts': "Sovg'alar",
+        'nav.rating': 'Reyting',
+        'nav.profile': 'Profil',
+        'common.loading': 'Yuklanmoqda...',
+        'common.sending': 'Yuborilmoqda...',
+        'common.buy': 'Sotib olish',
+        'common.unknown_order': "Noma'lum buyurtma turi.",
+        'success.title': '✅ Muvaffaqiyatli',
+        'success.stars': '⭐ Stars muvaffaqiyatli sotib olindi!',
+        'success.premium': '💎 Premium obuna muvaffaqiyatli faollashtirildi!',
+        'success.gift': "🎁 Sovg'a muvaffaqiyatli yuborildi!",
+        'success.phone': '📱 Virtual raqam muvaffaqiyatli olindi!',
+        'success.order_done': 'Buyurtma bajarildi!',
+        'error.title': '❌ Xatolik',
+        'error.retry': "Qayta urinib ko'ring",
+        'error.network_title': '❌ Tarmoq xatoligi',
+        'error.network': "Serverga ulanib bo'lmadi. Qayta urinib ko'ring.",
+        'validate.min_stars': 'Minimal miqdor: {min} stars',
+        'validate.max_stars': "Maksimal miqdor: {max} stars",
+        'loader.text': 'Yuklanmoqda...',
+        'loader.sub': 'Yuklanmoqda...',
+    },
+    ru: {
+        'rating.title': 'Статистика продаж',
+        'rating.subtitle': 'Рейтинг лучших продавцов',
+        'rating.tab.today': 'Сегодня',
+        'rating.tab.week': 'На этой неделе',
+        'rating.tab.month': 'В этом месяце',
+        'rating.tab.all': 'За всё время',
+        'rating.loading': 'Загрузка...',
+        'rating.empty': 'Нет данных',
+        'rating.error': 'Ошибка загрузки',
+        'nav.menu': 'Меню',
+        'nav.gifts': 'Подарки',
+        'nav.rating': 'Рейтинг',
+        'nav.profile': 'Профиль',
+        'common.loading': 'Загрузка...',
+        'common.sending': 'Отправка...',
+        'common.buy': 'Купить',
+        'common.unknown_order': 'Неизвестный тип заказа.',
+        'success.title': '✅ Успешно',
+        'success.stars': '⭐ Stars успешно куплены!',
+        'success.premium': '💎 Premium подписка успешно активирована!',
+        'success.gift': '🎁 Подарок успешно отправлен!',
+        'success.phone': '📱 Виртуальный номер успешно получен!',
+        'success.order_done': 'Заказ выполнен!',
+        'error.title': '❌ Ошибка',
+        'error.retry': 'Попробуйте снова',
+        'error.network_title': '❌ Сетевая ошибка',
+        'error.network': 'Не удалось подключиться к серверу. Попробуйте снова.',
+        'validate.min_stars': 'Минимальное количество: {min} stars',
+        'validate.max_stars': 'Максимальное количество: {max} stars',
+        'loader.text': 'Загрузка...',
+        'loader.sub': 'Загрузка...',
+    },
+};
+
+let currentLang = 'uz';
+
+function detectLanguage() {
+    const saved = localStorage.getItem('starpay_lang');
+    if (saved && TRANSLATIONS[saved]) return saved;
+    const tgLang = tg.initDataUnsafe?.user?.language_code || '';
+    if (tgLang.startsWith('ru')) return 'ru';
+    return 'uz';
+}
+
+function t(key) {
+    return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['uz']?.[key] || key;
+}
+
+function setLanguage(lang) {
+    if (!TRANSLATIONS[lang]) return;
+    currentLang = lang;
+    localStorage.setItem('starpay_lang', lang);
+    document.documentElement.lang = lang;
+    applyTranslations();
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = t(key);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.title = t(key);
+    });
+}
+
+function toggleLanguage() {
+    const langs = Object.keys(TRANSLATIONS);
+    const idx = langs.indexOf(currentLang);
+    const next = langs[(idx + 1) % langs.length];
+    setLanguage(next);
+}
+
+currentLang = detectLanguage();
+document.documentElement.lang = currentLang;
