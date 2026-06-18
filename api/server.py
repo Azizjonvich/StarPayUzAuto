@@ -1,4 +1,5 @@
 import asyncio
+from datetime import date, datetime
 import json
 import logging
 from pathlib import Path
@@ -847,8 +848,15 @@ async def api_user_transactions(request: web.Request) -> web.Response:
       user_id
     )
 
-  orders = [dict(r) for r in orders_rows]
-  balance_history = [dict(r) for r in balance_rows]
+  def serialize(row):
+    d = dict(row)
+    for k, v in d.items():
+      if isinstance(v, (datetime, date)):
+        d[k] = v.isoformat()
+    return d
+
+  orders = [serialize(r) for r in orders_rows]
+  balance_history = [serialize(r) for r in balance_rows]
 
   return web.json_response({
     "ok": True,
