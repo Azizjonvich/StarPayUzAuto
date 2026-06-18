@@ -1040,6 +1040,8 @@
         function buyGift() {
             const usernameInput = document.getElementById('modalUsername');
             const username = usernameInput ? usernameInput.value.trim() : '';
+            const commentInput = document.getElementById('modalComment');
+            const comment = commentInput ? commentInput.value.trim() : '';
 
             if (!username) {
                 if (tg) {
@@ -1067,7 +1069,8 @@
                     action: 'buy_gift',
                     gift: selectedGift,
                     price: selectedGiftPrice,
-                    username: username
+                    username: username,
+                    comment: comment || undefined
                 });
             }
         }

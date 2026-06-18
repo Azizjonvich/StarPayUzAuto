@@ -514,7 +514,10 @@
 
         function loadTransactions() {
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return;
+            if (!userId) {
+                document.getElementById('transactionsSection').innerHTML = '<div style="padding:14px 16px;text-align:center;color:#9CA3AF;">Foydalanuvchi ma\'lumotlari topilmadi</div>';
+                return;
+            }
 
             fetch(getApiBase() + '/api/user/transactions', {
                 method: 'POST',

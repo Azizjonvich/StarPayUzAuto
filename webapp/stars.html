@@ -356,6 +356,17 @@
         margin: 8px 0 14px 4px;
     }
 
+    .price-hint {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #3B82F6;
+        font-size: 15px;
+        font-weight: 700;
+        pointer-events: none;
+        white-space: nowrap;
+    }
 
 </style>
 
@@ -413,6 +424,7 @@
             <img src="./images/star-input.webp" class="inside-icon" alt="star">
             <input type="number" id="customStars" class="input" placeholder="50 — 1 000 000" min="50" max="1000000"
                 step="1">
+            <span class="price-hint" id="priceHint">0 so'm</span>
         </div>
         <p class="amount-hint">Minimal: 50 · Maksimal: 1 000 000 stars</p>
 
@@ -468,6 +480,16 @@
         let selectedStars = 0;
         let selectedPrice = 0;
 
+        function updatePriceHint(stars) {
+            const hint = document.getElementById('priceHint');
+            if (stars > 0) {
+                const price = stars * 200;
+                hint.textContent = price.toLocaleString('uz-UZ') + " so'm";
+            } else {
+                hint.textContent = '0 so\'m';
+            }
+        }
+
         document.getElementById('customStars').addEventListener('input', function () {
             document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
             const check = validateStarsAmount(this.value);
@@ -478,6 +500,7 @@
                 selectedStars = 0;
                 selectedPrice = 0;
             }
+            updatePriceHint(selectedStars);
         });
 
         function selectAmount(stars, price, btn) {
@@ -492,6 +515,7 @@
             document.getElementById('customStars').value = stars;
             document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
             if (btn) btn.classList.add('selected');
+            updatePriceHint(selectedStars);
         }
 
         document.addEventListener('DOMContentLoaded', function () {
