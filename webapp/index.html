@@ -493,11 +493,57 @@
         }
 
         function openGiftlarim() {
-            tg.showAlert('Giftlarim sahifasi tez orada...');
+            const userId = tg.initDataUnsafe?.user?.id;
+            if (!userId) { tg.showAlert('Foydalanuvchi topilmadi'); return; }
+
+            fetch(getApiBase() + '/api/user/gifts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': tg.initData || '',
+                },
+                body: JSON.stringify({ telegram_id: userId, initData: tg.initData || '' }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok || !data.gifts?.length) {
+                    tg.showPopup({ title: 'Giftlarim', message: 'Hozircha giftlar yo\'q', buttons: [{ type: 'ok' }] });
+                    return;
+                }
+                let msg = data.gifts.map((g, i) =>
+                    `${i+1}. 🎁 ${g.product_type?.toUpperCase() || 'Gift'} — ${(g.amount || 0).toLocaleString('uz-UZ')} so'm\n   📅 ${(g.created_at || '').slice(0, 10)}`
+                ).join('\n');
+                tg.showPopup({ title: `🎁 Giftlarim (${data.gifts.length})`, message: msg, buttons: [{ type: 'ok' }] });
+            })
+            .catch(() => tg.showAlert('Yuklashda xatolik'));
         }
 
         function openTakliflarim() {
-            tg.showAlert('Takliflarim sahifasi tez orada...');
+            const userId = tg.initDataUnsafe?.user?.id;
+            if (!userId) { tg.showAlert('Foydalanuvchi topilmadi'); return; }
+
+            fetch(getApiBase() + '/api/user/referrals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': tg.initData || '',
+                },
+                body: JSON.stringify({ telegram_id: userId, initData: tg.initData || '' }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { tg.showAlert('Ma\'lumot olishda xatolik'); return; }
+                let refs = data.referred || [];
+                let list = refs.length
+                    ? refs.map((r, i) => `${i+1}. ${r.username ? '@'+r.username : r.full_name || 'User#'+r.telegram_id}`).join('\n')
+                    : 'Hali taklif qilinganlar yo\'q';
+                tg.showPopup({
+                    title: `👥 Takliflarim`,
+                    message: `Taklif qilinganlar: ${data.referrals_count} ta\n💰 Bonus: ${(data.total_bonus || 0).toLocaleString('uz-UZ')} so'm\n\n${list}`,
+                    buttons: [{ type: 'ok' }]
+                });
+            })
+            .catch(() => tg.showAlert('Yuklashda xatolik'));
         }
 
         function openTasks() {

@@ -78,7 +78,22 @@ async def cmd_start(message: Message) -> None:
     if arg.isdigit():
       ref_id = int(arg)
 
+  existing = await get_user(tg.id)
   user = await ensure_user(tg.id, tg.username, tg.full_name, referred_by=ref_id)
+
+  if not existing and ref_id and ref_id != tg.id:
+    try:
+      ref_user = await get_user(ref_id)
+      if ref_user:
+        name = tg.username or tg.first_name or f"User#{tg.id}"
+        await message.bot.send_message(
+          ref_id,
+          f"🎉 <b>Referallingiz @{name} bazaga qo'shildi!</b>\n\n"
+          f"💰 Balansingizga <b>300 so'm</b> qo'shildi!",
+          parse_mode="HTML",
+        )
+    except Exception:
+      pass
 
   await message.answer(
     menu_text(user, tg.username, tg.first_name),

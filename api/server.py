@@ -865,6 +865,66 @@ async def api_user_transactions(request: web.Request) -> web.Response:
   })
 
 
+async def api_user_gifts(request: web.Request) -> web.Response:
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  from services.database import get_pool
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    rows = await conn.fetch(
+      "SELECT * FROM orders WHERE telegram_id = $1 AND product_type = 'gift' ORDER BY id DESC LIMIT 50",
+      user_id
+    )
+
+  gifts = [serialize(r) for r in rows]
+  return web.json_response({"ok": True, "gifts": gifts})
+
+
+async def api_user_referrals(request: web.Request) -> web.Response:
+  auth = await _auth_user(request)
+  user_id = _user_id_from_auth(auth)
+  body = await _json_body(request)
+  if not user_id:
+    user_id = body.get("telegram_id")
+  if not user_id:
+    return web.json_response({"ok": False, "error": "Unauthorized"}, status=401)
+
+  from services.database import get_pool
+  pool = await get_pool()
+  async with pool.acquire() as conn:
+    user = await conn.fetchrow(
+      "SELECT telegram_id, referrals, balance FROM users WHERE telegram_id = $1",
+      user_id
+    )
+    referred_rows = await conn.fetch(
+      "SELECT telegram_id, username, full_name, created_at FROM users WHERE referred_by = $1 ORDER BY created_at DESC LIMIT 50",
+      user_id
+    )
+
+  referred = []
+  for r in referred_rows:
+    referred.append({
+      "telegram_id": r["telegram_id"],
+      "username": r["username"],
+      "full_name": r["full_name"],
+      "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+    })
+
+  return web.json_response({
+    "ok": True,
+    "referrals_count": user["referrals"] if user else 0,
+    "bonus_per_referral": 300,
+    "total_bonus": (user["referrals"] if user else 0) * 300,
+    "referred": referred,
+  })
+
+
 async def api_rating(request: web.Request) -> web.Response:
   auth = await _auth_user(request)
   user_id = _user_id_from_auth(auth)
@@ -935,6 +995,8 @@ def create_app() -> web.Application:
   app.router.add_get("/api/gifts/available", api_get_available_gifts)
   app.router.add_get("/payment/success", payment_success_page)
   app.router.add_post("/api/user/transactions", api_user_transactions)
+  app.router.add_post("/api/user/gifts", api_user_gifts)
+  app.router.add_post("/api/user/referrals", api_user_referrals)
   app.router.add_post("/api/rating", api_rating)
 
   app.router.add_static("/app", WEBAPP_DIR, name="webapp")
