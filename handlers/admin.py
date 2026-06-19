@@ -26,17 +26,49 @@ router = Router()
 
 class AdminStates(StatesGroup):
     broadcast_text = State()
-    balance_sp_id = State()
-    balance_amount = State()
-    balance_reason = State()
-    balance_action = State()
     search_query = State()
     settings_key = State()
     settings_value = State()
+    check_sp_id = State()
+    check_amount = State()
+    check_reason = State()
+    stars_sp_id = State()
+    stars_amount = State()
+    stars_reason = State()
+    sub_channel_input = State()
+    admin_add_input = State()
+
+
+ADMIN_IDS = list(config.ADMINS)
+
+_runtime_settings = {
+    "stars_price_per_unit": 200,
+    "min_topup_amount": 1000,
+    "max_topup_amount": 100_000_000,
+    "referral_bonus": 300,
+    "gift_enabled": True,
+    "stars_enabled": True,
+    "maintenance_mode": False,
+    "ref_contest_enabled": False,
+    "ref_contest_prize": 500,
+    "ref_contest_min_refs": 5,
+    "required_channels": [],
+    "autopay_enabled": False,
+}
+
+SETTINGS_LABELS = {
+    "stars_price_per_unit": "⭐ Stars narxi (so'm/1 star)",
+    "min_topup_amount": "💳 Min. to'ldirish (so'm)",
+    "max_topup_amount": "💳 Maks. to'ldirish (so'm)",
+    "referral_bonus": "👥 Referal bonusi (so'm)",
+    "gift_enabled": "🎁 Sovg'alar (true/false)",
+    "stars_enabled": "⭐ Stars xizmati (true/false)",
+    "maintenance_mode": "🔧 Texnik ishlar rejimi (true/false)",
+}
 
 
 def _is_admin(user_id: int) -> bool:
-    return user_id in config.ADMINS
+    return user_id in config.ADMINS or user_id in ADMIN_IDS
 
 
 async def _deny(message: Message):
@@ -59,6 +91,17 @@ async def _admin_header(bot: Bot) -> str:
     )
 
 
+async def _go_main(callback_or_msg, state: FSMContext = None):
+    if state:
+        await state.clear()
+    if isinstance(callback_or_msg, CallbackQuery):
+        header = await _admin_header(callback_or_msg.bot)
+        await callback_or_msg.message.edit_text(header, reply_markup=admin_kb.admin_main_keyboard())
+    else:
+        header = await _admin_header(callback_or_msg.bot)
+        await callback_or_msg.answer(header, reply_markup=admin_kb.admin_main_keyboard())
+
+
 @router.message(Command("admin"))
 async def cmd_admin(message: Message, state: FSMContext = None):
     if not message.from_user:
@@ -75,11 +118,41 @@ async def cmd_admin(message: Message, state: FSMContext = None):
 @router.callback_query(F.data == "admin_main_menu")
 async def admin_main_menu_cb(callback: CallbackQuery, state: FSMContext = None):
     await callback.answer()
-    if state:
-        await state.clear()
-    header = await _admin_header(callback.bot)
-    await callback.message.edit_text(header, reply_markup=admin_kb.admin_main_keyboard())
+    await _go_main(callback, state)
 
+
+@router.message(Command("confirm"))
+async def cmd_confirm(message: Message):
+    if not message.from_user:
+        return
+    if not _is_admin(message.from_user.id):
+        await _deny(message)
+        return
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.answer("❌ Buyurtma ID sini kiriting:\n\n<code>/confirm topup_abc123</code>")
+        return
+    order_id = args[1].strip()
+    await message.answer(f"⏳ Tekshirilmoqda: <code>{order_id}</code>...")
+    from services.payment_client import confirm_payment
+    result = await confirm_payment(order_id)
+    if result.get("ok"):
+        await message.answer(
+            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
+            f"📦 Buyurtma: <code>{order_id}</code>\n"
+            f"💰 Summa: {result.get('amount', 0):,} so'm\n"
+            f"💳 Yangi balans: {result.get('new_balance', 0):,} so'm",
+        )
+    elif "PAYMENT_SERVER_URL not configured" in result.get("error", ""):
+        await _confirm_locally(message, order_id)
+    else:
+        err_msg = result.get('error', "Noma'lum xatolik")
+        await message.answer(f"❌ Xatolik: {err_msg}")
+
+
+# ═══════════════════════════════════════════
+# 1. STATISTIKA
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_stats")
 async def admin_stats_cb(callback: CallbackQuery):
@@ -106,6 +179,10 @@ async def admin_stats_cb(callback: CallbackQuery):
     await callback.message.edit_text(text, reply_markup=admin_kb.stats_keyboard())
 
 
+# ═══════════════════════════════════════════
+# 2. FOYDALANUVCHILAR
+# ═══════════════════════════════════════════
+
 @router.callback_query(F.data == "admin_users")
 async def admin_users_menu_cb(callback: CallbackQuery):
     await callback.answer()
@@ -128,24 +205,18 @@ async def admin_users_list_cb(callback: CallbackQuery):
         for u in users:
             name = u.get("username") or u.get("full_name") or "—"
             blocked = " 🔒" if u.get("is_blocked") else ""
-            text += (
-                f"• <code>{u['sp_id']}</code> "
-                f"<b>{name}</b>{blocked}\n"
-                f"  Balans: {u['balance']:,} so'm\n"
-            )
+            text += f"• <code>{u['sp_id']}</code> <b>{name}</b>{blocked}\n  Balans: {u['balance']:,} so'm\n"
     except Exception as e:
         logger.error(f"Users list error: {e}")
         text = "❌ Xatolik."
-    kb = admin_kb.users_list_keyboard(page, total > page * 10)
-    await callback.message.edit_text(text, reply_markup=kb)
+    await callback.message.edit_text(text, reply_markup=admin_kb.users_list_keyboard(page, total > page * 10))
 
 
 @router.callback_query(F.data == "admin_users_search")
 async def admin_users_search_start_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(
-        "🔍 <b>Foydalanuvchini qidirish</b>\n\n"
-        "Telegram ID, username yoki SP ID ni kiriting:"
+        "🔍 <b>Foydalanuvchini qidirish</b>\n\nTelegram ID, username yoki SP ID ni kiriting:"
     )
     await state.set_state(AdminStates.search_query)
 
@@ -168,16 +239,12 @@ async def admin_users_search_result_msg(message: Message, state: FSMContext):
                     f"Balans: <b>{u['balance']:,}</b> so'm\n"
                     f"Referallar: {u.get('referrals', 0)}"
                 )
-                await message.answer(
-                    text,
-                    reply_markup=admin_kb.user_actions_keyboard(u['telegram_id']),
-                )
+                await message.answer(text, reply_markup=admin_kb.user_actions_keyboard(u['telegram_id']))
     except Exception as e:
         logger.error(f"Search error: {e}")
         await message.answer("❌ Xatolik.")
     await state.clear()
-    header = await _admin_header(message.bot)
-    await message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
+    await _go_main(message)
 
 
 @router.callback_query(F.data.startswith("admin_user_block_"))
@@ -213,6 +280,10 @@ async def admin_user_delete_cb(callback: CallbackQuery):
         await callback.message.edit_text(f"❌ Xatolik: {e}")
 
 
+# ═══════════════════════════════════════════
+# 3. XABAR YUBORISH
+# ═══════════════════════════════════════════
+
 @router.callback_query(F.data == "admin_broadcast")
 async def admin_broadcast_start_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -226,27 +297,18 @@ async def admin_broadcast_start_cb(callback: CallbackQuery, state: FSMContext):
 
 @router.message(AdminStates.broadcast_text)
 async def admin_broadcast_preview_msg(message: Message, state: FSMContext):
-    await state.update_data(
-        broadcast_msg_id=message.message_id,
-        broadcast_chat_id=message.chat.id,
-    )
+    await state.update_data(broadcast_msg_id=message.message_id, broadcast_chat_id=message.chat.id)
     await message.bot.copy_message(
-        chat_id=message.chat.id,
-        from_chat_id=message.chat.id,
-        message_id=message.message_id,
+        chat_id=message.chat.id, from_chat_id=message.chat.id, message_id=message.message_id,
     )
-    await message.answer(
-        "📨 <b>Ushbu xabarni yuborish?</b>",
-        reply_markup=admin_kb.broadcast_confirm_keyboard(),
-    )
+    await message.answer("📨 <b>Ushbu xabarni yuborish?</b>", reply_markup=admin_kb.broadcast_confirm_keyboard())
 
 
 @router.callback_query(F.data == "admin_broadcast_confirm")
 async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer("⏳ Yuborilmoqda...")
     data = await state.get_data()
-    msg_id = data.get("broadcast_msg_id")
-    chat_id = data.get("broadcast_chat_id")
+    msg_id, chat_id = data.get("broadcast_msg_id"), data.get("broadcast_chat_id")
     if not msg_id or not chat_id:
         await callback.message.edit_text("❌ Xabar topilmadi.")
         return
@@ -256,11 +318,7 @@ async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext)
         sent = 0
         for tid in tgs:
             try:
-                await callback.bot.copy_message(
-                    chat_id=tid,
-                    from_chat_id=chat_id,
-                    message_id=msg_id,
-                )
+                await callback.bot.copy_message(chat_id=tid, from_chat_id=chat_id, message_id=msg_id)
                 sent += 1
             except Exception as exc:
                 logger.warning(f"Broadcast failed to {tid}: {exc}")
@@ -269,8 +327,7 @@ async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext)
     except Exception as e:
         await callback.message.answer(f"❌ Xatolik: {e}")
     await state.clear()
-    header = await _admin_header(callback.bot)
-    await callback.message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
+    await _go_main(callback.message)
 
 
 @router.callback_query(F.data == "admin_broadcast_cancel")
@@ -278,30 +335,12 @@ async def admin_broadcast_cancel_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.clear()
     await callback.message.edit_text("❌ Xabar yuborish bekor qilindi.")
-    header = await _admin_header(callback.bot)
-    await callback.message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
+    await _go_main(callback.message)
 
 
-_runtime_settings = {
-    "stars_price_per_unit": 200,
-    "min_topup_amount": 1000,
-    "max_topup_amount": 100_000_000,
-    "referral_bonus": 300,
-    "gift_enabled": True,
-    "stars_enabled": True,
-    "maintenance_mode": False,
-}
-
-SETTINGS_LABELS = {
-    "stars_price_per_unit": "⭐ Stars narxi (so'm/1 star)",
-    "min_topup_amount": "💳 Min. to'ldirish (so'm)",
-    "max_topup_amount": "💳 Maks. to'ldirish (so'm)",
-    "referral_bonus": "👥 Referal bonusi (so'm)",
-    "gift_enabled": "🎁 Sovg'alar (true/false)",
-    "stars_enabled": "⭐ Stars xizmati (true/false)",
-    "maintenance_mode": "🔧 Texnik ishlar rejimi (true/false)",
-}
-
+# ═══════════════════════════════════════════
+# 4. SOZLAMALAR
+# ═══════════════════════════════════════════
 
 def _settings_text() -> str:
     lines = ["⚙️ <b>Sozlamalar</b>\n"]
@@ -317,10 +356,7 @@ def _settings_keyboard():
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     builder = InlineKeyboardBuilder()
     for key in SETTINGS_LABELS:
-        builder.row(InlineKeyboardButton(
-            text=f"✏️ {SETTINGS_LABELS[key].split('(')[0].strip()}",
-            callback_data=f"admin_set_{key}"
-        ))
+        builder.row(InlineKeyboardButton(text=f"✏️ {SETTINGS_LABELS[key].split('(')[0].strip()}", callback_data=f"admin_set_{key}"))
     builder.row(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"))
     return builder.as_markup()
 
@@ -328,10 +364,7 @@ def _settings_keyboard():
 @router.callback_query(F.data == "admin_settings")
 async def admin_settings_menu_cb(callback: CallbackQuery):
     await callback.answer()
-    await callback.message.edit_text(
-        _settings_text(),
-        reply_markup=_settings_keyboard(),
-    )
+    await callback.message.edit_text(_settings_text(), reply_markup=_settings_keyboard())
 
 
 @router.callback_query(F.data.startswith("admin_set_"))
@@ -346,8 +379,7 @@ async def admin_set_key_cb(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"✏️ <b>{label}</b>\n\n"
         f"Hozirgi qiymat: <code>{current}</code>\n\n"
-        f"Yangi qiymatni kiriting:\n"
-        f"<i>(son yoki true/false)</i>"
+        f"Yangi qiymatni kiriting:\n<i>(son yoki true/false)</i>"
     )
     await state.update_data(settings_key=key)
     await state.set_state(AdminStates.settings_value)
@@ -381,165 +413,498 @@ async def admin_set_value_msg(message: Message, state: FSMContext):
         await message.answer(f"❌ Noto'g'ri qiymat: {e}\nQayta urinib ko'ring:")
         return
     _runtime_settings[key] = new_val
-    label = SETTINGS_LABELS.get(key, key)
     logger.info(f"Admin {message.from_user.id} changed {key}: {current} → {new_val}")
     await message.answer(
-        f"✅ <b>Sozlama yangilandi</b>\n\n"
-        f"{label}\n"
-        f"Eski: <code>{current}</code>\n"
-        f"Yangi: <b><code>{new_val}</code></b>",
+        f"✅ <b>Sozlama yangilandi</b>\n\n{label}\nEski: <code>{current}</code>\nYangi: <b><code>{new_val}</code></b>",
     )
     await state.clear()
-    await message.answer(
-        _settings_text(),
-        reply_markup=_settings_keyboard(),
-    )
+    await message.answer(_settings_text(), reply_markup=_settings_keyboard())
 
 
 def get_setting(key: str):
     return _runtime_settings.get(key)
 
 
-@router.callback_query(F.data == "admin_ref_contest")
-async def admin_ref_contest_cb(callback: CallbackQuery):
-    await callback.answer()
-    await callback.message.edit_text(
-        "📢 <b>Referal konkurs</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda referal konkurslar boshqaruvi bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
-    )
-
+# ═══════════════════════════════════════════
+# 5. CHEK YARATISH
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_create_check")
-async def admin_create_check_cb(callback: CallbackQuery):
+async def admin_create_check_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(
         "⚡ <b>Chek yaratish</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda balans to'ldirish uchun cheklar yaratiladi.",
-        reply_markup=admin_kb.stub_keyboard(),
+        "Foydalanuvchi SP ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.check_sp_id)
+
+
+@router.message(AdminStates.check_sp_id)
+async def admin_check_sp_id_msg(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if not text.isdigit():
+        await message.answer("❌ SP ID raqam bo'lishi kerak. Qayta kiriting yoki /admin ni bosing.")
+        return
+    sp_id = int(text)
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await message.answer(f"❌ SP ID <code>{sp_id}</code> bo'yicha foydalanuvchi topilmadi.")
+        return
+    await state.update_data(check_sp_id=sp_id, check_user_tid=user["telegram_id"])
+    await message.answer(
+        f"👤 <b>Foydalanuvchi #{sp_id}</b>\n"
+        f"Balans: <b>{user['balance']:,}</b> so'm\n\n"
+        f"Chek summasini kiriting (so'mda):"
+    )
+    await state.set_state(AdminStates.check_amount)
+
+
+@router.message(AdminStates.check_amount)
+async def admin_check_amount_msg(message: Message, state: FSMContext):
+    try:
+        amount = int(message.text.strip().replace(",", "").replace(" ", ""))
+    except ValueError:
+        await message.answer("❌ Noto'g'ri summa. Raqam kiriting.")
+        return
+    if amount <= 0:
+        await message.answer("❌ Summa 0 dan katta bo'lishi kerak.")
+        return
+    await state.update_data(check_amount=amount)
+    data = await state.get_data()
+    sp_id = data["check_sp_id"]
+    await message.answer(
+        f"⚡ <b>Chek ma'lumotlari</b>\n\n"
+        f"Foydalanuvchi: #{sp_id}\n"
+        f"Summa: {amount:,} so'm\n\n"
+        f"Tasdiqlaysizmi?",
+        reply_markup=admin_kb.check_confirm_keyboard(sp_id, amount),
     )
 
+
+@router.callback_query(F.data.startswith("admin_check_confirm_"))
+async def admin_check_confirm_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("⏳ Chek yaratilmoqda...")
+    parts = callback.data.split("_")
+    sp_id = int(parts[3])
+    amount = int(parts[4])
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await callback.message.edit_text("❌ Foydalanuvchi topilmadi.")
+        return
+    tid = user["telegram_id"]
+    new_balance = await add_balance(tid, amount)
+    await record_payment(f"check_{sp_id}_{int(time.time())}", tid, amount, "paid",
+                          f'{{"source": "chek", "admin_id": {callback.from_user.id}}}')
+    username = user.get("username") or str(tid)
+    await callback.message.edit_text(
+        f"✅ <b>Chek yaratildi!</b>\n\n"
+        f"👤 Foydalanuvchi: #{sp_id} (@{username})\n"
+        f"💰 Summa: {amount:,} so'm\n"
+        f"💳 Yangi balans: {new_balance:,} so'm\n\n"
+        f"✅ Balans to'ldirildi."
+    )
+    await _go_main(callback.message)
+
+
+# ═══════════════════════════════════════════
+# 6. REFERAL KONKURS
+# ═══════════════════════════════════════════
+
+@router.callback_query(F.data == "admin_ref_contest")
+async def admin_ref_contest_cb(callback: CallbackQuery):
+    await callback.answer()
+    enabled = _runtime_settings.get("ref_contest_enabled", False)
+    status = "✅ Yoqilgan" if enabled else "❌ O'chirilgan"
+    prize = _runtime_settings.get("ref_contest_prize", 500)
+    min_refs = _runtime_settings.get("ref_contest_min_refs", 5)
+    await callback.message.edit_text(
+        f"📢 <b>Referal konkurs</b>\n\n"
+        f"Holati: {status}\n"
+        f"Sovrin: {prize:,} so'm\n"
+        f"Min. referallar: {min_refs} ta\n\n"
+        f"🏆 Eng yaxshi referallarni ko'rish uchun pastdagi tugmani bosing.",
+        reply_markup=admin_kb.ref_contest_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_ref_rating")
+async def admin_ref_rating_cb(callback: CallbackQuery):
+    await callback.answer("⏳ Yuklanmoqda...")
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT telegram_id, username, full_name, referrals FROM users ORDER BY referrals DESC LIMIT 10"
+            )
+        if not rows:
+            text = "🏆 <b>Top referallar</b>\n\nHozircha hech kim yo'q."
+        else:
+            text = "🏆 <b>Top 10 referallar</b>\n\n"
+            for i, r in enumerate(rows, 1):
+                name = r["username"] or r["full_name"] or f"#{r['telegram_id']}"
+                text += f"{i}. <b>{name}</b> — {r['referrals']} ta\n"
+        await callback.message.edit_text(text, reply_markup=admin_kb.back_button("admin_ref_contest"))
+    except Exception as e:
+        logger.error(f"Ref rating error: {e}")
+        await callback.message.edit_text("❌ Xatolik.", reply_markup=admin_kb.back_button("admin_ref_contest"))
+
+
+@router.callback_query(F.data == "admin_ref_settings")
+async def admin_ref_settings_cb(callback: CallbackQuery):
+    await callback.answer()
+    enabled = _runtime_settings.get("ref_contest_enabled", False)
+    prize = _runtime_settings.get("ref_contest_prize", 500)
+    min_refs = _runtime_settings.get("ref_contest_min_refs", 5)
+    status = "✅ Yoqilgan" if enabled else "❌ O'chirilgan"
+    text = (
+        f"⚙️ <b>Konkurs sozlamalari</b>\n\n"
+        f"Holati: {status}\n"
+        f"Sovrin: {prize:,} so'm\n"
+        f"Min. referallar: {min_refs} ta\n\n"
+        f"Sozlamalarni o'zgartirish uchun <b>Sozlamalar</b> bo'limiga o'ting:\n"
+        f"<code>ref_contest_enabled</code> — yoqish/o'chirish\n"
+        f"<code>ref_contest_prize</code> — sovrin miqdori\n"
+        f"<code>ref_contest_min_refs</code> — minimal referallar soni"
+    )
+    await callback.message.edit_text(text, reply_markup=admin_kb.back_button("admin_ref_contest"))
+
+
+# ═══════════════════════════════════════════
+# 7. MAJBURIY OBUNA
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_required_sub")
 async def admin_required_sub_cb(callback: CallbackQuery):
     await callback.answer()
-    await callback.message.edit_text(
-        "📌 <b>Majburiy obuna</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda kanalga majburiy obunani sozlash mumkin.",
-        reply_markup=admin_kb.stub_keyboard(),
-    )
+    channels = _runtime_settings.get("required_channels", [])
+    text = "📌 <b>Majburiy obuna</b>\n\n"
+    if channels:
+        text += "Quyidagi kanallarga obuna talab qilinadi:\n"
+        for ch in channels:
+            text += f"• {ch}\n"
+    else:
+        text += "Hozircha kanallar yo'q.\n\n➕ Kanal qo'shish tugmasini bosing."
+    await callback.message.edit_text(text, reply_markup=admin_kb.required_sub_keyboard(channels))
 
+
+@router.callback_query(F.data == "admin_sub_add")
+async def admin_sub_add_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.edit_text(
+        "📌 <b>Kanal qo'shish</b>\n\n"
+        "Kanal username (masalan: @kanal_nomi) yoki ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.sub_channel_input)
+
+
+@router.message(AdminStates.sub_channel_input)
+async def admin_sub_channel_msg(message: Message, state: FSMContext):
+    channel = message.text.strip()
+    channels = _runtime_settings.get("required_channels", [])
+    if channel not in channels:
+        channels.append(channel)
+        _runtime_settings["required_channels"] = channels
+        await message.answer(f"✅ Kanal {channel} qo'shildi.")
+    else:
+        await message.answer(f"⚠️ Kanal {channel} allaqachon mavjud.")
+    await state.clear()
+    await _go_main(message)
+
+
+@router.callback_query(F.data.startswith("admin_sub_del_"))
+async def admin_sub_del_cb(callback: CallbackQuery):
+    await callback.answer()
+    channel = callback.data[len("admin_sub_del_"):]
+    channels = _runtime_settings.get("required_channels", [])
+    if channel in channels:
+        channels.remove(channel)
+        _runtime_settings["required_channels"] = channels
+    await admin_required_sub_cb(callback)
+
+
+# ═══════════════════════════════════════════
+# 8. PREMIUMLAR
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_premiums")
 async def admin_premiums_cb(callback: CallbackQuery):
     await callback.answer()
     await callback.message.edit_text(
         "⭐ <b>Premiumlar</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda premium obunalar boshqaruvi bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
+        "Premium obunalarni boshqarish.\n\n"
+        "💡 Premium berish va boshqarish uchun quyidagi tugmalardan foydalaning:",
+        reply_markup=admin_kb.premiums_keyboard(),
     )
 
+
+@router.callback_query(F.data == "admin_premiums_list")
+async def admin_premiums_list_cb(callback: CallbackQuery):
+    await callback.answer("⏳ Yuklanmoqda...")
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            # Check if premium_until column exists
+            from asyncpg import UndefinedColumnError
+            try:
+                rows = await conn.fetch(
+                    "SELECT telegram_id, username, full_name FROM users WHERE premium_until IS NOT NULL AND premium_until > NOW() ORDER BY premium_until DESC LIMIT 20"
+                )
+                if rows:
+                    text = "⭐ <b>Premium foydalanuvchilar</b>\n\n"
+                    for r in rows:
+                        name = r["username"] or r["full_name"] or f"#{r['telegram_id']}"
+                        text += f"• {name}\n"
+                else:
+                    text = "⭐ <b>Premium foydalanuvchilar</b>\n\nHozircha premium foydalanuvchilar yo'q."
+            except UndefinedColumnError:
+                text = "⭐ <b>Premium foydalanuvchilar</b>\n\nMa'lumotlar bazasida premium_ustun maydoni yo'q.\n"
+                text += "Premium funksiyasi hozircha faqat <b>Sozlamalar</b> bo'limida boshqariladi."
+    except Exception as e:
+        logger.error(f"Premiums list error: {e}")
+        text = "❌ Xatolik."
+    await callback.message.edit_text(text, reply_markup=admin_kb.back_button("admin_premiums"))
+
+
+@router.callback_query(F.data == "admin_premiums_grant")
+async def admin_premiums_grant_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "⭐ <b>Premium berish</b>\n\n"
+        "Premium berish uchun <b>Chek yaratish</b> bo'limidan foydalaning.\n\n"
+        "Yoki <b>Sozlamalar</b> bo'limida premium narxini o'zgartiring.",
+        reply_markup=admin_kb.back_button("admin_premiums"),
+    )
+
+
+# ═══════════════════════════════════════════
+# 9. SOVG'ALAR
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_gifts")
 async def admin_gifts_cb(callback: CallbackQuery):
-    await callback.answer()
-    await callback.message.edit_text(
-        "🎁 <b>Sovg'alar</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda sovg'alar boshqaruvi bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
-    )
+    await callback.answer("⏳ Yuklanmoqda...")
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            total_gifts = await conn.fetchval("SELECT COUNT(*) FROM orders WHERE product_type = 'gift'") or 0
+            today_gifts = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE product_type = 'gift' AND created_at >= CURRENT_DATE"
+            ) or 0
+            gift_revenue = await conn.fetchval(
+                "SELECT COALESCE(SUM(amount), 0) FROM orders WHERE product_type = 'gift' AND status = 'completed'"
+            ) or 0
+        gift_status = "✅ Yoqilgan" if _runtime_settings.get('gift_enabled') else "❌ O'chirilgan"
+        text = (
+            f"🎁 <b>Sovg'alar</b>\n\n"
+            f"📦 Jami sovg'alar: {total_gifts:,}\n"
+            f"📅 Bugun: {today_gifts:,}\n"
+            f"💰 Daromad: {gift_revenue:,} so'm\n\n"
+            f"Sovg'alar xizmati: {gift_status}"
+        )
+    except Exception as e:
+        logger.error(f"Gifts error: {e}")
+        text = "❌ Xatolik."
+    await callback.message.edit_text(text, reply_markup=admin_kb.gifts_keyboard())
 
+
+# ═══════════════════════════════════════════
+# 10. AVTOTO'LOV
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_autopay")
 async def admin_autopay_cb(callback: CallbackQuery):
     await callback.answer()
+    enabled = _runtime_settings.get("autopay_enabled", False)
+    status = "✅ Yoqilgan" if enabled else "❌ O'chirilgan"
     await callback.message.edit_text(
-        "💸 <b>Avtoto'lov</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda avtomatik to'lov sozlamalari bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
+        f"💸 <b>Avtoto'lov</b>\n\n"
+        f"Holati: {status}\n\n"
+        "Avtoto'lov yoqilgan bo'lsa, foydalanuvchilar to'lovni amalga oshirgandan so'ng\n"
+        "balans avtomatik ravishda to'ldiriladi.\n\n"
+        "Holatni o'zgartirish uchun tugmani bosing:",
+        reply_markup=admin_kb.autopay_keyboard(enabled),
     )
 
+
+@router.callback_query(F.data == "admin_autopay_toggle")
+async def admin_autopay_toggle_cb(callback: CallbackQuery):
+    await callback.answer()
+    _runtime_settings["autopay_enabled"] = not _runtime_settings.get("autopay_enabled", False)
+    await admin_autopay_cb(callback)
+
+
+# ═══════════════════════════════════════════
+# 11. TO'LOV TIZIMI
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_payment_system")
 async def admin_payment_system_cb(callback: CallbackQuery):
     await callback.answer()
-    await callback.message.edit_text(
-        "💳 <b>To'lov tizimi</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda to'lov tizimlari sozlamalari bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
-    )
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            total_orders = await conn.fetchval("SELECT COUNT(*) FROM orders") or 0
+            completed = await conn.fetchval("SELECT COUNT(*) FROM orders WHERE status = 'completed'") or 0
+            pending = await conn.fetchval("SELECT COUNT(*) FROM orders WHERE status = 'pending'") or 0
+            total_payments = await conn.fetchval("SELECT COUNT(*) FROM payments") or 0
+        text = (
+            "💳 <b>To'lov tizimi</b>\n\n"
+            f"📦 Jami buyurtmalar: {total_orders:,}\n"
+            f"✅ Bajarilgan: {completed:,}\n"
+            f"⏳ Kutilayotgan: {pending:,}\n"
+            f"💳 To'lovlar: {total_payments:,}\n\n"
+            "To'lov tizimi sozlamalari <b>.env</b> faylida joylashgan."
+        )
+    except Exception as e:
+        logger.error(f"Payment system error: {e}")
+        text = "❌ Xatolik."
+    await callback.message.edit_text(text, reply_markup=admin_kb.payment_system_keyboard())
 
+
+# ═══════════════════════════════════════════
+# 12. STARS TO'LDIRISH
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_stars_topup")
-async def admin_stars_topup_cb(callback: CallbackQuery):
+async def admin_stars_topup_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(
         "⭐ <b>Stars to'ldirish</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda Telegram Stars to'ldirish boshqaruvi bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
+        "Foydalanuvchi SP ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.stars_sp_id)
+
+
+@router.message(AdminStates.stars_sp_id)
+async def admin_stars_sp_id_msg(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if not text.isdigit():
+        await message.answer("❌ SP ID raqam bo'lishi kerak.")
+        return
+    sp_id = int(text)
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await message.answer(f"❌ SP ID <code>{sp_id}</code> bo'yicha foydalanuvchi topilmadi.")
+        return
+    await state.update_data(stars_sp_id=sp_id, stars_user_tid=user["telegram_id"])
+    price_per_unit = _runtime_settings.get("stars_price_per_unit", 200)
+    await message.answer(
+        f"👤 <b>Foydalanuvchi #{sp_id}</b>\n"
+        f"Balans: <b>{user['balance']:,}</b> so'm\n\n"
+        f"Stars miqdorini kiriting (1 star = {price_per_unit:,} so'm):"
+    )
+    await state.set_state(AdminStates.stars_amount)
+
+
+@router.message(AdminStates.stars_amount)
+async def admin_stars_amount_msg(message: Message, state: FSMContext):
+    try:
+        stars_count = int(message.text.strip().replace(",", "").replace(" ", ""))
+    except ValueError:
+        await message.answer("❌ Noto'g'ri miqdor. Raqam kiriting.")
+        return
+    if stars_count <= 0:
+        await message.answer("❌ Miqdor 0 dan katta bo'lishi kerak.")
+        return
+    price_per_unit = _runtime_settings.get("stars_price_per_unit", 200)
+    total_amount = stars_count * price_per_unit
+    await state.update_data(stars_count=stars_count, stars_amount=total_amount)
+    data = await state.get_data()
+    sp_id = data["stars_sp_id"]
+    await message.answer(
+        f"⭐ <b>Stars ma'lumotlari</b>\n\n"
+        f"Foydalanuvchi: #{sp_id}\n"
+        f"Stars: {stars_count} ⭐\n"
+        f"Summa: {total_amount:,} so'm\n\n"
+        f"Tasdiqlaysizmi?",
+        reply_markup=admin_kb.stars_topup_confirm_keyboard(sp_id, stars_count),
     )
 
+
+@router.callback_query(F.data.startswith("admin_stars_confirm_"))
+async def admin_stars_confirm_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("⏳ Balans to'ldirilmoqda...")
+    parts = callback.data.split("_")
+    sp_id = int(parts[3])
+    stars_count = int(parts[4])
+    price_per_unit = _runtime_settings.get("stars_price_per_unit", 200)
+    total_amount = stars_count * price_per_unit
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await callback.message.edit_text("❌ Foydalanuvchi topilmadi.")
+        return
+    tid = user["telegram_id"]
+    new_balance = await add_balance(tid, total_amount)
+    await record_payment(f"stars_{sp_id}_{int(time.time())}", tid, total_amount, "paid",
+                          f'{{"source": "stars_admin", "admin_id": {callback.from_user.id}}}')
+    username = user.get("username") or str(tid)
+    await callback.message.edit_text(
+        f"✅ <b>Stars to'ldirildi!</b>\n\n"
+        f"👤 Foydalanuvchi: #{sp_id} (@{username})\n"
+        f"⭐ Stars: {stars_count}\n"
+        f"💰 Summa: {total_amount:,} so'm\n"
+        f"💳 Yangi balans: {new_balance:,} so'm",
+    )
+    await _go_main(callback.message)
+
+
+# ═══════════════════════════════════════════
+# 13. ADMIN SOZLAMALARI
+# ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_admins_settings")
 async def admin_admins_settings_cb(callback: CallbackQuery):
     await callback.answer()
+    text = "🔐 <b>Admin sozlamalari</b>\n\nHozirgi adminlar:\n"
+    for aid in ADMIN_IDS:
+        text += f"• <code>{aid}</code>\n"
+    text += "\nAdmin qo'shish yoki o'chirish uchun tugmalardan foydalaning:"
+    await callback.message.edit_text(text, reply_markup=admin_kb.admins_keyboard(ADMIN_IDS))
+
+
+@router.callback_query(F.data == "admin_admin_add")
+async def admin_admin_add_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await callback.message.edit_text(
-        "🔐 <b>Admin sozlamalari</b>\n\n"
-        "🚧 Bo'lim ishlab chiqilmoqda.\n"
-        "Bu yerda administratorlar boshqaruvi bo'ladi.",
-        reply_markup=admin_kb.stub_keyboard(),
+        "🔐 <b>Admin qo'shish</b>\n\n"
+        "Yangi adminning Telegram ID sini kiriting:"
     )
+    await state.set_state(AdminStates.admin_add_input)
 
 
-@router.message(Command("confirm"))
-async def cmd_confirm(message: Message):
-    if not message.from_user:
+@router.message(AdminStates.admin_add_input)
+async def admin_admin_add_msg(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if not text.isdigit():
+        await message.answer("❌ Telegram ID raqam bo'lishi kerak.")
         return
-    if not _is_admin(message.from_user.id):
-        await _deny(message)
-        return
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        await message.answer(
-            "❌ Buyurtma ID sini kiriting:\n\n"
-            "<code>/confirm topup_abc123</code>",
-        )
-        return
-    order_id = args[1].strip()
-    await message.answer(f"⏳ Tekshirilmoqda: <code>{order_id}</code>...")
-    from services.payment_client import confirm_payment
-    result = await confirm_payment(order_id)
-    if result.get("ok"):
-        await message.answer(
-            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
-            f"📦 Buyurtma: <code>{order_id}</code>\n"
-            f"💰 Summa: {result.get('amount', 0):,} so'm\n"
-            f"💳 Yangi balans: {result.get('new_balance', 0):,} so'm",
-        )
-    elif "PAYMENT_SERVER_URL not configured" in result.get("error", ""):
-        await _confirm_locally(message, order_id)
+    new_id = int(text)
+    if new_id in ADMIN_IDS:
+        await message.answer(f"⚠️ Admin <code>{new_id}</code> allaqachon mavjud.")
     else:
-        unknown_error = "Noma'lum xatolik"
-        await message.answer(
-            f"❌ Xatolik: {result.get('error', unknown_error)}",
-        )
+        ADMIN_IDS.append(new_id)
+        await message.answer(f"✅ Admin <code>{new_id}</code> qo'shildi.")
+    await state.clear()
+    await _go_main(message)
 
+
+@router.callback_query(F.data.startswith("admin_admin_del_"))
+async def admin_admin_del_cb(callback: CallbackQuery):
+    await callback.answer()
+    aid = int(callback.data.split("_")[-1])
+    if aid in ADMIN_IDS:
+        ADMIN_IDS.remove(aid)
+    await admin_admins_settings_cb(callback)
+
+
+# ═══════════════════════════════════════════
+# /confirm yordamchi
+# ═══════════════════════════════════════════
 
 async def _confirm_locally(message: Message, order_id: str):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        order = await conn.fetchrow(
-            "SELECT * FROM orders WHERE external_id = $1",
-            order_id
-        )
+        order = await conn.fetchrow("SELECT * FROM orders WHERE external_id = $1", order_id)
         if not order:
             await message.answer(f"❌ Buyurtma topilmadi: <code>{order_id}</code>")
             return
@@ -549,18 +914,10 @@ async def _confirm_locally(message: Message, order_id: str):
         tid = order["telegram_id"]
         amount = order["amount"]
         new_balance = await add_balance(tid, amount)
-        await conn.execute(
-            "UPDATE orders SET status = 'completed' WHERE external_id = $1",
-            order_id
-        )
-        await record_payment(
-            order_id, tid, amount, "paid",
-            f'{{"source": "admin_confirm_local", "admin_id": {message.from_user.id}}}'
-        )
-        bot = Bot(
-            token=config.BOT_TOKEN,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
+        await conn.execute("UPDATE orders SET status = 'completed' WHERE external_id = $1", order_id)
+        await record_payment(order_id, tid, amount, "paid",
+                              f'{{"source": "admin_confirm_local", "admin_id": {message.from_user.id}}}')
+        bot = Bot(token=config.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         try:
             user_text = (
                 f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_CHECK}\">✅</tg-emoji> "

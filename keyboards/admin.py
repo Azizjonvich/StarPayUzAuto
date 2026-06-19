@@ -107,8 +107,114 @@ def broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def stub_keyboard() -> InlineKeyboardMarkup:
+def check_confirm_keyboard(sp_id: int, amount: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"admin_check_confirm_{sp_id}_{amount}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_create_check"),
+    )
+    return builder.as_markup()
+
+
+def ref_contest_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="🏆 Top reyting", callback_data="admin_ref_rating"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⚙️ Konkurs sozlamalari", callback_data="admin_ref_settings"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def required_sub_keyboard(channels: list) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for ch in channels:
+        builder.row(InlineKeyboardButton(
+            text=f"❌ {ch}", callback_data=f"admin_sub_del_{ch}"
+        ))
+    builder.row(
+        InlineKeyboardButton(text="➕ Kanal qo'shish", callback_data="admin_sub_add"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def premiums_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="📋 Premium foydalanuvchilar", callback_data="admin_premiums_list"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="➕ Premium berish", callback_data="admin_premiums_grant"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def gifts_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="🔄 Yangilash", callback_data="admin_gifts"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def autopay_keyboard(enabled: bool) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    status = "✅ Yoqilgan" if enabled else "❌ O'chirilgan"
+    builder.row(
+        InlineKeyboardButton(text=status, callback_data="admin_autopay_toggle"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def payment_system_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="🔄 Tekshirish", callback_data="admin_payment_system"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def stars_topup_confirm_keyboard(sp_id: int, amount: int) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"admin_stars_confirm_{sp_id}_{amount}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_stars_topup"),
+    )
+    return builder.as_markup()
+
+
+def admins_keyboard(admin_ids: list[int]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for aid in admin_ids:
+        builder.row(InlineKeyboardButton(
+            text=f"❌ Admin {aid}", callback_data=f"admin_admin_del_{aid}"
+        ))
+    builder.row(
+        InlineKeyboardButton(text="➕ Admin qo'shish", callback_data="admin_admin_add"),
+    )
     builder.row(
         InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
     )
