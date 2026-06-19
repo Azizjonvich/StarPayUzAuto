@@ -1,28 +1,28 @@
-"""Admin panel — внутри бота (inline меню, без веба)"""
 import asyncio
 import logging
+import time
 
-from aiogram import F, Router
+from aiogram import F, Bot, Router
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 import config
-import keyboards
+import keyboards.admin as admin_kb
 from services.database import (
     add_balance, add_balance_history, deduct_balance, db,
     get_all_users_telegram_ids, get_dashboard_stats, get_order_by_id,
     get_orders_paginated, get_users_paginated, search_users_db,
     block_user_db, unblock_user_db, delete_user_db,
-    update_order_status, record_payment,
+    update_order_status, record_payment, get_pool,
 )
 
 logger = logging.getLogger(__name__)
 router = Router()
 
-
-# ─── States ───────────────────────────────────────────────────────
 
 class AdminStates(StatesGroup):
     broadcast_text = State()
@@ -31,12 +31,9 @@ class AdminStates(StatesGroup):
     balance_reason = State()
     balance_action = State()
     search_query = State()
-    order_status = State()
     settings_key = State()
     settings_value = State()
 
-
-# ─── Helper ───────────────────────────────────────────────────────
 
 def _is_admin(user_id: int) -> bool:
     return user_id in config.ADMINS
@@ -46,7 +43,21 @@ async def _deny(message: Message):
     await message.answer("❌ <b>Bu buyruq faqat administratorlar uchun.</b>")
 
 
-# ─── /admin — вход в админ-панель ────────────────────────────────
+async def _get_ping(bot: Bot) -> int:
+    start = time.monotonic()
+    await bot.get_me()
+    return int((time.monotonic() - start) * 1000)
+
+
+async def _admin_header(bot: Bot) -> str:
+    ping = await _get_ping(bot)
+    return (
+        "\u2699\ufe0f <b>\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043f\u0430\u043d\u0435\u043b\u0438</b>\n\n"
+        f"\U0001f4a1 PING: {ping} MS\n\n"
+        "\u0412\u044b \u0438\u043c\u0435\u0435\u0442\u0435 \u043f\u0440\u0430\u0432\u0430 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430.\n"
+        "\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0440\u0430\u0431\u043e\u0442\u0430\u0439\u0442\u0435 \u043e\u0441\u0442\u043e\u0440\u043e\u0436\u043d\u043e."
+    )
+
 
 @router.message(Command("admin"))
 async def cmd_admin(message: Message, state: FSMContext = None):
@@ -57,458 +68,194 @@ async def cmd_admin(message: Message, state: FSMContext = None):
         return
     if state:
         await state.clear()
-    await message.answer(
-        "🔐 <b>Admin Panel</b>\n\nXush kelibsiz, administrator!",
-        reply_markup=keyboards.get_admin_main_keyboard()
-    )
+    header = await _admin_header(message.bot)
+    await message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
 
-
-# ─── /confirm — быстрое подтверждение оплаты ──────────────────────
-
-@router.message(Command("confirm"))
-async def cmd_confirm(message: Message):
-    """Quick confirm payment by order_id. Calls Node.js payment server."""
-    if not message.from_user:
-        return
-    if not _is_admin(message.from_user.id):
-        await _deny(message)
-        return
-
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        await message.answer(
-            "❌ Buyurtma ID sini kiriting:\n\n"
-            "<code>/confirm topup_abc123</code>",
-            parse_mode="HTML",
-        )
-        return
-
-    order_id = args[1].strip()
-    
-    await message.answer(f"⏳ Tekshirilmoqda: <code>{order_id}</code>...", parse_mode="HTML")
-    
-    # Try Node.js payment server first
-    from services.payment_client import confirm_payment
-    result = await confirm_payment(order_id)
-    
-    if result.get("ok"):
-        await message.answer(
-            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
-            f"📦 Buyurtma: <code>{order_id}</code>\n"
-            f"💰 Summa: {result.get('amount', 0):,} so'm\n"
-            f"💳 Yangi balans: {result.get('new_balance', 0):,} so'm",
-            parse_mode="HTML",
-        )
-    elif "PAYMENT_SERVER_URL not configured" in result.get("error", ""):
-        # Fallback: confirm locally via admin panel logic
-        await _confirm_locally(message, order_id)
-    else:
-        unknown_error = "Noma'lum xatolik"
-        await message.answer(
-            f"❌ Xatolik: {result.get('error', unknown_error)}",
-            parse_mode="HTML",
-        )
-
-
-async def _confirm_locally(message: Message, order_id: str):
-    """Fallback: confirm payment directly via database (no Node.js server)."""
-    from services.database import get_pool, add_balance, record_payment
-    
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        order = await conn.fetchrow(
-            "SELECT * FROM orders WHERE external_id = $1",
-            order_id
-        )
-        
-        if not order:
-            await message.answer(
-                f"❌ Buyurtma topilmadi: <code>{order_id}</code>",
-                parse_mode="HTML",
-            )
-            return
-        
-        if order["status"] != "pending":
-            await message.answer(
-                f"⚠️ Buyurtma <code>{order_id}</code> allaqachon «{order['status']}»",
-                parse_mode="HTML",
-            )
-            return
-        
-        tid = order["telegram_id"]
-        amount = order["amount"]
-        
-        # Credit balance
-        new_balance = await add_balance(tid, amount)
-        
-        # Update order status
-        await conn.execute(
-            "UPDATE orders SET status = 'completed' WHERE external_id = $1",
-            order_id
-        )
-        
-        # Record payment
-        await record_payment(
-            order_id, tid, amount, "paid",
-            f'{{"source": "admin_confirm_local", "admin_id": {message.from_user.id}}}'
-        )
-        
-        # Notify user
-        from aiogram import Bot
-        from aiogram.client.default import DefaultBotProperties
-        from aiogram.enums import ParseMode
-        import config as bot_config
-        
-        bot = Bot(
-            token=bot_config.BOT_TOKEN,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
-        try:
-            check_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CHECK}">✅</tg-emoji>'
-            wallet_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WALLET}">👛</tg-emoji>'
-            money_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji>'
-            user_text = (
-                f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
-                f"{wallet_emoji} Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
-                f"{money_emoji} Yangi balans: <b>{new_balance:,}</b> so'm"
-            )
-            await bot.send_message(tid, user_text, parse_mode="HTML")
-        except Exception as e:
-            logger.warning(f"Could not notify user {tid}: {e}")
-        finally:
-            await bot.session.close()
-        
-        user = await conn.fetchrow(
-            "SELECT * FROM users WHERE telegram_id = $1", tid
-        )
-        username = user["username"] if user else str(tid)
-        
-        await message.answer(
-            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
-            f"👤 Foydalanuvchi: @{username}\n"
-            f"📦 Buyurtma: <code>{order_id}</code>\n"
-            f"💰 Summa: {amount:,} so'm\n"
-            f"💳 Yangi balans: {new_balance:,} so'm\n\n"
-            f"📨 Foydalanuvchiga xabar yuborildi.",
-            parse_mode="HTML",
-        )
-
-
-# ─── Главное меню админки ────────────────────────────────────────
 
 @router.callback_query(F.data == "admin_main_menu")
-async def admin_main_menu(callback: CallbackQuery):
+async def admin_main_menu_cb(callback: CallbackQuery, state: FSMContext = None):
     await callback.answer()
-    await callback.message.edit_text(
-        "🔐 <b>Admin Panel</b>\n\nBo'limni tanlang:",
-        reply_markup=keyboards.get_admin_main_keyboard(),
-    )
+    if state:
+        await state.clear()
+    header = await _admin_header(callback.bot)
+    await callback.message.edit_text(header, reply_markup=admin_kb.admin_main_keyboard())
 
-
-# ═══════════════════════════════════════════════════════════════════
-# 1. СТАТИСТИКА / DASHBOARD
-# ═══════════════════════════════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_stats")
-async def admin_stats(callback: CallbackQuery):
-    await callback.answer("⏳ Yuklanmoqda...")
+async def admin_stats_cb(callback: CallbackQuery):
+    await callback.answer("\u23f3 \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...")
     try:
         stats = await get_dashboard_stats()
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            payments_count = await conn.fetchval("SELECT COUNT(*) FROM payments") or 0
+            total_profit = await conn.fetchval(
+                "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'paid'"
+            ) or 0
         text = (
-            "📊 <b>Dashboard statistika</b>\n\n"
-            f"👥 <b>Foydalanuvchilar:</b> {stats['total_users']:,}\n"
-            f"┣ Yangi (bugun): {stats['new_today']:,}\n"
-            f"┣ Yangi (7 kun): {stats['new_week']:,}\n"
-            f"┗ Yangi (30 kun): {stats['new_month']:,}\n\n"
-            f"💰 <b>Umumiy balans:</b> {stats['total_balance']:,} so'm\n"
-            f"📦 <b>Buyurtmalar:</b> {stats['total_orders']:,}\n"
+            f"\U0001f4ca <b>\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430</b>\n\n"
+            f"\U0001f465 <b>\u0412\u0441\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439:</b> {stats['total_users']:,}\n"
+            f"\U0001f4c5 \u0417\u0430 \u0441\u0435\u0433\u043e\u0434\u043d\u044f: {stats['new_today']:,}\n"
+            f"\U0001f4c5 \u0417\u0430 \u043d\u0435\u0434\u0435\u043b\u044e: {stats['new_week']:,}\n\n"
+            f"\U0001f4b3 <b>\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u043b\u0430\u0442\u0435\u0436\u0435\u0439:</b> {payments_count:,}\n"
+            f"\U0001f4b0 <b>\u041e\u0431\u0449\u0430\u044f \u043f\u0440\u0438\u0431\u044b\u043b\u044c:</b> {total_profit:,} \u0441\u0443\u043c"
         )
     except Exception as e:
         logger.error(f"Stats error: {e}")
-        text = "❌ Statistikani yuklashda xatolik."
+        text = "\u274c \u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0438."
+    await callback.message.edit_text(text, reply_markup=admin_kb.stats_keyboard())
 
-    await callback.message.edit_text(text, reply_markup=keyboards.get_admin_back_keyboard())
-
-
-# ═══════════════════════════════════════════════════════════════════
-# 2. ПОЛЬЗОВАТЕЛИ
-# ═══════════════════════════════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_users")
-async def admin_users_menu(callback: CallbackQuery):
+async def admin_users_menu_cb(callback: CallbackQuery):
     await callback.answer()
     await callback.message.edit_text(
-        "👥 <b>Foydalanuvchilar</b>\n\n"
-        "Foydalanuvchilarni boshqarish:",
-        reply_markup=keyboards.get_admin_users_keyboard(),
+        "\U0001f534 <b>\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f\u043c\u0438</b>\n\n\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435:",
+        reply_markup=admin_kb.users_main_keyboard(),
     )
 
 
-@router.callback_query(F.data == "admin_users_list_skip")
-async def admin_users_list_skip(callback: CallbackQuery):
-    await callback.answer()
-
-
 @router.callback_query(F.data.startswith("admin_users_list_"))
-async def admin_users_list(callback: CallbackQuery):
+async def admin_users_list_cb(callback: CallbackQuery):
     await callback.answer()
-    page = int(callback.data.split("_")[-1])
+    data = callback.data
+    if data == "admin_users_list_skip":
+        return
+    page = int(data.split("_")[-1])
     try:
         users, total = await get_users_paginated(page=page, page_size=10)
-        text = f"👥 <b>Foydalanuvchilar</b> (jami: {total:,})\n\n"
+        text = f"\U0001f465 <b>\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438</b> (\u0432\u0441\u0435\u0433\u043e: {total:,})\n\n"
         for u in users:
-            name = u.get("username") or u.get("full_name") or "—"
-            blocked = " 🔒" if u.get("is_blocked") else ""
+            name = u.get("username") or u.get("full_name") or "\u2014"
+            blocked = " \U0001f512" if u.get("is_blocked") else ""
             text += (
-                f"• <code>{u['sp_id']}</code> "
+                f"\u2022 <code>{u['sp_id']}</code> "
                 f"<b>{name}</b>{blocked}\n"
-                f"  Balans: {u['balance']:,} so'm\n"
+                f"  \u0411\u0430\u043b\u0430\u043d\u0441: {u['balance']:,} \u0441\u0443\u043c\n"
             )
     except Exception as e:
         logger.error(f"Users list error: {e}")
-        text = "❌ Xatolik yuz berdi."
-
-    kb = keyboards.get_admin_users_list_keyboard(page, total > page * 10)
+        text = "\u274c \u041e\u0448\u0438\u0431\u043a\u0430."
+    kb = admin_kb.users_list_keyboard(page, total > page * 10)
     await callback.message.edit_text(text, reply_markup=kb)
 
 
 @router.callback_query(F.data == "admin_users_search")
-async def admin_users_search_start(callback: CallbackQuery, state: FSMContext):
+async def admin_users_search_start_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(
-        "🔍 <b>Foydalanuvchini qidirish</b>\n\n"
-        "Telegram ID, username yoki SP ID ni kiriting:"
+        "\U0001f50d <b>\u041f\u043e\u0438\u0441\u043a \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f</b>\n\n"
+        "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 Telegram ID, \u0438\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0438\u043b\u0438 SP ID:"
     )
     await state.set_state(AdminStates.search_query)
 
 
 @router.message(AdminStates.search_query)
-async def admin_users_search_result(message: Message, state: FSMContext):
+async def admin_users_search_result_msg(message: Message, state: FSMContext):
     query = message.text.strip()
     try:
         users = await search_users_db(query)
         if not users:
-            await message.answer("❌ Foydalanuvchi topilmadi.")
+            await message.answer("\u274c \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.")
         else:
             for u in users[:5]:
-                name = u.get("username") or u.get("full_name") or "—"
-                blocked = " 🔒" if u.get("is_blocked") else ""
+                name = u.get("username") or u.get("full_name") or "\u2014"
+                blocked = " \U0001f512" if u.get("is_blocked") else ""
                 text = (
-                    f"👤 <b>#{u['sp_id']}</b>{blocked}\n"
+                    f"\U0001f464 <b>#{u['sp_id']}</b>{blocked}\n"
                     f"Telegram ID: <code>{u['telegram_id']}</code>\n"
-                    f"Ism: {name}\n"
-                    f"Balans: <b>{u['balance']:,}</b> so'm\n"
-                    f"Referallar: {u.get('referrals', 0)} ta\n"
+                    f"\u0418\u043c\u044f: {name}\n"
+                    f"\u0411\u0430\u043b\u0430\u043d\u0441: <b>{u['balance']:,}</b> \u0441\u0443\u043c\n"
+                    f"\u0420\u0435\u0444\u0435\u0440\u0430\u043b\u044b: {u.get('referrals', 0)}"
                 )
                 await message.answer(
                     text,
-                    reply_markup=keyboards.get_admin_user_actions_keyboard(u['telegram_id']),
+                    reply_markup=admin_kb.user_actions_keyboard(u['telegram_id']),
                 )
     except Exception as e:
         logger.error(f"Search error: {e}")
-        await message.answer("❌ Xatolik yuz berdi.")
+        await message.answer("\u274c \u041e\u0448\u0438\u0431\u043a\u0430.")
     await state.clear()
-    await message.answer(
-        "🔐 Admin Panel", reply_markup=keyboards.get_admin_main_keyboard()
-    )
+    header = await _admin_header(message.bot)
+    await message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
 
-
-# ─── Блокировка / Разблокировка / Удаление ───────────────────────
 
 @router.callback_query(F.data.startswith("admin_user_block_"))
-async def admin_user_block(callback: CallbackQuery):
+async def admin_user_block_cb(callback: CallbackQuery):
     await callback.answer()
     tid = int(callback.data.split("_")[-1])
     try:
         await block_user_db(tid)
-        await callback.message.edit_text(f"✅ Foydalanuvchi <code>{tid}</code> bloklandi.")
+        await callback.message.edit_text(f"\u2705 \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c <code>{tid}</code> \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d.")
     except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
+        await callback.message.edit_text(f"\u274c \u041e\u0448\u0438\u0431\u043a\u0430: {e}")
 
 
 @router.callback_query(F.data.startswith("admin_user_unblock_"))
-async def admin_user_unblock(callback: CallbackQuery):
+async def admin_user_unblock_cb(callback: CallbackQuery):
     await callback.answer()
     tid = int(callback.data.split("_")[-1])
     try:
         await unblock_user_db(tid)
-        await callback.message.edit_text(f"✅ Foydalanuvchi <code>{tid}</code> blokdan chiqarildi.")
+        await callback.message.edit_text(f"\u2705 \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c <code>{tid}</code> \u0440\u0430\u0437\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d.")
     except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
+        await callback.message.edit_text(f"\u274c \u041e\u0448\u0438\u0431\u043a\u0430: {e}")
 
 
 @router.callback_query(F.data.startswith("admin_user_delete_"))
-async def admin_user_delete(callback: CallbackQuery):
+async def admin_user_delete_cb(callback: CallbackQuery):
     await callback.answer()
     tid = int(callback.data.split("_")[-1])
     try:
         await delete_user_db(tid)
-        await callback.message.edit_text(f"🗑 Foydalanuvchi <code>{tid}</code> o'chirildi.")
+        await callback.message.edit_text(f"\U0001f5d1 \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c <code>{tid}</code> \u0443\u0434\u0430\u043b\u0451\u043d.")
     except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
+        await callback.message.edit_text(f"\u274c \u041e\u0448\u0438\u0431\u043a\u0430: {e}")
 
-
-# ═══════════════════════════════════════════════════════════════════
-# 3. БАЛАНС
-# ═══════════════════════════════════════════════════════════════════
-
-@router.callback_query(F.data == "admin_balance")
-async def admin_balance_menu(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await callback.message.edit_text(
-        "💰 <b>Balans boshqaruvi</b>\n\n"
-        "Foydalanuvchi SP ID sini kiriting:"
-    )
-    await state.set_state(AdminStates.balance_sp_id)
-
-
-@router.message(AdminStates.balance_sp_id)
-async def admin_balance_sp_id_received(message: Message, state: FSMContext):
-    if not message.text or not message.text.strip().isdigit():
-        await message.answer("❌ SP ID raqam bo'lishi kerak. Qayta kiriting yoki /admin ni bosing.")
-        return
-    sp_id = int(message.text.strip())
-    user = await db.get_user_by_sp_id(sp_id)
-    if not user:
-        await message.answer(f"❌ SP ID <code>{sp_id}</code> bo'yicha foydalanuvchi topilmadi.")
-        return
-    await state.update_data(balance_sp_id=sp_id, balance_user_tid=user["telegram_id"], balance_current=user["balance"])
-    await message.answer(
-        f"👤 <b>Foydalanuvchi #{sp_id}</b>\n"
-        f"Balans: <b>{user['balance']:,}</b> so'm\n\n"
-        "Amalni tanlang:",
-        reply_markup=keyboards.get_admin_balance_actions_keyboard(),
-    )
-    await state.set_state(AdminStates.balance_action)
-
-
-@router.callback_query(F.data.startswith("admin_balance_act_"), AdminStates.balance_action)
-async def admin_balance_action(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    action = callback.data.split("_")[-1]
-    await state.update_data(balance_action=action)
-    action_label = "qo'shish" if action == "add" else "ayirish"
-    await callback.message.edit_text(
-        f"💰 <b>Balans {action_label}</b>\n\n"
-        "Summani kiriting (so'mda):"
-    )
-    await state.set_state(AdminStates.balance_amount)
-
-
-@router.message(AdminStates.balance_amount)
-async def admin_balance_amount_received(message: Message, state: FSMContext):
-    try:
-        amount = int(message.text.strip().replace(",", "").replace(" ", ""))
-    except ValueError:
-        await message.answer("❌ Noto'g'ri summa. Raqam kiriting.")
-        return
-    if amount <= 0:
-        await message.answer("❌ Summa 0 dan katta bo'lishi kerak.")
-        return
-    await state.update_data(balance_amount=amount)
-    await message.answer("📝 Sababni kiriting (yoki '-' ni yuboring):")
-    await state.set_state(AdminStates.balance_reason)
-
-
-@router.message(AdminStates.balance_reason)
-async def admin_balance_reason_received(message: Message, state: FSMContext):
-    reason = message.text.strip() if message.text and message.text.strip() != "-" else None
-    data = await state.get_data()
-    action = data["balance_action"]
-    amount = data["balance_amount"]
-    tid = data["balance_user_tid"]
-    old_balance = data["balance_current"]
-
-    try:
-        if action == "add":
-            new_balance = await add_balance(tid, amount)
-            tx_type = "credit"
-        else:
-            ok = await deduct_balance(tid, amount)
-            if not ok:
-                await message.answer("❌ Balans yetarli emas!")
-                await state.clear()
-                return
-            user = await db.get_user(tid)
-            new_balance = user["balance"] if user else old_balance
-            tx_type = "debit"
-
-        await add_balance_history(tid, amount, tx_type, old_balance, new_balance, reason)
-        user = await db.get_user(tid)
-        sp_id = user["sp_id"] if user else "?"
-        action_text = "Qo'shish" if action == "add" else "Ayirish"
-        await message.answer(
-            f"✅ <b>Balans o'zgartirildi</b>\n\n"
-            f"Foydalanuvchi: <code>#{sp_id}</code>\n"
-            f"Amal: {action_text}\n"
-            f"Summa: {amount:,} so'm\n"
-            f"Oldingi balans: {old_balance:,} so'm\n"
-            f"Yangi balans: <b>{new_balance:,}</b> so'm\n"
-            f"Sabab: {reason or '—'}"
-        )
-    except Exception as e:
-        await message.answer(f"❌ Xatolik: {e}")
-
-    await state.clear()
-    await message.answer("🔐 Admin Panel", reply_markup=keyboards.get_admin_main_keyboard())
-
-
-# ═══════════════════════════════════════════════════════════════════
-# 4. РАССЫЛКА
-# ═══════════════════════════════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_broadcast")
-async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext):
+async def admin_broadcast_start_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(
-        "📢 <b>Xabar yuborish</b>\n\n"
-        "Yubormoqchi bo'lgan xabaringizni kiriting\n"
-        "(matn, rasm, video — istalgan formatda):"
+        "\U0001f4e8 <b>\u0420\u0430\u0441\u0441\u044b\u043b\u043a\u0430</b>\n\n"
+        "\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435, \u043a\u043e\u0442\u043e\u0440\u043e\u0435 \u0445\u043e\u0442\u0438\u0442\u0435 \u0440\u0430\u0437\u043e\u0441\u043b\u0430\u0442\u044c \u0432\u0441\u0435\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f\u043c\n"
+        "(\u0442\u0435\u043a\u0441\u0442, \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435, \u0432\u0438\u0434\u0435\u043e \u2014 \u043b\u044e\u0431\u043e\u0439 \u0444\u043e\u0440\u043c\u0430\u0442):"
     )
     await state.set_state(AdminStates.broadcast_text)
 
 
 @router.message(AdminStates.broadcast_text)
-async def admin_broadcast_preview(message: Message, state: FSMContext):
-    # Use copyMessage for broadcast — preserves ALL formatting including premium emoji
+async def admin_broadcast_preview_msg(message: Message, state: FSMContext):
     await state.update_data(
         broadcast_msg_id=message.message_id,
         broadcast_chat_id=message.chat.id,
     )
-
-    # Copy the admin's message back as preview (exact copy with all formatting)
     await message.bot.copy_message(
         chat_id=message.chat.id,
         from_chat_id=message.chat.id,
         message_id=message.message_id,
     )
-
-    # Confirm buttons
     await message.answer(
-        "📢 <b>Yuqoridagi xabarni yuborish?</b>",
-        parse_mode="HTML",
-        reply_markup=keyboards.get_admin_broadcast_confirm_keyboard(),
+        "\U0001f4e8 <b>\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u044d\u0442\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435?</b>",
+        reply_markup=admin_kb.broadcast_confirm_keyboard(),
     )
 
 
 @router.callback_query(F.data == "admin_broadcast_confirm")
 async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext):
-    await callback.answer("⏳ Yuborilmoqda...")
+    await callback.answer("\u23f3 \u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442\u0441\u044f...")
     data = await state.get_data()
     msg_id = data.get("broadcast_msg_id")
     chat_id = data.get("broadcast_chat_id")
-
     if not msg_id or not chat_id:
-        await callback.message.edit_text("❌ Xabar topilmadi. Qaytadan urinib ko'ring.")
+        await callback.message.edit_text("\u274c \u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.")
         return
-
-    await callback.message.edit_text("⏳ Xabar yuborilmoqda, biroz kuting...")
+    await callback.message.edit_text("\u23f3 \u0420\u0430\u0441\u0441\u044b\u043b\u043a\u0430 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u0442\u0441\u044f...")
     try:
         tgs = await get_all_users_telegram_ids()
         sent = 0
         for tid in tgs:
             try:
-                # CopyMessage preserves ALL formatting: premium emoji, bold, inline entities, etc.
                 await callback.bot.copy_message(
                     chat_id=tid,
                     from_chat_id=chat_id,
@@ -516,326 +263,70 @@ async def admin_broadcast_confirm_cb(callback: CallbackQuery, state: FSMContext)
                 )
                 sent += 1
             except Exception as exc:
-                logger.warning(f"Broadcast copy failed to {tid}: {exc}")
+                logger.warning(f"Broadcast failed to {tid}: {exc}")
             await asyncio.sleep(0.05)
-        await callback.message.answer(f"✅ Xabar {sent}/{len(tgs)} foydalanuvchiga yuborildi.")
+        await callback.message.answer(f"\u2705 \u0420\u0430\u0441\u0441\u044b\u043b\u043a\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430. \u041e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e: {sent}/{len(tgs)}")
     except Exception as e:
-        await callback.message.answer(f"❌ Xatolik: {e}")
+        await callback.message.answer(f"\u274c \u041e\u0448\u0438\u0431\u043a\u0430: {e}")
     await state.clear()
-    await callback.message.answer("🔐 Admin Panel", reply_markup=keyboards.get_admin_main_keyboard())
+    header = await _admin_header(callback.bot)
+    await callback.message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
 
 
 @router.callback_query(F.data == "admin_broadcast_cancel")
 async def admin_broadcast_cancel_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.clear()
-    await callback.message.edit_text("❌ Xabar yuborish bekor qilindi.")
-    await callback.message.answer("🔐 Admin Panel", reply_markup=keyboards.get_admin_main_keyboard())
+    await callback.message.edit_text("\u274c \u0420\u0430\u0441\u0441\u044b\u043b\u043a\u0430 \u043e\u0442\u043c\u0435\u043d\u0435\u043d\u0430.")
+    header = await _admin_header(callback.bot)
+    await callback.message.answer(header, reply_markup=admin_kb.admin_main_keyboard())
 
 
-# ═══════════════════════════════════════════════════════════════════
-# 4.5. ПОДТВЕРЖДЕНИЕ ОПЛАТ ПО КАРТЕ
-# ═══════════════════════════════════════════════════════════════════
-
-
-async def _get_pending_topups(page: int = 1, page_size: int = 5):
-    """Get pending topup orders"""
-    return await get_orders_paginated(
-        page=page, page_size=page_size,
-        product_type="topup",
-        status="pending",
-    )
-
-
-@router.callback_query(F.data == "admin_confirm_payments")
-async def admin_confirm_payments(callback: CallbackQuery):
-    await callback.answer()
-    page = 1
-    try:
-        orders, total = await _get_pending_topups(page=page)
-        if not orders:
-            text = "💳 <b>Kutilayotgan to'lovlar</b>\n\n✅ Hozircha kutilayotgan to'lovlar yo'q."
-            await callback.message.edit_text(text, reply_markup=keyboards.get_admin_back_keyboard())
-            return
-        text = f"💳 <b>Kutilayotgan to'lovlar</b> (jami: {total:,})\n\n"
-    except Exception as e:
-        logger.error(f"Pending payments error: {e}")
-        text = "❌ Xatolik yuz berdi."
-        orders = []
-        total = 0
-
-    await callback.message.edit_text(
-        text,
-        reply_markup=keyboards.get_admin_payments_keyboard(orders, page, total),
-    )
-
-
-@router.callback_query(F.data.startswith("admin_pay_page_"))
-async def admin_pay_page(callback: CallbackQuery):
-    await callback.answer()
-    page = int(callback.data.split("_")[-1])
-    try:
-        orders, total = await _get_pending_topups(page=page)
-        text = f"💳 <b>Kutilayotgan to'lovlar</b> (jami: {total:,})\n\n"
-    except Exception as e:
-        logger.error(f"Pay page error: {e}")
-        orders = []
-        total = 0
-        text = "❌ Xatolik yuz berdi."
-    await callback.message.edit_text(
-        text,
-        reply_markup=keyboards.get_admin_payments_keyboard(orders, page, total),
-    )
-
-
-@router.callback_query(F.data == "admin_pay_skip")
-async def admin_pay_skip(callback: CallbackQuery):
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("admin_pay_detail_"))
-async def admin_pay_detail(callback: CallbackQuery):
-    await callback.answer()
-    oid = int(callback.data.split("_")[-1])
-    try:
-        o = await get_order_by_id(oid)
-        if not o:
-            await callback.message.edit_text("❌ Buyurtma topilmadi.")
-            return
-        
-        user = await db.get_user(o["telegram_id"])
-        username = (user or {}).get("username") or str(o["telegram_id"])
-        
-        text = (
-            f"💳 <b>To'lov ma'lumotlari</b>\n\n"
-            f"📦 Buyurtma: #{o['id']}\n"
-            f"👤 Foydalanuvchi: @{username} (<code>{o['telegram_id']}</code>)\n"
-            f"💰 Summa: {o.get('amount', 0):,} so'm\n"
-            f"📅 Yaratilgan: {o.get('created_at', '—')}\n"
-            f"📊 Holat: {o['status']}\n\n"
-            f"Agar to'lov kelgan bo'lsa, «To'lov keldi» tugmasini bosing."
-        )
-        await callback.message.edit_text(
-            text,
-            reply_markup=keyboards.get_admin_pay_confirm_keyboard(oid),
-        )
-    except Exception as e:
-        logger.error(f"Pay detail error: {e}")
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
-
-
-@router.callback_query(F.data.startswith("admin_pay_confirm_"))
-async def admin_pay_confirm(callback: CallbackQuery):
-    await callback.answer("✅ Balans to'ldirilmoqda...")
-    oid = int(callback.data.split("_")[-1])
-    admin_id = callback.from_user.id
-    
-    try:
-        o = await get_order_by_id(oid)
-        if not o:
-            await callback.message.edit_text("❌ Buyurtma topilmadi.")
-            return
-        if o["status"] != "pending":
-            await callback.message.edit_text(f"❌ Buyurtma #{oid} holati «{o['status']}», kutilayotgan emas.")
-            return
-        
-        tid = o["telegram_id"]
-        amount = o["amount"]
-        external_id = o.get("external_id") or f"card_{oid}_{tid}"
-        
-        # Add balance first
-        new_balance = await add_balance(tid, amount)
-        
-        # Record payment (prevents duplicates)
-        await record_payment(external_id, tid, amount, "paid", f"admin_confirmed:{admin_id}")
-        
-        # Update order status
-        await update_order_status(oid, "completed")
-        
-        user = await db.get_user(tid)
-        username = (user or {}).get("username") or str(tid)
-        
-        await callback.message.edit_text(
-            f"✅ <b>To'lov tasdiqlandi!</b>\n\n"
-            f"👤 Foydalanuvchi: @{username} (<code>{tid}</code>)\n"
-            f"💰 Summa: {amount:,} so'm\n"
-            f"💳 Yangi balans: {new_balance:,} so'm\n"
-            f"📦 Buyurtma: #{oid}",
-        )
-        
-        # Notify user
-        from aiogram import Bot
-        from aiogram.client.default import DefaultBotProperties
-        from aiogram.enums import ParseMode
-        bot = Bot(
-            token=config.BOT_TOKEN,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
-        try:
-            check_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_CHECK}">✅</tg-emoji>'
-            wallet_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_WALLET}">👛</tg-emoji>'
-            money_emoji = f'<tg-emoji emoji-id="{config.CUSTOM_EMOJI_MONEY}">💰</tg-emoji>'
-            user_text = (
-                f"{check_emoji} <b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
-                f"{wallet_emoji} Hisobingizga <b>{amount:,}</b> so'm qo'shildi.\n"
-                f"{money_emoji} Yangi balans: <b>{new_balance:,}</b> so'm"
-            )
-            await bot.send_message(tid, user_text, parse_mode="HTML")
-        except Exception as e:
-            logger.warning(f"Could not notify user {tid}: {e}")
-        finally:
-            await bot.session.close()
-            
-    except Exception as e:
-        logger.error(f"Pay confirm error: {e}")
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
-
-
-@router.callback_query(F.data.startswith("admin_pay_reject_"))
-async def admin_pay_reject(callback: CallbackQuery):
-    await callback.answer()
-    oid = int(callback.data.split("_")[-1])
-    try:
-        await update_order_status(oid, "cancelled")
-        await callback.message.edit_text(f"❌ Buyurtma #{oid} bekor qilindi.")
-    except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# 5. ЗАКАЗЫ
-# ═══════════════════════════════════════════════════════════════════
-
-@router.callback_query(F.data == "admin_orders_skip")
-async def admin_orders_skip(callback: CallbackQuery):
-    await callback.answer()
-
-
-@router.callback_query(F.data == "admin_orders")
-async def admin_orders_menu(callback: CallbackQuery):
-    await callback.answer()
-    page = 1
-    try:
-        orders, total = await get_orders_paginated(page=page, page_size=5)
-        text = f"📦 <b>Buyurtmalar</b> (jami: {total:,})\n\n"
-    except Exception:
-        orders = []
-        total = 0
-        text = "📦 <b>Buyurtmalar</b>\n\nMa'lumot topilmadi."
-
-    await callback.message.edit_text(
-        text,
-        reply_markup=keyboards.get_admin_orders_keyboard(orders, page, total),
-    )
-
-
-@router.callback_query(F.data.startswith("admin_orders_page_"))
-async def admin_orders_page(callback: CallbackQuery):
-    await callback.answer()
-    page = int(callback.data.split("_")[-1])
-    try:
-        orders, total = await get_orders_paginated(page=page, page_size=5)
-        text = f"📦 <b>Buyurtmalar</b> (jami: {total:,})\n\n"
-    except Exception:
-        orders = []
-        total = 0
-        text = "📦 <b>Buyurtmalar</b>\n\nMa'lumot topilmadi."
-
-    await callback.message.edit_text(
-        text,
-        reply_markup=keyboards.get_admin_orders_keyboard(orders, page, total),
-    )
-
-
-@router.callback_query(F.data.startswith("admin_order_status_"))
-async def admin_order_status_change(callback: CallbackQuery):
-    await callback.answer()
-    parts = callback.data.split("_")
-    oid = int(parts[3])
-    new_status = parts[4]
-    try:
-        await update_order_status(oid, new_status)
-        await callback.message.edit_text(f"✅ Buyurtma #{oid} holati o'zgartirildi: {new_status}")
-    except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
-
-
-@router.callback_query(F.data.startswith("admin_order_detail_"))
-async def admin_order_detail(callback: CallbackQuery):
-    await callback.answer()
-    oid = int(callback.data.split("_")[-1])
-    try:
-        o = await get_order_by_id(oid)
-        if o:
-            text = (
-                f"📦 <b>Buyurtma #{o['id']}</b>\n\n"
-                f"Telegram ID: <code>{o['telegram_id']}</code>\n"
-                f"Mahsulot: {o.get('product_type', '?')}\n"
-                f"Miqdor: {o.get('quantity', '—')}\n"
-                f"Summa: {o.get('amount', 0):,} so'm\n"
-                f"Holat: {o['status']}\n"
-                f"Yaratilgan: {o.get('created_at', '—')}\n"
-            )
-            await callback.message.edit_text(
-                text,
-                reply_markup=keyboards.get_admin_order_detail_keyboard(oid, o["status"]),
-            )
-        else:
-            await callback.message.edit_text("❌ Buyurtma topilmadi.")
-    except Exception as e:
-        await callback.message.edit_text(f"❌ Xatolik: {e}")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# 6. НАСТРОЙКИ
-# ═══════════════════════════════════════════════════════════════════
-
-# Настройки хранятся в памяти (можно сохранить в БД позже)
 _runtime_settings = {
-    "stars_price_per_unit": 200,        # Цена за 1 star (сум)
-    "min_topup_amount": 1000,           # Минимальное пополнение
-    "max_topup_amount": 100_000_000,    # Максимальное пополнение
-    "referral_bonus": 300,              # Бонус за реферала
-    "gift_enabled": True,               # Включить/выключить подарки
-    "stars_enabled": True,              # Включить/выключить Stars
-    "maintenance_mode": False,          # Режим обслуживания
+    "stars_price_per_unit": 200,
+    "min_topup_amount": 1000,
+    "max_topup_amount": 100_000_000,
+    "referral_bonus": 300,
+    "gift_enabled": True,
+    "stars_enabled": True,
+    "maintenance_mode": False,
 }
 
 SETTINGS_LABELS = {
-    "stars_price_per_unit": "⭐ Stars narxi (so'm/1 star)",
-    "min_topup_amount": "💳 Min to'ldirish (so'm)",
-    "max_topup_amount": "💳 Max to'ldirish (so'm)",
-    "referral_bonus": "👥 Referal bonusi (so'm)",
-    "gift_enabled": "🎁 Sovg'alar (true/false)",
-    "stars_enabled": "⭐ Stars xizmati (true/false)",
-    "maintenance_mode": "🔧 Texnik ishlar rejimi (true/false)",
+    "stars_price_per_unit": "\u2b50 Stars \u0446\u0435\u043d\u0430 (\u0441\u0443\u043c/1 star)",
+    "min_topup_amount": "\U0001f4b3 \u041c\u0438\u043d. \u043f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 (\u0441\u0443\u043c)",
+    "max_topup_amount": "\U0001f4b3 \u041c\u0430\u043a\u0441. \u043f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 (\u0441\u0443\u043c)",
+    "referral_bonus": "\U0001f465 \u0420\u0435\u0444\u0435\u0440\u0430\u043b\u044c\u043d\u044b\u0439 \u0431\u043e\u043d\u0443\u0441 (\u0441\u0443\u043c)",
+    "gift_enabled": "\U0001f381 \u041f\u043e\u0434\u0430\u0440\u043a\u0438 (true/false)",
+    "stars_enabled": "\u2b50 Stars \u0441\u0435\u0440\u0432\u0438\u0441 (true/false)",
+    "maintenance_mode": "\U0001f6a7 \u0420\u0435\u0436\u0438\u043c \u043e\u0431\u0441\u043b\u0443\u0436\u0438\u0432\u0430\u043d\u0438\u044f (true/false)",
 }
 
 
 def _settings_text() -> str:
-    lines = ["⚙️ <b>Sozlamalar</b>\n"]
+    lines = ["\u2699\ufe0f <b>\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438</b>\n"]
     for key, label in SETTINGS_LABELS.items():
         val = _runtime_settings.get(key)
-        lines.append(f"• {label}\n  <code>{key}</code> = <b>{val}</b>")
-    lines.append("\n✏️ O'zgartirish uchun kalit nomini yuboring")
+        lines.append(f"\u2022 {label}\n  <code>{key}</code> = <b>{val}</b>")
+    lines.append("\n\U0000270f\ufe0f \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043d\u0430 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440 \u043d\u0438\u0436\u0435 \u0434\u043b\u044f \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f:")
     return "\n".join(lines)
 
 
 def _settings_keyboard():
-    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+    from aiogram.types import InlineKeyboardButton
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     builder = InlineKeyboardBuilder()
     for key in SETTINGS_LABELS:
         builder.row(InlineKeyboardButton(
-            text=f"✏️ {SETTINGS_LABELS[key].split('(')[0].strip()}",
+            text=f"\u270f\ufe0f {SETTINGS_LABELS[key].split('(')[0].strip()}",
             callback_data=f"admin_set_{key}"
         ))
-    builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
+    builder.row(InlineKeyboardButton(text="\u2b05\ufe0f \u041d\u0430\u0437\u0430\u0434", callback_data="admin_main_menu"))
     return builder.as_markup()
 
 
 @router.callback_query(F.data == "admin_settings")
-async def admin_settings_menu(callback: CallbackQuery):
+async def admin_settings_menu_cb(callback: CallbackQuery):
     await callback.answer()
     await callback.message.edit_text(
         _settings_text(),
@@ -844,45 +335,42 @@ async def admin_settings_menu(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("admin_set_"))
-async def admin_set_key(callback: CallbackQuery, state: FSMContext):
+async def admin_set_key_cb(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     key = callback.data[len("admin_set_"):]
     if key not in _runtime_settings:
-        await callback.answer("❌ Noma'lum kalit", show_alert=True)
+        await callback.answer("\u274c \u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440", show_alert=True)
         return
     current = _runtime_settings[key]
     label = SETTINGS_LABELS.get(key, key)
     await callback.message.edit_text(
-        f"✏️ <b>{label}</b>\n\n"
-        f"Hozirgi qiymat: <code>{current}</code>\n\n"
-        f"Yangi qiymatni kiriting:\n"
-        f"<i>(raqam yoki true/false)</i>"
+        f"\u270f\ufe0f <b>{label}</b>\n\n"
+        f"\u0422\u0435\u043a\u0443\u0449\u0435\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435: <code>{current}</code>\n\n"
+        f"\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435:\n"
+        f"<i>(\u0447\u0438\u0441\u043b\u043e \u0438\u043b\u0438 true/false)</i>"
     )
     await state.update_data(settings_key=key)
     await state.set_state(AdminStates.settings_value)
 
 
 @router.message(AdminStates.settings_value)
-async def admin_set_value(message: Message, state: FSMContext):
+async def admin_set_value_msg(message: Message, state: FSMContext):
     data = await state.get_data()
     key = data.get("settings_key")
     raw = (message.text or "").strip()
-
     if key not in _runtime_settings:
-        await message.answer("❌ Xatolik. Qaytadan /admin")
+        await message.answer("\u274c \u041e\u0448\u0438\u0431\u043a\u0430. \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 /admin")
         await state.clear()
         return
-
     current = _runtime_settings[key]
-    # Определяем тип по текущему значению
     try:
         if isinstance(current, bool):
-            if raw.lower() in ("true", "1", "ha", "yes"):
+            if raw.lower() in ("true", "1", "da", "yes"):
                 new_val = True
-            elif raw.lower() in ("false", "0", "yoq", "no"):
+            elif raw.lower() in ("false", "0", "net", "no"):
                 new_val = False
             else:
-                raise ValueError("bool kerak: true yoki false")
+                raise ValueError("\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e true \u0438\u043b\u0438 false")
         elif isinstance(current, int):
             new_val = int(raw.replace(",", "").replace(" ", ""))
         elif isinstance(current, float):
@@ -890,18 +378,16 @@ async def admin_set_value(message: Message, state: FSMContext):
         else:
             new_val = raw
     except ValueError as e:
-        await message.answer(f"❌ Noto'g'ri qiymat: {e}\nQayta kiriting:")
+        await message.answer(f"\u274c \u041d\u0435\u0432\u0435\u0440\u043d\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435: {e}\n\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u043d\u043e\u0432\u0430:")
         return
-
     _runtime_settings[key] = new_val
     label = SETTINGS_LABELS.get(key, key)
-    logger.info(f"Admin {message.from_user.id} changed setting {key}: {current} → {new_val}")
-
+    logger.info(f"Admin {message.from_user.id} changed {key}: {current} \u2192 {new_val}")
     await message.answer(
-        f"✅ <b>Sozlama yangilandi</b>\n\n"
+        f"\u2705 <b>\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0430</b>\n\n"
         f"{label}\n"
-        f"Eski: <code>{current}</code>\n"
-        f"Yangi: <b><code>{new_val}</code></b>",
+        f"\u0421\u0442\u0430\u0440\u043e\u0435: <code>{current}</code>\n"
+        f"\u041d\u043e\u0432\u043e\u0435: <b><code>{new_val}</code></b>",
     )
     await state.clear()
     await message.answer(
@@ -911,5 +397,191 @@ async def admin_set_value(message: Message, state: FSMContext):
 
 
 def get_setting(key: str):
-    """Get runtime setting value — use in API/handlers"""
     return _runtime_settings.get(key)
+
+
+@router.callback_query(F.data == "admin_ref_contest")
+async def admin_ref_contest_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f4e2 <b>\u0420\u0435\u0444\u0435\u0440\u0430\u043b\u044c\u043d\u044b\u0439 \u043a\u043e\u043d\u043a\u0443\u0440\u0441</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0440\u0435\u0444\u0435\u0440\u0430\u043b\u044c\u043d\u044b\u043c\u0438 \u043a\u043e\u043d\u043a\u0443\u0440\u0441\u0430\u043c\u0438.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_create_check")
+async def admin_create_check_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\u26a1 <b>\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0447\u0435\u043a</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0447\u0435\u043a\u043e\u0432 \u0434\u043b\u044f \u043f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u0431\u0430\u043b\u0430\u043d\u0441\u0430.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_required_sub")
+async def admin_required_sub_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f4cc <b>\u041e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0430</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u0443\u044e \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0443 \u043d\u0430 \u043a\u0430\u043d\u0430\u043b.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_premiums")
+async def admin_premiums_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\u2b50 <b>\u041f\u0440\u0435\u043c\u0438\u0443\u043c\u044b</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u0440\u0435\u043c\u0438\u0443\u043c \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0430\u043c\u0438.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_gifts")
+async def admin_gifts_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f381 <b>\u041f\u043e\u0434\u0430\u0440\u043a\u0438</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u0434\u0430\u0440\u043a\u0430\u043c\u0438.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_autopay")
+async def admin_autopay_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f4b8 <b>\u0410\u0432\u0442\u043e\u043e\u043f\u043b\u0430\u0442\u0430</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u043e\u043f\u043b\u0430\u0442\u044b.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_payment_system")
+async def admin_payment_system_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f4b3 <b>\u041f\u043b\u0430\u0442\u0451\u0436\u043d\u0430\u044f \u0441\u0438\u0441\u0442\u0435\u043c\u0430</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043f\u043b\u0430\u0442\u0451\u0436\u043d\u044b\u0445 \u0441\u0438\u0441\u0442\u0435\u043c.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_stars_topup")
+async def admin_stars_topup_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\u2b50 <b>\u041f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 Stars</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435\u043c Telegram Stars.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.callback_query(F.data == "admin_admins_settings")
+async def admin_admins_settings_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "\U0001f510 <b>\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0430\u0434\u043c\u0438\u043d\u043e\u0432</b>\n\n"
+        "\U0001f6a7 \u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435.\n"
+        "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430\u043c\u0438.",
+        reply_markup=admin_kb.stub_keyboard(),
+    )
+
+
+@router.message(Command("confirm"))
+async def cmd_confirm(message: Message):
+    if not message.from_user:
+        return
+    if not _is_admin(message.from_user.id):
+        await _deny(message)
+        return
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.answer(
+            "\u274c \u0423\u043a\u0430\u0436\u0438\u0442\u0435 ID \u0437\u0430\u043a\u0430\u0437\u0430:\n\n"
+            "<code>/confirm topup_abc123</code>",
+        )
+        return
+    order_id = args[1].strip()
+    await message.answer(f"\u23f3 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430: <code>{order_id}</code>...")
+    from services.payment_client import confirm_payment
+    result = await confirm_payment(order_id)
+    if result.get("ok"):
+        await message.answer(
+            f"\u2705 <b>\u041f\u043b\u0430\u0442\u0451\u0436 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d!</b>\n\n"
+            f"\U0001f4e6 \u0417\u0430\u043a\u0430\u0437: <code>{order_id}</code>\n"
+            f"\U0001f4b0 \u0421\u0443\u043c\u043c\u0430: {result.get('amount', 0):,} \u0441\u0443\u043c\n"
+            f"\U0001f4b3 \u041d\u043e\u0432\u044b\u0439 \u0431\u0430\u043b\u0430\u043d\u0441: {result.get('new_balance', 0):,} \u0441\u0443\u043c",
+        )
+    elif "PAYMENT_SERVER_URL not configured" in result.get("error", ""):
+        await _confirm_locally(message, order_id)
+    else:
+        unknown_error = "\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430\u044f \u043e\u0448\u0438\u0431\u043a\u0430"
+        await message.answer(
+            f"\u274c \u041e\u0448\u0438\u0431\u043a\u0430: {result.get('error', unknown_error)}",
+        )
+
+
+async def _confirm_locally(message: Message, order_id: str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        order = await conn.fetchrow(
+            "SELECT * FROM orders WHERE external_id = $1",
+            order_id
+        )
+        if not order:
+            await message.answer(f"\u274c \u0417\u0430\u043a\u0430\u0437 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d: <code>{order_id}</code>")
+            return
+        if order["status"] != "pending":
+            await message.answer(f"\u26a0\ufe0f \u0417\u0430\u043a\u0430\u0437 <code>{order_id}</code> \u0443\u0436\u0435 \u0432 \u0441\u0442\u0430\u0442\u0443\u0441\u0435 \u00ab{order['status']}\u00bb")
+            return
+        tid = order["telegram_id"]
+        amount = order["amount"]
+        new_balance = await add_balance(tid, amount)
+        await conn.execute(
+            "UPDATE orders SET status = 'completed' WHERE external_id = $1",
+            order_id
+        )
+        await record_payment(
+            order_id, tid, amount, "paid",
+            f'{{"source": "admin_confirm_local", "admin_id": {message.from_user.id}}}'
+        )
+        bot = Bot(
+            token=config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+        try:
+            user_text = (
+                f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_CHECK}\">\u2705</tg-emoji> "
+                f"<b>\u041f\u043b\u0430\u0442\u0451\u0436 \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d</b>\n\n"
+                f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_WALLET}\">\U0001f45b</tg-emoji> "
+                f"\u041d\u0430 \u0432\u0430\u0448 \u0441\u0447\u0451\u0442 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u043e <b>{amount:,}</b> \u0441\u0443\u043c.\n"
+                f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_MONEY}\">\U0001f4b0</tg-emoji> "
+                f"\u041d\u043e\u0432\u044b\u0439 \u0431\u0430\u043b\u0430\u043d\u0441: <b>{new_balance:,}</b> \u0441\u0443\u043c"
+            )
+            await bot.send_message(tid, user_text)
+        except Exception as e:
+            logger.warning(f"Could not notify user {tid}: {e}")
+        finally:
+            await bot.session.close()
+        user = await conn.fetchrow("SELECT * FROM users WHERE telegram_id = $1", tid)
+        username = user["username"] if user else str(tid)
+        await message.answer(
+            f"\u2705 <b>\u041f\u043b\u0430\u0442\u0451\u0436 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d!</b>\n\n"
+            f"\U0001f464 \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c: @{username}\n"
+            f"\U0001f4e6 \u0417\u0430\u043a\u0430\u0437: <code>{order_id}</code>\n"
+            f"\U0001f4b0 \u0421\u0443\u043c\u043c\u0430: {amount:,} \u0441\u0443\u043c\n"
+            f"\U0001f4b3 \u041d\u043e\u0432\u044b\u0439 \u0431\u0430\u043b\u0430\u043d\u0441: {new_balance:,} \u0441\u0443\u043c\n\n"
+            f"\U0001f4e8 \u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044e \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435.",
+        )

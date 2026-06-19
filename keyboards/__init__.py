@@ -1,7 +1,7 @@
 from aiogram.types import (
-    ReplyKeyboardMarkup, 
-    KeyboardButton, 
-    InlineKeyboardMarkup, 
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    InlineKeyboardMarkup,
     InlineKeyboardButton,
     WebAppInfo
 )
@@ -10,7 +10,6 @@ import config
 
 
 def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
-    """Main inline menu: Webapp (green), Balans To'ldirish (blue) + Support (orange)"""
     builder = InlineKeyboardBuilder()
     admin_url = "https://t.me/StarPayUzAdmin"
 
@@ -40,20 +39,18 @@ def get_webapp_main_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
-    """Simple reply keyboard"""
     builder = ReplyKeyboardBuilder()
-    
+
     builder.row(
         KeyboardButton(text="🏠 Bosh menyu")
     )
-    
+
     return builder.as_markup(resize_keyboard=True)
 
 
 def get_stars_keyboard() -> InlineKeyboardMarkup:
-    """Stars purchase keyboard"""
     builder = InlineKeyboardBuilder()
-    
+
     for package in config.PRODUCTS["stars"]["packages"]:
         amount = package["amount"]
         price = package["price"]
@@ -63,18 +60,17 @@ def get_stars_keyboard() -> InlineKeyboardMarkup:
                 callback_data=f"buy_stars_{amount}"
             )
         )
-    
+
     builder.row(
         InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_main")
     )
-    
+
     return builder.as_markup()
 
 
 def get_premium_keyboard() -> InlineKeyboardMarkup:
-    """Premium purchase keyboard with premium emoji"""
     builder = InlineKeyboardBuilder()
-    
+
     for package in config.PRODUCTS["premium"]["packages"]:
         duration = package["duration"]
         price = package["price"]
@@ -85,18 +81,17 @@ def get_premium_keyboard() -> InlineKeyboardMarkup:
                 callback_data=f"buy_premium_{duration}"
             )
         )
-    
+
     builder.row(
         InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_main")
     )
-    
+
     return builder.as_markup()
 
 
 def get_payment_keyboard(payment_url: str, order_id: str) -> InlineKeyboardMarkup:
-    """Payment keyboard"""
     builder = InlineKeyboardBuilder()
-    
+
     builder.row(
         InlineKeyboardButton(text="💳 To'lash", url=payment_url)
     )
@@ -106,14 +101,13 @@ def get_payment_keyboard(payment_url: str, order_id: str) -> InlineKeyboardMarku
     builder.row(
         InlineKeyboardButton(text="❌ Bekor qilish", callback_data=f"cancel_order_{order_id}")
     )
-    
+
     return builder.as_markup()
 
 
 def get_webapp_keyboard() -> ReplyKeyboardMarkup:
-    """Web App keyboard"""
     builder = ReplyKeyboardBuilder()
-    
+
     builder.row(
         KeyboardButton(
             text="🛒 Magazin ochish",
@@ -123,12 +117,11 @@ def get_webapp_keyboard() -> ReplyKeyboardMarkup:
     builder.row(
         KeyboardButton(text="◀️ Orqaga")
     )
-    
+
     return builder.as_markup(resize_keyboard=True)
 
 
 def get_admin_main_keyboard() -> InlineKeyboardMarkup:
-    """Admin panel main menu"""
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats"))
     builder.row(InlineKeyboardButton(text="👥 Foydalanuvchilar", callback_data="admin_users"))
@@ -141,7 +134,6 @@ def get_admin_main_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_admin_payments_keyboard(orders: list, page: int = 1, total: int = 0) -> InlineKeyboardMarkup:
-    """Pending payments list with confirm buttons"""
     builder = InlineKeyboardBuilder()
     for o in orders:
         label = f"💰 #{o['id']} — {o.get('telegram_id', '?')} — {o.get('amount', 0):,} so'm"
@@ -149,7 +141,6 @@ def get_admin_payments_keyboard(orders: list, page: int = 1, total: int = 0) -> 
             text=label,
             callback_data=f"admin_pay_detail_{o['id']}"
         ))
-    # Pagination
     has_next = (page * 5) < total
     nav = []
     if page > 1:
@@ -164,7 +155,6 @@ def get_admin_payments_keyboard(orders: list, page: int = 1, total: int = 0) -> 
 
 
 def get_admin_pay_confirm_keyboard(order_id: int) -> InlineKeyboardMarkup:
-    """Confirm or reject a payment"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(
@@ -183,14 +173,12 @@ def get_admin_pay_confirm_keyboard(order_id: int) -> InlineKeyboardMarkup:
 
 
 def get_admin_back_keyboard() -> InlineKeyboardMarkup:
-    """Back to admin main menu"""
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main_menu"))
     return builder.as_markup()
 
 
 def get_admin_users_keyboard() -> InlineKeyboardMarkup:
-    """Users management menu"""
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="📋 Ro'yxat", callback_data="admin_users_list_1"))
     builder.row(InlineKeyboardButton(text="🔍 Qidirish", callback_data="admin_users_search"))
@@ -199,7 +187,6 @@ def get_admin_users_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_admin_users_list_keyboard(page: int, has_next: bool) -> InlineKeyboardMarkup:
-    """Users list pagination"""
     builder = InlineKeyboardBuilder()
     nav = []
     if page > 1:
@@ -214,7 +201,6 @@ def get_admin_users_list_keyboard(page: int, has_next: bool) -> InlineKeyboardMa
 
 
 def get_admin_user_actions_keyboard(telegram_id: int) -> InlineKeyboardMarkup:
-    """Single user actions"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="🔒 Bloklash", callback_data=f"admin_user_block_{telegram_id}"),
@@ -228,7 +214,6 @@ def get_admin_user_actions_keyboard(telegram_id: int) -> InlineKeyboardMarkup:
 
 
 def get_admin_orders_keyboard(orders: list, page: int = 1, total: int = 0) -> InlineKeyboardMarkup:
-    """Orders list with clickable order buttons + pagination"""
     builder = InlineKeyboardBuilder()
     for o in orders:
         status_emoji = {"pending": "⏳", "processing": "🔄", "completed": "✅",
@@ -237,7 +222,6 @@ def get_admin_orders_keyboard(orders: list, page: int = 1, total: int = 0) -> In
         builder.row(InlineKeyboardButton(
             text=label, callback_data=f"admin_order_detail_{o['id']}"
         ))
-    # Pagination
     has_next = (page * 5) < total
     nav = []
     if page > 1:
@@ -252,7 +236,6 @@ def get_admin_orders_keyboard(orders: list, page: int = 1, total: int = 0) -> In
 
 
 def get_admin_order_detail_keyboard(order_id: int, current_status: str) -> InlineKeyboardMarkup:
-    """Order detail actions"""
     builder = InlineKeyboardBuilder()
     statuses = ["pending", "processing", "completed", "failed", "cancelled"]
     for s in statuses:
@@ -265,7 +248,6 @@ def get_admin_order_detail_keyboard(order_id: int, current_status: str) -> Inlin
 
 
 def get_admin_balance_actions_keyboard() -> InlineKeyboardMarkup:
-    """Balance actions: add or deduct"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="➕ Qo'shish", callback_data="admin_balance_act_add"),
@@ -276,7 +258,6 @@ def get_admin_balance_actions_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_admin_broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
-    """Broadcast confirm: Yes/No"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="✅ Yuborish", callback_data="admin_broadcast_confirm"),
@@ -286,24 +267,21 @@ def get_admin_broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_admin_keyboard() -> InlineKeyboardMarkup:
-    """Legacy admin panel keyboard"""
     return get_admin_main_keyboard()
 
 
 def get_confirm_keyboard(action: str, data: str) -> InlineKeyboardMarkup:
-    """Confirmation keyboard"""
     builder = InlineKeyboardBuilder()
-    
+
     builder.row(
         InlineKeyboardButton(text="✅ Ha", callback_data=f"confirm_{action}_{data}"),
         InlineKeyboardButton(text="❌ Yo'q", callback_data=f"cancel_{action}")
     )
-    
+
     return builder.as_markup()
 
 
 def get_back_keyboard() -> InlineKeyboardMarkup:
-    """Simple back button"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_main")
@@ -312,7 +290,6 @@ def get_back_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_card_payment_keyboard(order_id: str) -> InlineKeyboardMarkup:
-    """Card payment: check + cancel buttons"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(
@@ -330,7 +307,6 @@ def get_card_payment_keyboard(order_id: str) -> InlineKeyboardMarkup:
 
 
 def get_bosh_menu_keyboard() -> InlineKeyboardMarkup:
-    """Blue Bosh Menu button for timeout message"""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(
