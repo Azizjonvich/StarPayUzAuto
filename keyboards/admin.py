@@ -6,33 +6,33 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.row(
-        InlineKeyboardButton(text="📊 Статистика", callback_data="admin_stats")
+        InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats")
     )
     builder.row(
-        InlineKeyboardButton(text="📨 Рассылка", callback_data="admin_broadcast"),
-        InlineKeyboardButton(text="⚙️ Настройки", callback_data="admin_settings"),
+        InlineKeyboardButton(text="📨 Xabar yuborish", callback_data="admin_broadcast"),
+        InlineKeyboardButton(text="⚙️ Sozlamalar", callback_data="admin_settings"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔴 Управление пользователями", callback_data="admin_users")
+        InlineKeyboardButton(text="🔴 Foydalanuvchilar", callback_data="admin_users")
     )
     builder.row(
-        InlineKeyboardButton(text="📢 Реферальный конкурс", callback_data="admin_ref_contest"),
-        InlineKeyboardButton(text="⚡ Создать чек", callback_data="admin_create_check"),
+        InlineKeyboardButton(text="📢 Referal konkurs", callback_data="admin_ref_contest"),
+        InlineKeyboardButton(text="⚡ Chek yaratish", callback_data="admin_create_check"),
     )
     builder.row(
-        InlineKeyboardButton(text="📌 Обязательная подписка", callback_data="admin_required_sub"),
-        InlineKeyboardButton(text="⭐ Премиумы", callback_data="admin_premiums"),
+        InlineKeyboardButton(text="📌 Majburiy obuna", callback_data="admin_required_sub"),
+        InlineKeyboardButton(text="⭐ Premiumlar", callback_data="admin_premiums"),
     )
     builder.row(
-        InlineKeyboardButton(text="🎁 Подарки", callback_data="admin_gifts"),
-        InlineKeyboardButton(text="💸 Автооплата", callback_data="admin_autopay"),
+        InlineKeyboardButton(text="🎁 Sovg'alar", callback_data="admin_gifts"),
+        InlineKeyboardButton(text="💸 Avtoto'lov", callback_data="admin_autopay"),
     )
     builder.row(
-        InlineKeyboardButton(text="💳 Платёжная система", callback_data="admin_payment_system"),
-        InlineKeyboardButton(text="⭐ Пополнение Stars", callback_data="admin_stars_topup"),
+        InlineKeyboardButton(text="💳 To'lov tizimi", callback_data="admin_payment_system"),
+        InlineKeyboardButton(text="⭐ Stars to'ldirish", callback_data="admin_stars_topup"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔐 Настройки админов", callback_data="admin_admins_settings")
+        InlineKeyboardButton(text="🔐 Admin sozlamalari", callback_data="admin_admins_settings")
     )
 
     return builder.as_markup()
@@ -41,7 +41,7 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
 def back_button(callback_data: str = "admin_main_menu") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=callback_data)
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data=callback_data)
     )
     return builder.as_markup()
 
@@ -49,10 +49,10 @@ def back_button(callback_data: str = "admin_main_menu") -> InlineKeyboardMarkup:
 def stats_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_stats"),
+        InlineKeyboardButton(text="🔄 Yangilash", callback_data="admin_stats"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_main_menu"),
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
     )
     return builder.as_markup()
 
@@ -60,13 +60,13 @@ def stats_keyboard() -> InlineKeyboardMarkup:
 def users_main_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="📋 Список пользователей", callback_data="admin_users_list_1"),
+        InlineKeyboardButton(text="📋 Foydalanuvchilar ro'yxati", callback_data="admin_users_list_1"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔍 Поиск", callback_data="admin_users_search"),
+        InlineKeyboardButton(text="🔍 Qidirish", callback_data="admin_users_search"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_main_menu"),
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
     )
     return builder.as_markup()
 
@@ -81,28 +81,28 @@ def users_list_keyboard(page: int, has_next: bool) -> InlineKeyboardMarkup:
         nav.append(InlineKeyboardButton(text="➡️", callback_data=f"admin_users_list_{page+1}"))
     if nav:
         builder.row(*nav)
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_users"))
+    builder.row(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_users"))
     return builder.as_markup()
 
 
 def user_actions_keyboard(telegram_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="🔒 Блокировать", callback_data=f"admin_user_block_{telegram_id}"),
-        InlineKeyboardButton(text="🔓 Разблокировать", callback_data=f"admin_user_unblock_{telegram_id}"),
+        InlineKeyboardButton(text="🔒 Bloklash", callback_data=f"admin_user_block_{telegram_id}"),
+        InlineKeyboardButton(text="🔓 Blokdan chiqarish", callback_data=f"admin_user_unblock_{telegram_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🗑 Удалить", callback_data=f"admin_user_delete_{telegram_id}"),
+        InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"admin_user_delete_{telegram_id}"),
     )
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_users"))
+    builder.row(InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_users"))
     return builder.as_markup()
 
 
 def broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="✅ Отправить", callback_data="admin_broadcast_confirm"),
-        InlineKeyboardButton(text="❌ Отмена", callback_data="admin_broadcast_cancel"),
+        InlineKeyboardButton(text="✅ Yuborish", callback_data="admin_broadcast_confirm"),
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_broadcast_cancel"),
     )
     return builder.as_markup()
 
@@ -110,6 +110,6 @@ def broadcast_confirm_keyboard() -> InlineKeyboardMarkup:
 def stub_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_main_menu"),
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
     )
     return builder.as_markup()
