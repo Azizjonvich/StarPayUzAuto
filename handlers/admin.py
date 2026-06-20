@@ -18,6 +18,7 @@ from services.database import (
     get_orders_paginated, get_users_paginated, search_users_db,
     block_user_db, unblock_user_db, delete_user_db,
     update_order_status, record_payment, get_pool,
+    get_user, reset_balance,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,9 @@ class AdminStates(StatesGroup):
     stars_reason = State()
     sub_channel_input = State()
     admin_add_input = State()
+    balance_sp_id = State()
+    balance_amount = State()
+    balance_reset_sp_id = State()
 
 
 ADMIN_IDS = list(config.ADMINS)
@@ -849,7 +853,209 @@ async def admin_stars_confirm_cb(callback: CallbackQuery, state: FSMContext):
 
 
 # ═══════════════════════════════════════════
-# 13. ADMIN SOZLAMALARI
+# 13. BALANCE MANAGEMENT (ADD/DEDUCT/RESET)
+# ═══════════════════════════════════════════
+
+@router.callback_query(F.data == "admin_balance")
+async def admin_balance_menu_cb(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text(
+        "💰 <b>Balansni boshqarish</b>\n\n"
+        "Foydalanuvchi balansini boshqarish uchun pastdagi tugmalardan foydalaning:",
+        reply_markup=admin_kb.balance_main_keyboard(),
+    )
+
+
+# ── Add Balance ──
+
+@router.callback_query(F.data == "admin_balance_add")
+async def admin_balance_add_start_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.update_data(balance_action="add")
+    await callback.message.edit_text(
+        "💰 <b>Balans qo'shish</b>\n\n"
+        "Foydalanuvchi SP ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.balance_sp_id)
+
+
+# ── Deduct Balance ──
+
+@router.callback_query(F.data == "admin_balance_deduct")
+async def admin_balance_deduct_start_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.update_data(balance_action="deduct")
+    await callback.message.edit_text(
+        "💰 <b>Balansdan ayirish</b>\n\n"
+        "Foydalanuvchi SP ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.balance_sp_id)
+
+
+# ── SP ID input for add/deduct ──
+
+@router.message(AdminStates.balance_sp_id)
+async def admin_balance_sp_id_msg(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if not text.isdigit():
+        await message.answer("❌ SP ID raqam bo'lishi kerak. Qayta kiriting yoki /admin ni bosing.")
+        return
+    sp_id = int(text)
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await message.answer(f"❌ SP ID <code>{sp_id}</code> bo'yicha foydalanuvchi topilmadi.")
+        return
+    data = await state.get_data()
+    action = data.get("balance_action")
+    await state.update_data(balance_sp_id=sp_id, balance_user_tid=user["telegram_id"], balance_user_balance=user["balance"])
+    action_label = "qo'shish" if action == "add" else "ayirish"
+    await message.answer(
+        f"👤 <b>Foydalanuvchi #{sp_id}</b>\n"
+        f"Joriy balans: <b>{user['balance']:,}</b> so'm\n\n"
+        f"Balansdan {action_label} uchun summani kiriting (so'mda):"
+    )
+    await state.set_state(AdminStates.balance_amount)
+
+
+# ── Amount input for add/deduct ──
+
+@router.message(AdminStates.balance_amount)
+async def admin_balance_amount_msg(message: Message, state: FSMContext):
+    try:
+        amount = int(message.text.strip().replace(",", "").replace(" ", ""))
+    except ValueError:
+        await message.answer("❌ Noto'g'ri summa. Raqam kiriting.")
+        return
+    if amount <= 0:
+        await message.answer("❌ Summa 0 dan katta bo'lishi kerak.")
+        return
+    data = await state.get_data()
+    action = data.get("balance_action")
+    sp_id = data["balance_sp_id"]
+    user_balance = data.get("balance_user_balance", 0)
+    if action == "deduct" and user_balance < amount:
+        await message.answer(
+            f"❌ Foydalanuvchi balansida so'ralgan summa yetarli emas.\n"
+            f"Joriy balans: <b>{user_balance:,}</b> so'm\n"
+            f"Talab qilingan: <b>{amount:,}</b> so'm"
+        )
+        return
+    await state.update_data(balance_amount=amount)
+    action_label = "Qo'shiladi" if action == "add" else "Ayiriladi"
+    await message.answer(
+        f"💰 <b>Ma'lumotlarni tekshiring</b>\n\n"
+        f"Foydalanuvchi: #{sp_id}\n"
+        f"{action_label}: {amount:,} so'm\n"
+        f"Joriy balans: {user_balance:,} so'm\n\n"
+        f"Tasdiqlaysizmi?",
+        reply_markup=admin_kb.balance_confirm_keyboard(sp_id, amount, action),
+    )
+
+
+# ── Confirm add/deduct ──
+
+@router.callback_query(F.data.startswith("admin_balance_confirm_"))
+async def admin_balance_confirm_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("⏳ Amal bajarilmoqda...")
+    parts = callback.data.split("_")
+    action = parts[3]
+    sp_id = int(parts[4])
+    amount = int(parts[5])
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await callback.message.edit_text("❌ Foydalanuvchi topilmadi.")
+        return
+    tid = user["telegram_id"]
+    balance_before = user["balance"]
+    admin_id = callback.from_user.id
+
+    if action == "add":
+        new_balance = await add_balance(tid, amount)
+        tx_type = "admin_add"
+        action_text = "qo'shildi"
+    else:
+        if balance_before < amount:
+            await callback.message.edit_text("❌ Balansda yetarli mablag' yo'q.")
+            return
+        await deduct_balance(tid, amount)
+        new_balance = balance_before - amount
+        tx_type = "admin_deduct"
+        action_text = "ayirildi"
+
+    await add_balance_history(tid, amount, tx_type, balance_before, new_balance,
+                              f"Admin {action_text}: SP #{sp_id}", admin_id)
+
+    username = user.get("username") or str(tid)
+    await callback.message.edit_text(
+        f"✅ <b>Balans {action_text}!</b>\n\n"
+        f"👤 Foydalanuvchi: #{sp_id} (@{username})\n"
+        f"💰 Summa: {amount:,} so'm\n"
+        f"💳 Eski balans: {balance_before:,} so'm\n"
+        f"💳 Yangi balans: {new_balance:,} so'm"
+    )
+    await _go_main(callback.message)
+
+
+# ── Reset Balance ──
+
+@router.callback_query(F.data == "admin_balance_reset")
+async def admin_balance_reset_start_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.edit_text(
+        "🔄 <b>Balansni nolga tushirish</b>\n\n"
+        "Foydalanuvchi SP ID sini kiriting:"
+    )
+    await state.set_state(AdminStates.balance_reset_sp_id)
+
+
+@router.message(AdminStates.balance_reset_sp_id)
+async def admin_balance_reset_sp_id_msg(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if not text.isdigit():
+        await message.answer("❌ SP ID raqam bo'lishi kerak. Qayta kiriting yoki /admin ni bosing.")
+        return
+    sp_id = int(text)
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await message.answer(f"❌ SP ID <code>{sp_id}</code> bo'yicha foydalanuvchi topilmadi.")
+        return
+    await state.update_data(balance_reset_sp_id=sp_id)
+    await message.answer(
+        f"👤 <b>Foydalanuvchi #{sp_id}</b>\n"
+        f"Joriy balans: <b>{user['balance']:,}</b> so'm\n\n"
+        f"⚠️ Balansni nolga tushirishni tasdiqlaysizmi?",
+        reply_markup=admin_kb.balance_reset_confirm_keyboard(sp_id),
+    )
+
+
+@router.callback_query(F.data.startswith("admin_balance_reset_confirm_"))
+async def admin_balance_reset_confirm_cb(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("⏳ Balans nolga tushirilmoqda...")
+    sp_id = int(callback.data.split("_")[-1])
+    user = await db.get_user_by_sp_id(sp_id)
+    if not user:
+        await callback.message.edit_text("❌ Foydalanuvchi topilmadi.")
+        return
+    tid = user["telegram_id"]
+    balance_before = user["balance"]
+    admin_id = callback.from_user.id
+
+    new_balance = await reset_balance(tid)
+    await add_balance_history(tid, -balance_before, "admin_reset", balance_before, 0,
+                              f"Admin reset: SP #{sp_id}", admin_id)
+
+    username = user.get("username") or str(tid)
+    await callback.message.edit_text(
+        f"✅ <b>Balans nolga tushirildi!</b>\n\n"
+        f"👤 Foydalanuvchi: #{sp_id} (@{username})\n"
+        f"💰 Eski balans: {balance_before:,} so'm\n"
+        f"💳 Yangi balans: <b>0</b> so'm"
+    )
+    await _go_main(callback.message)
+
+
+# ═══════════════════════════════════════════
+# 14. ADMIN SOZLAMALARI
 # ═══════════════════════════════════════════
 
 @router.callback_query(F.data == "admin_admins_settings")

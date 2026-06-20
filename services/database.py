@@ -172,6 +172,16 @@ async def add_balance(telegram_id: int, amount: int) -> int:
         return row["balance"] if row else 0
 
 
+async def reset_balance(telegram_id: int) -> int:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "UPDATE users SET balance = 0 WHERE telegram_id = $1 RETURNING balance",
+            telegram_id,
+        )
+        return row["balance"] if row else 0
+
+
 async def deduct_balance(telegram_id: int, amount: int) -> bool:
     user = await get_user(telegram_id)
     if not user or user["balance"] < amount:

@@ -32,6 +32,9 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="⭐ Stars to'ldirish", callback_data="admin_stars_topup"),
     )
     builder.row(
+        InlineKeyboardButton(text="💰 Balansni boshqarish", callback_data="admin_balance"),
+    )
+    builder.row(
         InlineKeyboardButton(text="🔐 Admin sozlamalari", callback_data="admin_admins_settings")
     )
 
@@ -202,6 +205,43 @@ def stars_topup_confirm_keyboard(sp_id: int, amount: int) -> InlineKeyboardMarku
     )
     builder.row(
         InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_stars_topup"),
+    )
+    return builder.as_markup()
+
+
+def balance_main_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="➕ Qo'shish", callback_data="admin_balance_add"),
+        InlineKeyboardButton(text="➖ Ayirish", callback_data="admin_balance_deduct"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="🔄 Nolga tushirish", callback_data="admin_balance_reset"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Orqaga", callback_data="admin_main_menu"),
+    )
+    return builder.as_markup()
+
+
+def balance_confirm_keyboard(sp_id: int, amount: int, action: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"admin_balance_confirm_{action}_{sp_id}_{amount}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_balance"),
+    )
+    return builder.as_markup()
+
+
+def balance_reset_confirm_keyboard(sp_id: int) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"admin_balance_reset_confirm_{sp_id}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_balance"),
     )
     return builder.as_markup()
 
