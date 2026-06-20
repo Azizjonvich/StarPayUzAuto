@@ -40,8 +40,8 @@ ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8000")
 
 # Premium Emoji IDs (for <tg-emoji> in messages and icon_custom_emoji_id on buttons)
 CUSTOM_EMOJI_WALLET = os.getenv("CUSTOM_EMOJI_WALLET", "5769403330761593044")  # 👛 для кнопки/суммы
-CUSTOM_EMOJI_MONEY = os.getenv("CUSTOM_EMOJI_MONEY", "5987880246865565644")    # 💰 баланс в тексте
-CUSTOM_EMOJI_CHECK = os.getenv("CUSTOM_EMOJI_CHECK", "5843908536467198016")    # ✅ успех
+CUSTOM_EMOJI_MONEY = os.getenv("CUSTOM_EMOJI_MONEY", "5811989245761426317")    # 💰 баланс в тексте
+CUSTOM_EMOJI_CHECK = os.getenv("CUSTOM_EMOJI_CHECK", "5895231943955451762")    # ✅ успех
 
 # Channel notifications emoji IDs
 EMOJI_STAR = os.getenv("EMOJI_STAR", "5312253613140121792")              # ⭐️
