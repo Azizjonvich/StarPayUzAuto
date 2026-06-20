@@ -499,6 +499,7 @@ async def admin_check_confirm_cb(callback: CallbackQuery, state: FSMContext):
     new_balance = await add_balance(tid, amount)
     await record_payment(f"check_{sp_id}_{int(time.time())}", tid, amount, "paid",
                           f'{{"source": "chek", "admin_id": {callback.from_user.id}}}')
+    await _notify_balance_add(callback.bot, tid, amount, new_balance)
     username = user.get("username") or str(tid)
     await callback.message.edit_text(
         f"✅ <b>Chek yaratildi!</b>\n\n"
@@ -841,6 +842,7 @@ async def admin_stars_confirm_cb(callback: CallbackQuery, state: FSMContext):
     new_balance = await add_balance(tid, total_amount)
     await record_payment(f"stars_{sp_id}_{int(time.time())}", tid, total_amount, "paid",
                           f'{{"source": "stars_admin", "admin_id": {callback.from_user.id}}}')
+    await _notify_balance_add(callback.bot, tid, total_amount, new_balance)
     username = user.get("username") or str(tid)
     await callback.message.edit_text(
         f"✅ <b>Stars to'ldirildi!</b>\n\n"
@@ -985,6 +987,9 @@ async def admin_balance_confirm_cb(callback: CallbackQuery, state: FSMContext):
     await add_balance_history(tid, amount, tx_type, balance_before, new_balance,
                               f"Admin {action_text}: SP #{sp_id}", admin_id)
 
+    if action == "add":
+        await _notify_balance_add(callback.bot, tid, amount, new_balance)
+
     username = user.get("username") or str(tid)
     await callback.message.edit_text(
         f"✅ <b>Balans {action_text}!</b>\n\n"
@@ -1101,6 +1106,25 @@ async def admin_admin_del_cb(callback: CallbackQuery):
     if aid in ADMIN_IDS:
         ADMIN_IDS.remove(aid)
     await admin_admins_settings_cb(callback)
+
+
+# ═══════════════════════════════════════════
+# Foydalanuvchiga bildirishnoma yuborish
+# ═══════════════════════════════════════════
+
+async def _notify_balance_add(bot: Bot, telegram_id: int, amount: int, new_balance: int):
+    try:
+        text = (
+            f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_CHECK}\">✅</tg-emoji> "
+            f"<b>To'lov muvaffaqiyatli qabul qilindi</b>\n\n"
+            f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_WALLET}\">👛</tg-emoji> "
+            f"+{amount:,} so'm\n"
+            f"<tg-emoji emoji-id=\"{config.CUSTOM_EMOJI_MONEY}\">💰</tg-emoji> "
+            f"Balans: {new_balance:,} so'm"
+        )
+        await bot.send_message(telegram_id, text)
+    except Exception as e:
+        logger.warning(f"Could not notify user {telegram_id}: {e}")
 
 
 # ═══════════════════════════════════════════
