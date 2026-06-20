@@ -13,6 +13,8 @@ class UserInfo(BaseModel):
     referred_by: int | None = None
     language: str = "uz"
     is_blocked: bool = False
+    is_premium: bool = False
+    premium_until: datetime | None = None
     created_at: datetime | None = None
 
     class Config:

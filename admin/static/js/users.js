@@ -103,16 +103,24 @@ async function fetchUsers() {
                             </td>
                             <td>#${u.sp_id || '—'}</td>
                             <td><strong>${formatNumber(u.balance)}</strong> so'm</td>
-                            <td>${u.is_blocked ? '<span class="badge danger">🚫 Заблокирован</span>' : '<span class="badge success">✅ Активен</span>'}</td>
+                            <td>
+                                ${u.is_premium ? '<span class="badge premium-badge">⭐ Premium</span> ' : ''}
+                                ${u.is_blocked ? '<span class="badge danger">🚫 Заблокирован</span>' : '<span class="badge success">✅ Активен</span>'}
+                            </td>
                             <td>${u.referrals || 0}</td>
                             <td style="white-space:nowrap;">${formatDate(u.created_at)}</td>
                             <td>
-                                <button class="btn btn-outline btn-sm" onclick="showUserInfo(${u.telegram_id})" title="Просмотр">👁</button>
-                                ${u.is_blocked 
-                                    ? `<button class="btn btn-success btn-sm" onclick="confirmUnblockUser(${u.telegram_id})" title="Разблокировать">🔓</button>`
-                                    : `<button class="btn btn-warning btn-sm" onclick="confirmBlockUser(${u.telegram_id})" title="Заблокировать">🔒</button>`
-                                }
-                                <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser(${u.telegram_id})" title="Удалить">🗑</button>
+                                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                    <button class="btn btn-outline btn-sm" onclick="showUserInfo(${u.telegram_id})" title="Просмотр">👁</button>
+                                    <button class="btn btn-success btn-sm" onclick="quickAddBalance(${u.telegram_id})" title="Начислить баланс">➕</button>
+                                    <button class="btn btn-danger btn-sm" onclick="quickDeductBalance(${u.telegram_id})" title="Списать баланс">➖</button>
+                                    <button class="btn btn-warning btn-sm" onclick="quickResetBalance(${u.telegram_id})" title="Обнулить баланс">🔄</button>
+                                    ${u.is_blocked 
+                                        ? `<button class="btn btn-success btn-sm" onclick="confirmUnblockUser(${u.telegram_id})" title="Разблокировать">🔓</button>`
+                                        : `<button class="btn btn-warning btn-sm" onclick="confirmBlockUser(${u.telegram_id})" title="Заблокировать">🔒</button>`
+                                    }
+                                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser(${u.telegram_id})" title="Удалить">🗑</button>
+                                </div>
                             </td>
                         </tr>
                     `).join('')}
@@ -155,7 +163,14 @@ async function showUserInfo(telegramId) {
             </div>
             <div class="form-group">
                 <label class="form-label">Статус</label>
-                <div class="form-input" style="background:var(--bg-secondary);cursor:default;">${user.is_blocked ? '🚫 Заблокирован' : '✅ Активен'}</div>
+                <div class="form-input" style="background:var(--bg-secondary);cursor:default;">
+                    ${user.is_premium ? '⭐ Premium' : ''}
+                    ${user.is_blocked ? '🚫 Заблокирован' : '✅ Активен'}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Premium до</label>
+                <div class="form-input" style="background:var(--bg-secondary);cursor:default;">${user.premium_until ? formatDate(user.premium_until) : '—'}</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Рефералы</label>
@@ -172,6 +187,9 @@ async function showUserInfo(telegramId) {
         `, '', null);
         
         let actionsHtml = `<button class="btn btn-outline" onclick="closeModal()">Закрыть</button>`;
+        actionsHtml += `<button class="btn btn-success" onclick="closeModal();quickAddBalance(${telegramId})">➕ Начислить</button>`;
+        actionsHtml += `<button class="btn btn-danger" onclick="closeModal();quickDeductBalance(${telegramId})">➖ Списать</button>`;
+        actionsHtml += `<button class="btn btn-warning" onclick="closeModal();quickResetBalance(${telegramId})">🔄 Обнулить</button>`;
         if (user.is_blocked) {
             actionsHtml += `<button class="btn btn-success" onclick="closeModal();confirmUnblockUser(${telegramId})">🔓 Разблокировать</button>`;
         } else {
@@ -183,6 +201,90 @@ async function showUserInfo(telegramId) {
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }
+}
+
+// Quick balance actions from users page
+function quickAddBalance(telegramId) {
+    showModal('➕ Начислить баланс пользователю #' + telegramId, `
+        <div class="form-group">
+            <label class="form-label">Telegram ID</label>
+            <input type="text" class="form-input" value="${telegramId}" disabled style="background:var(--bg-secondary);">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Сумма (so'm)</label>
+            <input type="number" class="form-input" id="quickBalanceAmount" placeholder="50000" min="1" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Причина</label>
+            <textarea class="form-textarea" id="quickBalanceReason" placeholder="Например: бонус за активность"></textarea>
+        </div>
+    `, 'Начислить', async () => {
+        const amount = parseInt(document.getElementById('quickBalanceAmount').value);
+        const reason = document.getElementById('quickBalanceReason').value;
+        if (!amount) { alert('Введите сумму'); return; }
+        try {
+            await apiPost('/api/admin/balance/add', { telegram_id: telegramId, amount, reason });
+            alert('✅ Баланс успешно начислен');
+            closeModal();
+            fetchUsers();
+        } catch (err) {
+            alert('❌ ' + err.message);
+        }
+    });
+}
+
+function quickDeductBalance(telegramId) {
+    showModal('➖ Списать баланс пользователя #' + telegramId, `
+        <div class="form-group">
+            <label class="form-label">Telegram ID</label>
+            <input type="text" class="form-input" value="${telegramId}" disabled style="background:var(--bg-secondary);">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Сумма (so'm)</label>
+            <input type="number" class="form-input" id="quickBalanceAmount" placeholder="10000" min="1" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Причина</label>
+            <textarea class="form-textarea" id="quickBalanceReason" placeholder="Например: возврат средств"></textarea>
+        </div>
+    `, 'Списать', async () => {
+        const amount = parseInt(document.getElementById('quickBalanceAmount').value);
+        const reason = document.getElementById('quickBalanceReason').value;
+        if (!amount) { alert('Введите сумму'); return; }
+        try {
+            await apiPost('/api/admin/balance/deduct', { telegram_id: telegramId, amount, reason });
+            alert('✅ Баланс успешно списан');
+            closeModal();
+            fetchUsers();
+        } catch (err) {
+            alert('❌ ' + err.message);
+        }
+    });
+}
+
+function quickResetBalance(telegramId) {
+    showModal('🔄 Обнулить баланс пользователя #' + telegramId, `
+        <div class="form-group">
+            <label class="form-label">Telegram ID</label>
+            <input type="text" class="form-input" value="${telegramId}" disabled style="background:var(--bg-secondary);">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Причина</label>
+            <textarea class="form-textarea" id="quickBalanceReason" placeholder="Например: сброс тестового баланса"></textarea>
+        </div>
+        <div class="alert warning">⚠️ Баланс пользователя будет сброшен до 0. Это действие нельзя отменить.</div>
+    `, 'Обнулить', async () => {
+        const reason = document.getElementById('quickBalanceReason').value;
+        if (!confirm('Вы уверены, что хотите обнулить баланс пользователя ' + telegramId + '?')) return;
+        try {
+            await apiPost('/api/admin/balance/reset', { telegram_id: telegramId, reason });
+            alert('✅ Баланс успешно обнулен');
+            closeModal();
+            fetchUsers();
+        } catch (err) {
+            alert('❌ ' + err.message);
+        }
+    });
 }
 
 function confirmBlockUser(telegramId) {

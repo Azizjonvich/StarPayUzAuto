@@ -1,5 +1,6 @@
 """Users management router — sync version"""
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import text
@@ -26,15 +27,29 @@ def get_users(
     result = db.execute(text("SELECT COUNT(*) FROM users"))
     total = result.scalar() or 0
 
-    result = db.execute(
-        text(
-            "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
-            "referred_by, language, COALESCE(is_blocked, false), created_at "
-            "FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-        ),
-        {"limit": page_size, "offset": (page - 1) * page_size},
-    )
-    rows = result.fetchall()
+    try:
+        result = db.execute(
+            text(
+                "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
+                "referred_by, language, COALESCE(is_blocked, false), premium_until, created_at "
+                "FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+            ),
+            {"limit": page_size, "offset": (page - 1) * page_size},
+        )
+        rows = result.fetchall()
+    except Exception:
+        # Fallback if premium_until column doesn't exist
+        result = db.execute(
+            text(
+                "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
+                "referred_by, language, COALESCE(is_blocked, false), NULL as premium_until, created_at "
+                "FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+            ),
+            {"limit": page_size, "offset": (page - 1) * page_size},
+        )
+        rows = result.fetchall()
+    
+    now = datetime.now(timezone.utc)
 
     users = [
         UserInfo(
@@ -42,7 +57,9 @@ def get_users(
             full_name=row[3], balance=row[4], referrals=row[5] or 0,
             referred_by=row[6], language=row[7] or "uz",
             is_blocked=bool(row[8]) if row[8] is not None else False,
-            created_at=str(row[9]) if row[9] else None,
+            premium_until=row[9],
+            is_premium=row[9] is not None and row[9] > now,
+            created_at=str(row[10]) if row[10] else None,
         ) for row in rows
     ]
 
@@ -77,16 +94,31 @@ def search_users(
     total_result = db.execute(text(count_clause), {"q": query})
     total = total_result.scalar() or 0
 
-    sql = text(
-        "SELECT u.telegram_id, u.sp_id, u.username, u.full_name, u.balance, "
-        "u.referrals, u.referred_by, u.language, COALESCE(u.is_blocked, false), u.created_at "
-        f"FROM users u {where_clause} ORDER BY u.created_at DESC "
-        "LIMIT :limit OFFSET :offset"
-    )
-    result = db.execute(
-        sql, {"q": query, "limit": page_size, "offset": (page - 1) * page_size},
-    )
-    rows = result.fetchall()
+    try:
+        sql = text(
+            "SELECT u.telegram_id, u.sp_id, u.username, u.full_name, u.balance, "
+            "u.referrals, u.referred_by, u.language, COALESCE(u.is_blocked, false), u.premium_until, u.created_at "
+            f"FROM users u {where_clause} ORDER BY u.created_at DESC "
+            "LIMIT :limit OFFSET :offset"
+        )
+        result = db.execute(
+            sql, {"q": query, "limit": page_size, "offset": (page - 1) * page_size},
+        )
+        rows = result.fetchall()
+    except Exception:
+        # Fallback if premium_until column doesn't exist
+        sql = text(
+            "SELECT u.telegram_id, u.sp_id, u.username, u.full_name, u.balance, "
+            "u.referrals, u.referred_by, u.language, COALESCE(u.is_blocked, false), NULL as premium_until, u.created_at "
+            f"FROM users u {where_clause} ORDER BY u.created_at DESC "
+            "LIMIT :limit OFFSET :offset"
+        )
+        result = db.execute(
+            sql, {"q": query, "limit": page_size, "offset": (page - 1) * page_size},
+        )
+        rows = result.fetchall()
+    
+    now = datetime.now(timezone.utc)
 
     users = [
         UserInfo(
@@ -94,7 +126,9 @@ def search_users(
             full_name=row[3], balance=row[4], referrals=row[5] or 0,
             referred_by=row[6], language=row[7] or "uz",
             is_blocked=bool(row[8]) if row[8] is not None else False,
-            created_at=str(row[9]) if row[9] else None,
+            premium_until=row[9],
+            is_premium=row[9] is not None and row[9] > now,
+            created_at=str(row[10]) if row[10] else None,
         ) for row in rows
     ]
 
@@ -108,24 +142,41 @@ def get_user(
     db: Session = Depends(get_db),
 ):
     """Get user by Telegram ID"""
-    result = db.execute(
-        text(
-            "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
-            "referred_by, language, COALESCE(is_blocked, false), created_at "
-            "FROM users WHERE telegram_id = :tid"
-        ),
-        {"tid": telegram_id},
-    )
-    row = result.fetchone()
+    try:
+        result = db.execute(
+            text(
+                "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
+                "referred_by, language, COALESCE(is_blocked, false), premium_until, created_at "
+                "FROM users WHERE telegram_id = :tid"
+            ),
+            {"tid": telegram_id},
+        )
+        row = result.fetchone()
+    except Exception:
+        # Fallback if premium_until column doesn't exist
+        result = db.execute(
+            text(
+                "SELECT telegram_id, sp_id, username, full_name, balance, referrals, "
+                "referred_by, language, COALESCE(is_blocked, false), NULL as premium_until, created_at "
+                "FROM users WHERE telegram_id = :tid"
+            ),
+            {"tid": telegram_id},
+        )
+        row = result.fetchone()
+    
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
+
+    now = datetime.now(timezone.utc)
 
     return UserInfo(
         telegram_id=row[0], sp_id=row[1], username=row[2],
         full_name=row[3], balance=row[4], referrals=row[5] or 0,
         referred_by=row[6], language=row[7] or "uz",
         is_blocked=bool(row[8]) if row[8] is not None else False,
-        created_at=str(row[9]) if row[9] else None,
+        premium_until=row[9],
+        is_premium=row[9] is not None and row[9] > now,
+        created_at=str(row[10]) if row[10] else None,
     )
 
 
