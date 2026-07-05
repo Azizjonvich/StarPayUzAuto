@@ -33,7 +33,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://starpayuz-webapp.vercel.app")
 
 # Admin IDs
-ADMINS = [8784918764]
+ADMINS = [5494736195]
 
 # Admin Panel URL
 ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8000")
